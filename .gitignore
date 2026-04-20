@@ -1,9 +1,0 @@
-node_modules/
-dist/
-.cache/
-.vite/
-*.local
-.env
-.env.*
-!.env.example
-.DS_Store
