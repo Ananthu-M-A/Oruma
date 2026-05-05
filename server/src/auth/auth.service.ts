@@ -24,8 +24,12 @@ export class AuthService {
       password: hashedPassword,
       role: dto.role,
     });
-    const { password, ...registeredUser } = user;
 
-    return registeredUser;
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+    };
   }
 }
