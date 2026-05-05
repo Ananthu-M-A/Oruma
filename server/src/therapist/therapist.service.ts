@@ -11,6 +11,10 @@ export class TherapistService {
   ) {}
 
   findAll(): Promise<Therapist[]> {
-    return this.therapistRepository.find();
+    return this.therapistRepository.find({
+      order: {
+        displayOrder: 'ASC',
+      },
+    });
   }
 }

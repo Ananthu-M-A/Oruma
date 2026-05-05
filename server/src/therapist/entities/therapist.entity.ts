@@ -11,18 +11,30 @@ export class Therapist {
   @Column()
   title: string;
 
-  @Column({ type: 'int' })
-  experience: number;
+  @Column({ type: 'int', default: 0 })
+  hours: number;
 
-  @Column({ type: 'int' })
-  price: number;
+  @Column({ type: 'int', default: 1 })
+  group: number;
 
-  @Column({ nullable: true })
-  image: string;
+  @Column({ type: 'simple-array', default: '' })
+  tags: string[];
 
-  @Column({ nullable: true })
-  voiceIntro: string;
+  @Column()
+  price: string;
 
-  @Column({ nullable: true })
-  nextAvailableSlot: Date;
+  @Column()
+  slot: string;
+
+  @Column()
+  img: string;
+
+  @Column({ type: 'int', default: 0 })
+  displayOrder: number;
+
+  @Column({ nullable: true, type: 'varchar' })
+  voiceIntro: string | null;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  nextAvailableSlot: Date | null;
 }
