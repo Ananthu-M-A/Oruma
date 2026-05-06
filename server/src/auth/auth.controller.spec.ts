@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller';
 describe('AuthController', () => {
   let controller: AuthController;
   const authService = {
+    login: jest.fn(),
     register: jest.fn(),
   };
 
