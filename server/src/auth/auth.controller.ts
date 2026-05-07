@@ -1,15 +1,16 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
+import { Roles } from './decorators/roles.decorator';
+import { Role } from '../user/entities/user.entity';
+import { JwtPayload } from './strategies/jwt.strategy';
+
+type AuthenticatedRequest = {
+  user: JwtPayload;
+};
 
 @Controller('auth')
 export class AuthController {
@@ -17,7 +18,14 @@ export class AuthController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  getProfile(@Request() req) {
+  getProfile(@Req() req: AuthenticatedRequest) {
+    return req.user;
+  }
+
+  @Get('admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getAdminProfile(@Req() req: AuthenticatedRequest) {
     return req.user;
   }
 
