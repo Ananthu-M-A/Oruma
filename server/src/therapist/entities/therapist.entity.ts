@@ -1,4 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
 
 @Entity()
 export class Therapist {
@@ -11,30 +16,47 @@ export class Therapist {
   @Column()
   title: string;
 
-  @Column({ type: 'int', default: 0 })
-  hours: number;
-
-  @Column({ type: 'int', default: 1 })
-  group: number;
-
-  @Column({ type: 'simple-array', default: '' })
+  @Column('text', { array: true, nullable: true })
   tags: string[];
 
   @Column()
-  price: string;
+  experience: number;
 
   @Column()
-  slot: string;
+  group: number;
 
   @Column()
-  img: string;
+  price: number;
 
-  @Column({ type: 'int', default: 0 })
-  displayOrder: number;
+  @Column({ nullable: true })
+  couplePrice: number;
 
-  @Column({ nullable: true, type: 'varchar' })
-  voiceIntro: string | null;
+  @Column({ nullable: true })
+  image: string;
 
-  @Column({ nullable: true, type: 'timestamp' })
-  nextAvailableSlot: Date | null;
+  @Column({ nullable: true })
+  voiceIntro: string;
+
+  @Column({ nullable: true })
+  qualifications: string;
+
+  @Column({ nullable: true })
+  specialization: string;
+
+  @Column({ nullable: true })
+  bio: string;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+  })
+  nextAvailableSlot: Date;
+
+  @Column({
+    default: true,
+  })
+  isActive: boolean;
+
+  @CreateDateColumn()
+  createdAt: Date;
 }

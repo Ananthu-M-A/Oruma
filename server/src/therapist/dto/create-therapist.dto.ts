@@ -1,0 +1,74 @@
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsBoolean,
+  IsDate,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
+
+export class CreateTherapistDto {
+  @IsString()
+  name: string;
+
+  @IsString()
+  title: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  experience: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  group: number;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  price: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  couplePrice?: number;
+
+  @IsOptional()
+  @IsString()
+  image?: string;
+
+  @IsOptional()
+  @IsString()
+  voiceIntro?: string;
+
+  @IsOptional()
+  @IsString()
+  qualifications?: string;
+
+  @IsOptional()
+  @IsString()
+  specialization?: string;
+
+  @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  nextAvailableSlot?: Date;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
