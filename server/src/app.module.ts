@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { TherapistModule } from './therapist/therapist.module';
+import { AppointmentModule } from './appointment/appointment.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { TherapistModule } from './therapist/therapist.module';
     AuthModule,
     UserModule,
     TherapistModule,
+    AppointmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

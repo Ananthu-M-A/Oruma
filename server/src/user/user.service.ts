@@ -11,7 +11,12 @@ export class UserService {
   ) {}
 
   findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { email } });
+    return this.userRepository.findOne({
+      where: {
+        email,
+      },
+      select: ['id', 'email', 'password', 'role'],
+    });
   }
 
   create(user: Pick<User, 'email' | 'password' | 'role'>): Promise<User> {
