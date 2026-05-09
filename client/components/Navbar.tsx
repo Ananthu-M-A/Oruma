@@ -4,7 +4,7 @@ import { LucideIcon } from '@site-builder/icons';
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
-  const phoneNumber = "918136919987";
+  const phoneNumber = "918157039987";
 
   useEffect(() => {
     if (isOpen) {

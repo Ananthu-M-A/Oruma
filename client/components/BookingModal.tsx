@@ -348,7 +348,7 @@ export default function BookingModal({ isOpen, onClose, therapist }) {
               className="w-full bg-[#00D494] text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-[#00B37E] transition-all"
               onClick={() => {
                 const text = `Hi, I'd like to book a session.%0A%0A*Therapist:* ${therapist?.name}%0A*Group:* ${therapist?.group}%0A*Service:* ${formData.service}%0A*Package:* ${formData.package}%0A*Time:* ${formData.time}%0A*Mode:* ${formData.mode}`;
-                window.open(`https://wa.me/917558832001?text=${text}`, '_blank');
+                window.open(`https://wa.me/918157039987?text=${text}`, '_blank');
                 onClose();
               }}
             >
