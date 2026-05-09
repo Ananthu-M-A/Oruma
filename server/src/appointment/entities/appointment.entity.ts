@@ -1,12 +1,16 @@
 import {
-  Column,
-  CreateDateColumn,
   Entity,
-  ManyToOne,
   PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToOne,
+  JoinColumn,
+  CreateDateColumn,
 } from 'typeorm';
-import { Therapist } from '../../therapist/entities/therapist.entity';
+
 import { User } from '../../user/entities/user.entity';
+import { Therapist } from '../../therapist/entities/therapist.entity';
+import { AvailabilitySlot } from '../../availability/entities/availability-slot.entity';
 import { AppointmentStatus } from './appointment-status.enum';
 
 @Entity()
@@ -24,10 +28,11 @@ export class Appointment {
   })
   therapist: Therapist;
 
-  @Column({
-    type: 'timestamp',
+  @OneToOne(() => AvailabilitySlot, {
+    eager: true,
   })
-  appointmentDate: Date;
+  @JoinColumn()
+  slot: AvailabilitySlot;
 
   @Column({
     type: 'enum',
@@ -36,17 +41,11 @@ export class Appointment {
   })
   status: AppointmentStatus;
 
-  @Column({
-    type: 'jsonb',
-    nullable: true,
-  })
-  notes: string | null;
+  @Column({ type: 'text', nullable: true })
+  notes: string;
 
-  @Column({
-    type: 'jsonb',
-    nullable: true,
-  })
-  meetingLink: string | null;
+  @Column({ type: 'text', nullable: true })
+  meetingLink: string;
 
   @CreateDateColumn()
   createdAt: Date;

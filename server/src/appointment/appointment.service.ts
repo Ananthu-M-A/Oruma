@@ -1,16 +1,21 @@
 import {
-  BadRequestException,
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { JwtPayload } from '../auth/strategies/jwt.strategy';
-import { Therapist } from '../therapist/entities/therapist.entity';
+import { Appointment } from './entities/appointment.entity';
+import { AvailabilitySlot } from '../availability/entities/availability-slot.entity';
+import { SlotStatus } from '../availability/entities/slot-status.enum';
+
 import { User } from '../user/entities/user.entity';
+
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
-import { Appointment } from './entities/appointment.entity';
 
 @Injectable()
 export class AppointmentService {
@@ -18,53 +23,61 @@ export class AppointmentService {
     @InjectRepository(Appointment)
     private readonly appointmentRepo: Repository<Appointment>,
 
-    @InjectRepository(Therapist)
-    private readonly therapistRepo: Repository<Therapist>,
+    @InjectRepository(AvailabilitySlot)
+    private readonly slotRepo: Repository<AvailabilitySlot>,
   ) {}
 
   async create(
     dto: CreateAppointmentDto,
     patient: JwtPayload,
   ): Promise<Appointment> {
-    const therapist = await this.therapistRepo.findOne({
+    const slot = await this.slotRepo.findOne({
       where: {
-        id: dto.therapistId,
+        id: dto.slotId,
       },
+      relations: ['therapist'],
     });
 
-    if (!therapist) {
-      throw new NotFoundException('Therapist not found');
+    if (!slot) {
+      throw new NotFoundException('Slot not found');
+    }
+
+    if (slot.status !== SlotStatus.AVAILABLE) {
+      throw new BadRequestException('Selected slot is unavailable');
     }
 
     const existingAppointment = await this.appointmentRepo.findOne({
       where: {
-        therapist: {
-          id: therapist.id,
+        slot: {
+          id: slot.id,
         },
-        appointmentDate: dto.appointmentDate,
       },
     });
 
     if (existingAppointment) {
-      throw new BadRequestException('This slot is already booked');
+      throw new BadRequestException('Slot already booked');
     }
 
+    slot.status = SlotStatus.BOOKED;
+
+    await this.slotRepo.save(slot);
+
     const appointment = this.appointmentRepo.create({
-      therapist,
       patient: {
         id: patient.userId,
       } as User,
-      appointmentDate: dto.appointmentDate,
+      therapist: slot.therapist,
+      slot,
       notes: dto.notes,
     });
 
     return this.appointmentRepo.save(appointment);
   }
 
-  findAll(): Promise<Appointment[]> {
+  async findAll(): Promise<Appointment[]> {
     return this.appointmentRepo.find({
       order: {
-        appointmentDate: 'ASC',
+        createdAt: 'DESC',
       },
     });
   }
@@ -94,6 +107,12 @@ export class AppointmentService {
 
   async remove(id: string): Promise<{ message: string }> {
     const appointment = await this.findOne(id);
+
+    if (appointment.slot) {
+      appointment.slot.status = SlotStatus.AVAILABLE;
+
+      await this.slotRepo.save(appointment.slot);
+    }
 
     await this.appointmentRepo.remove(appointment);
 
