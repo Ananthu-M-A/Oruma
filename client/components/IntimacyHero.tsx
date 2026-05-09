@@ -13,7 +13,7 @@ export default function IntimacyHero() {
             Sexual wellness is more than just physical health. It's about feeling confident, connected, and comfortable in your own body and relationships. We provide a safe, non-judgmental space to explore your concerns through our Ivade initiative.
           </p>
           <a 
-            href="https://wa.me/917558832001?text=Hi,%20I'd%20like%20to%20book%20a%20Sexual%20Wellness%20consultation."
+            href="https://wa.me/918157039987?text=Hi,%20I'd%20like%20to%20book%20a%20Sexual%20Wellness%20consultation."
             className="bg-[#1A1A1A] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-black transition-all shadow-xl shadow-black/10 inline-block"
           >
             Book consultation

@@ -2,7 +2,7 @@ import React from 'react';
 import { LucideIcon } from '@site-builder/icons';
 
 export default function FloatingActions() {
-  const phoneNumber = "918136919987";
+  const phoneNumber = "918157039987";
   return (
     <div className="fixed bottom-12 right-6 z-[100] flex flex-col gap-4 items-end">
       

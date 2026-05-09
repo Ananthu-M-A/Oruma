@@ -2,7 +2,7 @@ import React from 'react';
 import { LucideIcon } from '@site-builder/icons';
 
 export default function TraumaMechanism() {
-  const whatsappLink = "https://wa.me/917558832001?text=Hi,%20I'd%20like%20to%20get%20therapy%20for%20trauma.";
+  const whatsappLink = "https://wa.me/918157039987?text=Hi,%20I'd%20like%20to%20get%20therapy%20for%20trauma.";
   const steps = [
     { icon: 'shield-check', title: 'Safe Boundaries' },
     { icon: 'user-check', title: 'Specialized Trauma Care' },

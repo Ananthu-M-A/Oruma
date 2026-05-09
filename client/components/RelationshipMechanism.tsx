@@ -2,7 +2,7 @@ import React from 'react';
 import { LucideIcon } from '@site-builder/icons';
 
 export default function RelationshipMechanism() {
-  const whatsappLink = "https://wa.me/917558832001?text=Hi,%20I'd%20like%20to%20get%20therapy%20for%20relationship%20issues.";
+  const whatsappLink = "https://wa.me/918157039987?text=Hi,%20I'd%20like%20to%20get%20therapy%20for%20relationship%20issues.";
   const steps = [
     { icon: 'users', title: 'Couples Focused', text: 'Therapy tailored to the unique dynamics of your partnership.' },
     { icon: 'user-check', title: 'Relationship Experts', text: 'Work with professionals trained in Gottman and EFT models.' },

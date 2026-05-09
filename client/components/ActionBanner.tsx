@@ -1,7 +1,7 @@
 import React from 'react';
 
 export default function ActionBanner({ title, buttonText, secondary = false, href }: any) {
-  const defaultLink = "https://wa.me/917558832001?text=Hi,%20I'd%20like%20to%20know%20more%20about%20your%20services.";
+  const defaultLink = "https://wa.me/918157039987?text=Hi,%20I'd%20like%20to%20know%20more%20about%20your%20services.";
   
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">

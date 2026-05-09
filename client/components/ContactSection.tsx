@@ -2,7 +2,7 @@ import React from 'react';
 import { LucideIcon } from '@site-builder/icons';
 
 export default function ContactSection() {
-  const phoneNumber = "918136919987";
+  const phoneNumber = "918157039987";
   const whatsappLink = `https://wa.me/${phoneNumber}?text=Hi,%20I%20want%20to%20get%20in%20touch%20with%20Oruma.`;
 
   return (

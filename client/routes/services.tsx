@@ -216,7 +216,7 @@ export default function ServicesPage() {
                   </ul>
 
                   <a 
-                    href="https://wa.me/917558832001?text=Hi,%20I'm%20interested%20in%20your%20training%20and%20courses" 
+                    href="https://wa.me/918157039987?text=Hi,%20I'm%20interested%20in%20your%20training%20and%20courses" 
                     className="w-full bg-[#F5F8F7] text-[#0A7F7A] py-4 rounded-2xl font-black text-xs text-center hover:bg-[#0A7F7A] hover:text-white transition-all block"
                   >
                     Request Information

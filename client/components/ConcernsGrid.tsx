@@ -45,7 +45,7 @@ export default function ConcernsGrid() {
     },
   ];
 
-  const bookingLink = "https://wa.me/917558832001?text=Hi,%20I'd%20like%20to%20book%20a%20consultation%20regarding%20my%20wellness%20concerns.";
+  const bookingLink = "https://wa.me/918157039987?text=Hi,%20I'd%20like%20to%20book%20a%20consultation%20regarding%20my%20wellness%20concerns.";
 
   return (
     <section className="py-24 bg-white">

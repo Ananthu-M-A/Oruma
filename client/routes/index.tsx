@@ -19,8 +19,8 @@ export const meta = {
 };
 
 export default function HomePage() {
-  const assessmentLink = "https://wa.me/917558832001?text=Hi,%20I'd%20like%20to%20take%20the%20mental%20health%20assessment.";
-  const unsureLink = "https://wa.me/917558832001?text=Hi,%20I'm%20not%20sure%20what%20help%20I%20need.%20Can%20you%20guide%20me?";
+  const assessmentLink = "https://wa.me/918157039987?text=Hi,%20I'd%20like%20to%20take%20the%20mental%20health%20assessment.";
+  const unsureLink = "https://wa.me/918157039987?text=Hi,%20I'm%20not%20sure%20what%20help%20I%20need.%20Can%20you%20guide%20me?";
 
   return (
     <main className="min-h-screen bg-white font-body text-[#2E3E3C]">
@@ -89,10 +89,10 @@ export default function HomePage() {
             </div>
 
             <div className="absolute -right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3">
-              <a href="tel:+917558832001" className="w-12 h-12 bg-[#1A3A37] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+              <a href="tel:+918157039987" className="w-12 h-12 bg-[#1A3A37] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
                 <LucideIcon name="phone" size={20} />
               </a>
-              <a href="https://wa.me/917558832001" className="w-14 h-14 bg-[#00D494] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+              <a href="https://wa.me/918157039987" className="w-14 h-14 bg-[#00D494] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
                 <LucideIcon name="message-circle" size={28} />
               </a>
             </div>

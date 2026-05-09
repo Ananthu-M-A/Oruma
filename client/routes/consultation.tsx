@@ -71,7 +71,7 @@ function MechanismSection() {
 }
 
 export default function NRIConsultationPage() {
-  const whatsappLink = "https://wa.me/917558832001?text=Hi,%20I'm%20contacting%20from%20abroad%20for%20a%20Global%20Consultation.%20I'd%20like%20to%20avail%20the%2010%%20offer.";
+  const whatsappLink = "https://wa.me/918157039987?text=Hi,%20I'm%20contacting%20from%20abroad%20for%20a%20Global%20Consultation.%20I'd%20like%20to%20avail%20the%2010%%20offer.";
 
   return (
     <main className="min-h-screen bg-white font-body text-[#2E3E3C]">

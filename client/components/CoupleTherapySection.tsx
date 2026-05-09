@@ -34,7 +34,7 @@ export default function CoupleTherapySection() {
 
           <div className="flex justify-center">
             <a 
-              href="https://wa.me/917558832001?text=Hi,%20I'm%20interested%20in%20Couple%20Therapy"
+              href="https://wa.me/918157039987?text=Hi,%20I'm%20interested%20in%20Couple%20Therapy"
               className="inline-flex items-center gap-3 bg-[#1A1A1A] text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#A3B899] transition-all duration-300 shadow-2xl shadow-black/10 active:scale-95"
             >
               Book a Session <LucideIcon name="arrow-right" size={18} />

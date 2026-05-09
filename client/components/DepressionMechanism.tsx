@@ -2,7 +2,7 @@ import React from 'react';
 import { LucideIcon } from '@site-builder/icons';
 
 export default function DepressionMechanism() {
-  const whatsappLink = "https://wa.me/917558832001?text=Hi,%20I'd%20like%20to%20get%20therapy%20for%20depression.";
+  const whatsappLink = "https://wa.me/918157039987?text=Hi,%20I'd%20like%20to%20get%20therapy%20for%20depression.";
   const steps = [
     { icon: 'message-square', title: 'Safe to Vent' },
     { icon: 'user-check', title: 'Specialized Professionals' },

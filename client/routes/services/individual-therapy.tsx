@@ -52,7 +52,7 @@ export default function IndividualTherapyPage() {
             
             <div className="mt-20">
                <a 
-                href="https://wa.me/917558832001?text=Hi,%20I'd%20like%20to%20start%20Individual%20Therapy."
+                href="https://wa.me/918157039987?text=Hi,%20I'd%20like%20to%20start%20Individual%20Therapy."
                 className="bg-[#064F4B] text-white px-16 py-6 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-[#064F4B]/20 hover:scale-105 transition-all"
               >
                   Start Your Journey
