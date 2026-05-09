@@ -31,8 +31,9 @@ type AuthResponse = {
   createdAt?: string;
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "/api";
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "/api";
 const ACCESS_TOKEN_KEY = "oruma_access_token";
+export const AUTH_CHANGED_EVENT = "oruma-auth-changed";
 
 async function requestAuth(path: string, payload: LoginPayload | RegisterPayload) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -92,6 +93,7 @@ export function getProfile() {
 
 export function saveAccessToken(token: string) {
   window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
 }
 
 export function getAccessToken() {
@@ -100,6 +102,7 @@ export function getAccessToken() {
 
 export function clearAccessToken() {
   window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+  window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
 }
 
 function decodeBase64Url(value: string) {

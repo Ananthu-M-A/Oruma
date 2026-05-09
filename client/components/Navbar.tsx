@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { LucideIcon } from '@site-builder/icons';
+import { AUTH_CHANGED_EVENT, clearAccessToken, getCurrentUser } from '../src/lib/auth';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [currentUser, setCurrentUser] = useState(getCurrentUser());
   const phoneNumber = "918157039987";
 
   useEffect(() => {
@@ -14,6 +16,19 @@ export default function Navbar() {
     }
     return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen]);
+
+  useEffect(() => {
+    const syncUser = () => setCurrentUser(getCurrentUser());
+
+    window.addEventListener(AUTH_CHANGED_EVENT, syncUser);
+    window.addEventListener('storage', syncUser);
+    syncUser();
+
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, syncUser);
+      window.removeEventListener('storage', syncUser);
+    };
+  }, []);
 
   const toggleDropdown = (name) => {
     setOpenDropdown(openDropdown === name ? null : name);
@@ -40,6 +55,11 @@ export default function Navbar() {
   const handleLinkClick = () => {
     setIsOpen(false);
     setOpenDropdown(null);
+  };
+
+  const handleLogout = () => {
+    clearAccessToken();
+    handleLinkClick();
   };
 
   return (
@@ -130,7 +150,19 @@ export default function Navbar() {
             <a href="/therapists" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors">Therapists</a>
             <a href="/careers" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors">Careers</a>
             <a href="/contact" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors">Contact Us</a>
-            <a href="/login" className="text-xs font-black text-[#0A7F7A] hover:text-[#064F4B] tracking-widest uppercase transition-colors">Login</a>
+            {currentUser ? (
+              <div className="flex items-center gap-3">
+                <a href="/therapists" className="inline-flex items-center gap-2 bg-[#F5F8F7] text-[#064F4B] px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">
+                  <LucideIcon name="circle-user-round" size={14} />
+                  {currentUser.role}
+                </a>
+                <button onClick={handleLogout} className="text-xs font-black text-[#0A7F7A] hover:text-[#064F4B] tracking-widest uppercase transition-colors">
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <a href="/login" className="text-xs font-black text-[#0A7F7A] hover:text-[#064F4B] tracking-widest uppercase transition-colors">Login</a>
+            )}
 
             <a href={`https://wa.me/${phoneNumber}?text=Hi,%20I%20want%20to%20book%20an%20appointment`} className="bg-[#0A7F7A] text-white px-7 py-2 rounded-full text-[10px] font-black hover:bg-[#064F4B] transition-all active:scale-95 shadow-lg shadow-[#0A7F7A]/20 uppercase tracking-widest">Book Appointment</a>
           </div>
@@ -203,7 +235,16 @@ export default function Navbar() {
               <a href="/therapists" className="px-8 py-5 text-[14px] font-black text-[#064F4B] border-b border-gray-50 uppercase tracking-tight" onClick={handleLinkClick}>THERAPISTS</a>
               <a href="/careers" className="px-8 py-5 text-[14px] font-black text-[#064F4B] border-b border-gray-50 uppercase tracking-tight" onClick={handleLinkClick}>CAREERS</a>
               <a href="/contact" className="px-8 py-5 text-[14px] font-black text-[#064F4B] border-b border-gray-50 uppercase tracking-tight" onClick={handleLinkClick}>CONTACT US</a>
-              <a href="/login" className="px-8 py-5 text-[14px] font-black text-[#064F4B] border-b border-gray-50 uppercase tracking-tight" onClick={handleLinkClick}>LOGIN</a>
+              {currentUser ? (
+                <>
+                  <div className="px-8 py-5 text-[13px] font-black text-[#0A7F7A] border-b border-gray-50 uppercase tracking-tight">
+                    LOGGED IN AS {currentUser.role}
+                  </div>
+                  <button className="text-left px-8 py-5 text-[14px] font-black text-[#064F4B] border-b border-gray-50 uppercase tracking-tight" onClick={handleLogout}>LOGOUT</button>
+                </>
+              ) : (
+                <a href="/login" className="px-8 py-5 text-[14px] font-black text-[#064F4B] border-b border-gray-50 uppercase tracking-tight" onClick={handleLinkClick}>LOGIN</a>
+              )}
             </div>
 
             <div className="mt-auto px-8 py-10">
