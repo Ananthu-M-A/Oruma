@@ -130,6 +130,7 @@ export default function Navbar() {
             <a href="/therapists" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors">Therapists</a>
             <a href="/careers" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors">Careers</a>
             <a href="/contact" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors">Contact Us</a>
+            <a href="/login" className="text-xs font-black text-[#0A7F7A] hover:text-[#064F4B] tracking-widest uppercase transition-colors">Login</a>
 
             <a href={`https://wa.me/${phoneNumber}?text=Hi,%20I%20want%20to%20book%20an%20appointment`} className="bg-[#0A7F7A] text-white px-7 py-2 rounded-full text-[10px] font-black hover:bg-[#064F4B] transition-all active:scale-95 shadow-lg shadow-[#0A7F7A]/20 uppercase tracking-widest">Book Appointment</a>
           </div>
@@ -202,6 +203,7 @@ export default function Navbar() {
               <a href="/therapists" className="px-8 py-5 text-[14px] font-black text-[#064F4B] border-b border-gray-50 uppercase tracking-tight" onClick={handleLinkClick}>THERAPISTS</a>
               <a href="/careers" className="px-8 py-5 text-[14px] font-black text-[#064F4B] border-b border-gray-50 uppercase tracking-tight" onClick={handleLinkClick}>CAREERS</a>
               <a href="/contact" className="px-8 py-5 text-[14px] font-black text-[#064F4B] border-b border-gray-50 uppercase tracking-tight" onClick={handleLinkClick}>CONTACT US</a>
+              <a href="/login" className="px-8 py-5 text-[14px] font-black text-[#064F4B] border-b border-gray-50 uppercase tracking-tight" onClick={handleLinkClick}>LOGIN</a>
             </div>
 
             <div className="mt-auto px-8 py-10">

@@ -10,7 +10,9 @@ import Concerns from "../routes/concerns";
 import AllConcerns from "../routes/concerns/all-concerns";
 import Consultation from "../routes/consultation";
 import Contact from "../routes/contact";
+import Login from "../routes/login";
 import OnlineCounselling from "../routes/online-counselling";
+import Register from "../routes/register";
 import Services from "../routes/services";
 import CoupleTherapy from "../routes/services/couple-therapy";
 import FollowUp from "../routes/services/follow-up";
@@ -28,7 +30,9 @@ import { meta as concernsMeta } from "../routes/concerns";
 import { meta as allConcernsMeta } from "../routes/concerns/all-concerns";
 import { meta as consultationMeta } from "../routes/consultation";
 import { meta as contactMeta } from "../routes/contact";
+import { meta as loginMeta } from "../routes/login";
 import { meta as onlineCounsellingMeta } from "../routes/online-counselling";
+import { meta as registerMeta } from "../routes/register";
 import { meta as servicesMeta } from "../routes/services";
 import { meta as coupleTherapyMeta } from "../routes/services/couple-therapy";
 import { meta as followUpMeta } from "../routes/services/follow-up";
@@ -48,7 +52,9 @@ const routeMeta: Record<string, { title?: string; description?: string }> = {
   "/concerns/all-concerns": allConcernsMeta,
   "/consultation": consultationMeta,
   "/contact": contactMeta,
+  "/login": loginMeta,
   "/online-counselling": onlineCounsellingMeta,
+  "/register": registerMeta,
   "/services": servicesMeta,
   "/services/couple-therapy": coupleTherapyMeta,
   "/services/follow-up": followUpMeta,
@@ -101,7 +107,9 @@ export default function App() {
         <Route path="/concerns/all-concerns" element={<AllConcerns />} />
         <Route path="/consultation" element={<Consultation />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/online-counselling" element={<OnlineCounselling />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/services" element={<Services />} />
         <Route path="/services/couple-therapy" element={<CoupleTherapy />} />
         <Route path="/services/follow-up" element={<FollowUp />} />
