@@ -7,10 +7,14 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { UserService } from '../user/user.service';
-import { User } from '../user/entities/user.entity';
+import { Role, User } from '../user/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 
 type RegisteredUser = Omit<User, 'password'>;
+type AuthenticatedUser = {
+  accessToken: string;
+  user: Pick<User, 'id' | 'email' | 'role' | 'createdAt'>;
+};
 
 @Injectable()
 export class AuthService {
@@ -31,7 +35,7 @@ export class AuthService {
     const user = await this.userService.create({
       email,
       password: hashedPassword,
-      role: dto.role,
+      role: Role.PATIENT,
     });
 
     return {
@@ -42,7 +46,7 @@ export class AuthService {
     };
   }
 
-  async login(dto: LoginDto): Promise<{ accessToken: string }> {
+  async login(dto: LoginDto): Promise<AuthenticatedUser> {
     const email = dto.email.trim().toLowerCase();
     const user = await this.userService.findByEmail(email);
 
@@ -56,12 +60,20 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    const accessToken = this.jwtService.sign({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
     return {
-      accessToken: this.jwtService.sign({
-        userId: user.id,
+      accessToken,
+      user: {
+        id: user.id,
         email: user.email,
         role: user.role,
-      }),
+        createdAt: user.createdAt,
+      },
     };
   }
 }

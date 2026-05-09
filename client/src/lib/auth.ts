@@ -8,17 +8,23 @@ export type AuthUser = {
   iat?: number;
 };
 
+export type AuthAccount = {
+  id: string;
+  email: string;
+  role: AuthRole;
+  createdAt: string;
+};
+
 type LoginPayload = {
   email: string;
   password: string;
 };
 
-type RegisterPayload = LoginPayload & {
-  role: Extract<AuthRole, "PATIENT" | "THERAPIST">;
-};
+type RegisterPayload = LoginPayload;
 
 type AuthResponse = {
   accessToken?: string;
+  user?: AuthAccount;
   id?: string;
   email?: string;
   role?: AuthRole;
@@ -51,12 +57,37 @@ async function requestAuth(path: string, payload: LoginPayload | RegisterPayload
   return data;
 }
 
+async function requestWithAuth<T>(path: string) {
+  const token = getAccessToken();
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  const data = (await response.json().catch(() => ({}))) as T & {
+    message?: string | string[];
+  };
+
+  if (!response.ok) {
+    if (response.status === 401) clearAccessToken();
+    const message = Array.isArray(data.message)
+      ? data.message.join(" ")
+      : data.message ?? "Your session could not be verified.";
+    throw new Error(message);
+  }
+
+  return data;
+}
+
 export function login(payload: LoginPayload) {
   return requestAuth("/auth/login", payload);
 }
 
 export function register(payload: RegisterPayload) {
   return requestAuth("/auth/register", payload);
+}
+
+export function getProfile() {
+  return requestWithAuth<AuthUser>("/auth/profile");
 }
 
 export function saveAccessToken(token: string) {

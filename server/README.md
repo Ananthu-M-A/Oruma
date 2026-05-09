@@ -25,6 +25,8 @@ copy .env.example .env
 Default database configuration:
 
 ```env
+PORT=3000
+CLIENT_ORIGIN=http://localhost:5173
 DATABASE_HOST=127.0.0.1
 DATABASE_PORT=5432
 DATABASE_USER=your_database_user
@@ -96,6 +98,12 @@ npm run start:prod
 ```
 
 The server listens on `PORT` from `.env`, or `3000` by default.
+
+The browser client is allowed through `CLIENT_ORIGIN`. For multiple origins, use a comma-separated value:
+
+```env
+CLIENT_ORIGIN=http://localhost:5173,https://your-client-domain.com
+```
 
 ## Scripts
 

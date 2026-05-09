@@ -30,7 +30,7 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      await register({ email, password, role: "PATIENT" });
+      await register({ email, password });
       navigate("/login", {
         state: { message: "Account created. Please login to continue." },
       });
