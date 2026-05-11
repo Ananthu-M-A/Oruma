@@ -6,8 +6,11 @@ import Footer from '../components/Footer';
 import FloatingActions from '../components/FloatingActions';
 import BookingModal from '../components/BookingModal';
 import {
+  AvailabilitySlot,
+  formatAvailabilitySlotRange,
   formatTherapistPrice,
   formatTherapistSlot,
+  getAvailabilitySlots,
   getTherapist,
   getTherapistImage,
   Therapist,
@@ -60,6 +63,9 @@ export default function TherapistDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([]);
+  const [isAvailabilityLoading, setIsAvailabilityLoading] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState('');
 
   useEffect(() => {
     if (!id) {
@@ -85,6 +91,29 @@ export default function TherapistDetailPage() {
       isMounted = false;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (!therapist?.id) return;
+
+    let isMounted = true;
+    setIsAvailabilityLoading(true);
+    setAvailabilityError('');
+
+    getAvailabilitySlots(therapist.id)
+      .then((slots) => {
+        if (isMounted) setAvailabilitySlots(slots);
+      })
+      .catch((err) => {
+        if (isMounted) setAvailabilityError(err instanceof Error ? err.message : 'Unable to load availability slots.');
+      })
+      .finally(() => {
+        if (isMounted) setIsAvailabilityLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [therapist?.id]);
 
   const profile = useMemo(() => {
     if (!therapist) return null;
@@ -220,6 +249,58 @@ export default function TherapistDetailPage() {
                     <div className="mt-6 pt-6 border-t border-[#064F4B]/10">
                       <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Qualifications</p>
                       <p className="mt-2 font-bold text-[#064F4B]">{therapist.qualifications}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-8 bg-white rounded-[2rem] p-6 md:p-8 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <h2 className="text-2xl font-heading font-black text-[#064F4B] uppercase tracking-tighter">Availability</h2>
+                      <p className="mt-1 text-sm font-bold text-[#5F7F7A]">Upcoming open slots for this therapist.</p>
+                    </div>
+                    <div className="inline-flex items-center gap-2 text-[#0A7F7A] bg-[#00D494]/10 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest w-fit">
+                      <LucideIcon name="clock" size={14} />
+                      IST
+                    </div>
+                  </div>
+
+                  {isAvailabilityLoading && (
+                    <div className="grid sm:grid-cols-2 gap-3 mt-6">
+                      {[1, 2, 3, 4].map((item) => (
+                        <div key={item} className="h-20 rounded-[1.25rem] bg-[#F5F8F7] animate-pulse" />
+                      ))}
+                    </div>
+                  )}
+
+                  {!isAvailabilityLoading && availabilityError && (
+                    <div className="mt-6 bg-red-50 rounded-[1.25rem] p-4">
+                      <p className="text-sm font-black text-red-700">{availabilityError}</p>
+                    </div>
+                  )}
+
+                  {!isAvailabilityLoading && !availabilityError && availabilitySlots.length === 0 && (
+                    <div className="mt-6 bg-[#F5F8F7] rounded-[1.25rem] p-5">
+                      <p className="text-sm font-black text-[#064F4B]">Detailed slots are not published yet.</p>
+                      <p className="text-sm font-bold text-[#5F7F7A] mt-1">Next available: {profile.slot}</p>
+                    </div>
+                  )}
+
+                  {!isAvailabilityLoading && !availabilityError && availabilitySlots.length > 0 && (
+                    <div className="grid sm:grid-cols-2 gap-3 mt-6">
+                      {availabilitySlots.slice(0, 8).map((slot) => (
+                        <button
+                          key={slot.id}
+                          onClick={() => setIsModalOpen(true)}
+                          className="text-left rounded-[1.25rem] border border-[#064F4B]/10 bg-[#F5F8F7] p-4 hover:border-[#0A7F7A] hover:bg-[#0A7F7A]/5 transition-all"
+                        >
+                          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+                            <LucideIcon name="calendar-check" size={14} />
+                            Open Slot
+                          </div>
+                          <p className="mt-2 text-sm font-black text-[#064F4B]">{formatAvailabilitySlotRange(slot)}</p>
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
