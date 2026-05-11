@@ -4,7 +4,7 @@ import { LucideIcon } from '@site-builder/icons';
 export default function PricingSection() {
   const [tier, setTier] = useState('senior'); // 'senior' (G2), 'group5' (G5), 'group4' (G4), 'consultant' (G3), or 'standard' (G1)
   const [activeTab, setActiveTab] = useState('individual'); // 'individual' or 'couple'
-  const whatsappNumber = "919846462744";
+  const whatsappNumber = "918157039987";
 
   const pricingData = {
     senior: {

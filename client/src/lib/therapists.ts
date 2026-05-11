@@ -35,6 +35,25 @@ export async function getTherapists() {
   return (data as Therapist[]).filter((therapist) => therapist.isActive);
 }
 
+export async function getTherapist(id: string) {
+  const response = await fetch(`${API_BASE_URL}/therapists/${id}`);
+  const data = (await response.json().catch(() => ({}))) as Therapist | {
+    message?: string | string[];
+  };
+
+  if (!response.ok) {
+    const message = Array.isArray((data as { message?: string | string[] }).message)
+      ? ((data as { message: string[] }).message).join(" ")
+      : (data as { message?: string }).message ?? "Unable to load therapist.";
+    throw new Error(message);
+  }
+
+  const therapist = data as Therapist;
+  if (!therapist.isActive) throw new Error("This therapist profile is currently unavailable.");
+
+  return therapist;
+}
+
 export function formatTherapistPrice(therapist: Therapist) {
   const individual = `Ind: Rs.${therapist.price.toLocaleString("en-IN")}`;
   const couple = therapist.couplePrice

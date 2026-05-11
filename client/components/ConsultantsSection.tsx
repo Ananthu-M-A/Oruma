@@ -93,7 +93,7 @@ const experts = [
 export default function ConsultantsSection() {
   const [selectedTherapist, setSelectedTherapist] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const whatsappNumber = "919846462744";
+  const whatsappNumber = "918157039987";
 
   const handleBookNow = (therapist) => {
     setSelectedTherapist(therapist);

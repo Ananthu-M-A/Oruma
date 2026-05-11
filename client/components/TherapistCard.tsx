@@ -11,7 +11,7 @@ export default function TherapistCard({
   nextSlot,
   onBook
 }: any) {
-  const whatsappLink = `https://wa.me/919846462744?text=Hi,%20I%20want%20to%20book%20an%20appointment%20with%20${encodeURIComponent(name)}.`;
+  const whatsappLink = `https://wa.me/918157039987?text=Hi,%20I%20want%20to%20book%20an%20appointment%20with%20${encodeURIComponent(name)}.`;
 
   return (
     <div className="bg-[#B7C8A3] rounded-[3rem] p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all group relative overflow-hidden flex flex-col gap-6">

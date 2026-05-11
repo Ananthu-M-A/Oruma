@@ -1,7 +1,8 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { LucideIcon } from '@site-builder/icons';
 
-export default function TherapistCardAdvanced({ name, title, hours, tags, price, img, slot, whatsappNumber = "919846462744" }) {
+export default function TherapistCardAdvanced({ id, name, title, hours, tags, price, img, slot, whatsappNumber = "918157039987" }) {
   // Simple check to avoid double currency symbol if it's already in the string
   const displayPrice = price && price.toString().startsWith('₹') ? price : `₹${price}`;
 
@@ -64,20 +65,31 @@ export default function TherapistCardAdvanced({ name, title, hours, tags, price,
       </div>
 
       {/* Footer Booking Area */}
-      <div className="flex items-end justify-between mt-2">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-2">
         <div className="space-y-1">
           <p className="text-[10px] font-black text-[#064F4B]/60 uppercase tracking-widest">Booking Slot</p>
           <p className="text-sm font-black text-[#064F4B]">{slot || "Today, 12:00 PM"}</p>
           <p className="text-xl font-black text-[#064F4B]">{displayPrice}</p>
         </div>
         
-        <a 
-          href={`https://wa.me/${whatsappNumber}?text=Hi,%20I%20want%20to%20book%20an%20appointment%20with%20${encodeURIComponent(name)}`}
-          className="bg-[#064F4B] text-white px-8 py-4 rounded-[1.5rem] font-black text-sm hover:bg-[#0A7F7A] transition-all active:scale-95 shadow-lg shadow-[#064F4B]/20 uppercase tracking-widest flex items-center gap-2"
-        >
-          <LucideIcon name="message-circle" size={18} />
-          Book Appointment
-        </a>
+        <div className="flex flex-col sm:flex-row gap-2">
+          {id && (
+            <Link
+              to={`/therapists/${id}`}
+              className="bg-white/40 text-[#064F4B] px-6 py-4 rounded-[1.5rem] font-black text-xs hover:bg-white/70 transition-all active:scale-95 uppercase tracking-widest flex items-center justify-center gap-2"
+            >
+              <LucideIcon name="user-round-search" size={16} />
+              View Profile
+            </Link>
+          )}
+          <a
+            href={`https://wa.me/${whatsappNumber}?text=Hi,%20I%20want%20to%20book%20an%20appointment%20with%20${encodeURIComponent(name)}`}
+            className="bg-[#064F4B] text-white px-6 py-4 rounded-[1.5rem] font-black text-xs hover:bg-[#0A7F7A] transition-all active:scale-95 shadow-lg shadow-[#064F4B]/20 uppercase tracking-widest flex items-center justify-center gap-2"
+          >
+            <LucideIcon name="message-circle" size={18} />
+            Book
+          </a>
+        </div>
       </div>
 
     </div>

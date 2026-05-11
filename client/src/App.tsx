@@ -19,6 +19,7 @@ import FollowUp from "../routes/services/follow-up";
 import IndividualTherapy from "../routes/services/individual-therapy";
 import SexualWellness from "../routes/services/sexual-wellness";
 import Team from "../routes/team";
+import TherapistDetail, { meta as therapistDetailMeta } from "../routes/therapist-detail";
 import Therapists from "../routes/therapists";
 
 // Route meta for document title
@@ -61,6 +62,7 @@ const routeMeta: Record<string, { title?: string; description?: string }> = {
   "/services/individual-therapy": individualTherapyMeta,
   "/services/sexual-wellness": sexualWellnessMeta,
   "/team": teamMeta,
+  "/therapists/:id": therapistDetailMeta,
   "/therapists": therapistsMeta,
 };
 
@@ -69,11 +71,13 @@ function MetaUpdater() {
 
   useEffect(() => {
     const meta = routeMeta[location.pathname];
-    if (meta?.title) document.title = meta.title;
+    const dynamicMeta = location.pathname.startsWith("/therapists/") ? routeMeta["/therapists/:id"] : undefined;
+    const activeMeta = meta ?? dynamicMeta;
+    if (activeMeta?.title) document.title = activeMeta.title;
 
     const descTag = document.querySelector('meta[name="description"]');
-    if (descTag && meta?.description) {
-      descTag.setAttribute("content", meta.description);
+    if (descTag && activeMeta?.description) {
+      descTag.setAttribute("content", activeMeta.description);
     }
 
     // Re-init lucide icons after route change
@@ -117,6 +121,7 @@ export default function App() {
         <Route path="/services/sexual-wellness" element={<SexualWellness />} />
         <Route path="/team" element={<Team />} />
         <Route path="/therapists" element={<Therapists />} />
+        <Route path="/therapists/:id" element={<TherapistDetail />} />
       </Routes>
     </BrowserRouter>
   );

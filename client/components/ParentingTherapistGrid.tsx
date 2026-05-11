@@ -1,7 +1,7 @@
 import React from 'react';
 
 export default function ParentingTherapistGrid() {
-  const whatsappNumber = "919846462744";
+  const whatsappNumber = "918157039987";
   const therapists = [
     { name: 'Dr. Pathmash Shahanuma', role: 'Consultant Psychologist', img: 'https://images.unsplash.com/photo-1559839734-2b71f1536783?auto=format&fit=crop&q=80&w=200' },
     { name: 'Noor Pareeda', role: 'Consultant Psychologist', img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200' },

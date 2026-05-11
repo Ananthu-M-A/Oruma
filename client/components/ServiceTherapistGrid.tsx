@@ -1,7 +1,7 @@
 import React from 'react';
 
 export default function ServiceTherapistGrid() {
-  const whatsappNumber = "919846462744";
+  const whatsappNumber = "918157039987";
   
   // Group 2: Individual & Couple (Premium/Senior)
   const seniorTherapists = [

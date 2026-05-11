@@ -149,7 +149,7 @@ export default function TherapistGrid() {
                       BOOK SESSION
                     </button>
                     <a
-                      href={`https://wa.me/919846462744?text=Hi,%20I%20want%20to%20book%20an%20appointment%20with%20${encodeURIComponent(therapist.name)}`}
+                      href={`https://wa.me/918157039987?text=Hi,%20I%20want%20to%20book%20an%20appointment%20with%20${encodeURIComponent(therapist.name)}`}
                       className="w-14 bg-[#00D494] text-white rounded-[1.2rem] flex items-center justify-center hover:bg-[#00B37E] transition-all active:scale-95 shadow-lg shadow-[#00D494]/20"
                       title="WhatsApp for Booking"
                     >
