@@ -202,7 +202,7 @@ export class TherapistService {
       return {
         therapistId: therapist.id,
         therapistName: therapist.name,
-        email: therapist.email,
+        email: therapist.email ?? '',
         totalAppointments,
         pendingAppointments: therapistAppointments.filter(
           (appointment) => appointment.status === AppointmentStatus.PENDING,
@@ -261,7 +261,7 @@ export class TherapistService {
     ].join('\n');
 
     return this.mailService.send({
-      to: therapist.email,
+      to: therapist.email ?? '',
       subject,
       text,
       html: `

@@ -16,8 +16,8 @@ export class Therapist {
   @Column({ default: 'Therapist' })
   name: string;
 
-  @Column({ unique: true })
-  email: string;
+  @Column('varchar', { nullable: true, unique: true })
+  email: string | null;
 
   @Column({ default: 'Therapist' })
   title: string;

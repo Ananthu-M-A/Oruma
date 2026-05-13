@@ -3,7 +3,7 @@ import { API_BASE_URL } from "./auth";
 export type Therapist = {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   title: string;
   tags: string[] | null;
   experience: number;
