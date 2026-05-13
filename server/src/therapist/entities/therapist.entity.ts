@@ -3,29 +3,35 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  JoinColumn,
+  OneToOne,
 } from 'typeorm';
+import { User } from '../../user/entities/user.entity';
 
 @Entity()
 export class Therapist {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ default: 'Therapist' })
   name: string;
 
-  @Column()
+  @Column({ unique: true })
+  email: string;
+
+  @Column({ default: 'Therapist' })
   title: string;
 
   @Column('text', { array: true, nullable: true })
   tags: string[];
 
-  @Column()
+  @Column({ default: 0 })
   experience: number;
 
-  @Column()
+  @Column({ default: 1 })
   group: number;
 
-  @Column()
+  @Column({ default: 0 })
   price: number;
 
   @Column({ nullable: true })
@@ -53,9 +59,16 @@ export class Therapist {
   nextAvailableSlot: Date;
 
   @Column({
-    default: true,
+    default: false,
   })
   isActive: boolean;
+
+  @OneToOne(() => User, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn()
+  account: User | null;
 
   @CreateDateColumn()
   createdAt: Date;

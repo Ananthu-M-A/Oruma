@@ -3,6 +3,7 @@ import { API_BASE_URL } from "./auth";
 export type Therapist = {
   id: string;
   name: string;
+  email: string;
   title: string;
   tags: string[] | null;
   experience: number;
@@ -17,6 +18,38 @@ export type Therapist = {
   nextAvailableSlot: string | null;
   isActive: boolean;
   createdAt: string;
+  credentialsSent?: boolean;
+};
+
+export type TherapistPayload = {
+  name: string;
+  email: string;
+  title: string;
+  tags?: string[];
+  experience: number;
+  group: number;
+  price: number;
+  couplePrice?: number | null;
+  image?: string;
+  voiceIntro?: string;
+  qualifications?: string;
+  specialization?: string;
+  bio?: string;
+  nextAvailableSlot?: string | null;
+  isActive?: boolean;
+};
+
+export type TherapistPerformance = {
+  therapistId: string;
+  therapistName: string;
+  email: string;
+  totalAppointments: number;
+  pendingAppointments: number;
+  confirmedAppointments: number;
+  completedAppointments: number;
+  cancelledAppointments: number;
+  completionRate: number;
+  estimatedCompletedRevenue: number;
 };
 
 export type AvailabilitySlot = {
@@ -41,6 +74,125 @@ export async function getTherapists() {
   }
 
   return (data as Therapist[]).filter((therapist) => therapist.isActive);
+}
+
+export async function getAdminTherapists(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/therapists/admin`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const data = (await response.json().catch(() => ({}))) as Therapist[] | {
+    message?: string | string[];
+  };
+
+  if (!response.ok) {
+    const message = Array.isArray((data as { message?: string | string[] }).message)
+      ? ((data as { message: string[] }).message).join(" ")
+      : (data as { message?: string }).message ?? "Unable to load therapists.";
+    throw new Error(message);
+  }
+
+  return data as Therapist[];
+}
+
+export async function getTherapistPerformance(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/therapists/admin/performance`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const data = (await response.json().catch(() => ({}))) as TherapistPerformance[] | {
+    message?: string | string[];
+  };
+
+  if (!response.ok) {
+    const message = Array.isArray((data as { message?: string | string[] }).message)
+      ? ((data as { message: string[] }).message).join(" ")
+      : (data as { message?: string }).message ?? "Unable to load therapist performance.";
+    throw new Error(message);
+  }
+
+  return data as TherapistPerformance[];
+}
+
+async function writeTherapist(
+  path: string,
+  accessToken: string,
+  method: "POST" | "PATCH",
+  payload: Partial<TherapistPayload>
+) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = (await response.json().catch(() => ({}))) as Therapist | {
+    message?: string | string[];
+  };
+
+  if (!response.ok) {
+    const message = Array.isArray((data as { message?: string | string[] }).message)
+      ? ((data as { message: string[] }).message).join(" ")
+      : (data as { message?: string }).message ?? "Unable to save therapist.";
+    throw new Error(message);
+  }
+
+  return data as Therapist;
+}
+
+export function createTherapist(accessToken: string, payload: { email: string }) {
+  return writeTherapist("/therapists", accessToken, "POST", payload);
+}
+
+export function updateTherapist(accessToken: string, id: string, payload: Partial<TherapistPayload>) {
+  return writeTherapist(`/therapists/${id}`, accessToken, "PATCH", payload);
+}
+
+export async function getMyTherapistProfile(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/therapists/me/profile`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const data = (await response.json().catch(() => ({}))) as Therapist | {
+    message?: string | string[];
+  };
+
+  if (!response.ok) {
+    const message = Array.isArray((data as { message?: string | string[] }).message)
+      ? ((data as { message: string[] }).message).join(" ")
+      : (data as { message?: string }).message ?? "Unable to load your therapist profile.";
+    throw new Error(message);
+  }
+
+  return data as Therapist;
+}
+
+export function updateMyTherapistProfile(accessToken: string, payload: Partial<TherapistPayload>) {
+  return writeTherapist("/therapists/me/profile", accessToken, "PATCH", payload);
+}
+
+export async function deleteTherapist(accessToken: string, id: string) {
+  const response = await fetch(`${API_BASE_URL}/therapists/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const data = (await response.json().catch(() => ({}))) as {
+    message?: string | string[];
+  };
+
+  if (!response.ok) {
+    const message = Array.isArray(data.message)
+      ? data.message.join(" ")
+      : data.message ?? "Unable to delete therapist.";
+    throw new Error(message);
+  }
 }
 
 export async function getTherapist(id: string) {

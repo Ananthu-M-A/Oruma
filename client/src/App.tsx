@@ -24,6 +24,7 @@ import Therapists from "../routes/therapists";
 import PatientProfile, { meta as patientProfileMeta } from "../routes/profile-patient";
 import TherapistProfile, { meta as therapistProfileMeta } from "../routes/profile-therapist";
 import AdminProfile, { meta as adminProfileMeta } from "../routes/profile-admin";
+import AdminTherapists, { meta as adminTherapistsMeta } from "../routes/admin-therapists";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Route meta for document title
@@ -63,6 +64,7 @@ const routeMeta: Record<string, { title?: string; description?: string }> = {
   "/profile/patient": patientProfileMeta,
   "/profile/therapist": therapistProfileMeta,
   "/profile/admin": adminProfileMeta,
+  "/profile/admin/therapists": adminTherapistsMeta,
   "/services": servicesMeta,
   "/services/couple-therapy": coupleTherapyMeta,
   "/services/follow-up": followUpMeta,
@@ -141,6 +143,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["ADMIN"]}>
               <AdminProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/admin/therapists"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <AdminTherapists />
             </ProtectedRoute>
           }
         />

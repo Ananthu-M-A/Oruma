@@ -3,6 +3,7 @@ import {
   IsArray,
   IsBoolean,
   IsDate,
+  IsEmail,
   IsInt,
   IsNumber,
   IsOptional,
@@ -14,6 +15,10 @@ export class UpdateTherapistDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 
   @IsOptional()
   @IsString()

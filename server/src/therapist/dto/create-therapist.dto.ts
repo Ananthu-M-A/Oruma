@@ -3,6 +3,7 @@ import {
   IsArray,
   IsBoolean,
   IsDate,
+  IsEmail,
   IsInt,
   IsNumber,
   IsOptional,
@@ -11,31 +12,39 @@ import {
 } from 'class-validator';
 
 export class CreateTherapistDto {
-  @IsString()
-  name: string;
+  @IsEmail()
+  email: string;
 
+  @IsOptional()
   @IsString()
-  title: string;
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
 
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  experience: number;
+  experience?: number;
 
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  group: number;
+  group?: number;
 
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  price: number;
+  price?: number;
 
   @IsOptional()
   @Type(() => Number)

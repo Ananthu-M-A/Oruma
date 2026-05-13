@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
@@ -70,8 +70,8 @@ export default function PatientProfilePage() {
 
   return (
     <main className="min-h-screen bg-[#F8FBF8] font-body text-[#2E3E3C]">
-      <Navbar />
-      <section className="pt-32 md:pt-40 pb-20 px-6">
+      <DashboardNavbar />
+      <section className="pt-24 pb-20 px-6">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
             <section className="rounded-[2rem] bg-[#064F4B] p-7 md:p-9 text-white shadow-xl shadow-[#064F4B]/10">

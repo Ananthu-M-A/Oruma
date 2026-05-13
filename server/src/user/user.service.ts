@@ -24,4 +24,11 @@ export class UserService {
 
     return this.userRepository.save(createdUser);
   }
+
+  async updateEmail(id: string, email: string): Promise<User> {
+    const user = await this.userRepository.findOneByOrFail({ id });
+    user.email = email;
+
+    return this.userRepository.save(user);
+  }
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LucideIcon } from '@site-builder/icons';
 import { AUTH_CHANGED_EVENT, clearAccessToken, getCurrentUser, getRedirectPathForRole } from '../src/lib/auth';
+import DashboardNavbar from './DashboardNavbar';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,6 +64,10 @@ export default function Navbar() {
   };
 
   const profilePath = getRedirectPathForRole(currentUser?.role);
+
+  if (currentUser) {
+    return <DashboardNavbar />;
+  }
 
   return (
     <>
