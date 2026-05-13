@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LucideIcon } from '@site-builder/icons';
-import { AUTH_CHANGED_EVENT, clearAccessToken, getCurrentUser } from '../src/lib/auth';
+import { AUTH_CHANGED_EVENT, clearAccessToken, getCurrentUser, getRedirectPathForRole } from '../src/lib/auth';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -61,6 +61,8 @@ export default function Navbar() {
     clearAccessToken();
     handleLinkClick();
   };
+
+  const profilePath = getRedirectPathForRole(currentUser?.role);
 
   return (
     <>
@@ -152,7 +154,7 @@ export default function Navbar() {
             <a href="/contact" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors">Contact Us</a>
             {currentUser ? (
               <div className="flex items-center gap-3">
-                <a href="/therapists" className="inline-flex items-center gap-2 bg-[#F5F8F7] text-[#064F4B] px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">
+                <a href={profilePath} className="inline-flex items-center gap-2 bg-[#F5F8F7] text-[#064F4B] px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">
                   <LucideIcon name="circle-user-round" size={14} />
                   {currentUser.role}
                 </a>
@@ -237,9 +239,9 @@ export default function Navbar() {
               <a href="/contact" className="px-8 py-5 text-[14px] font-black text-[#064F4B] border-b border-gray-50 uppercase tracking-tight" onClick={handleLinkClick}>CONTACT US</a>
               {currentUser ? (
                 <>
-                  <div className="px-8 py-5 text-[13px] font-black text-[#0A7F7A] border-b border-gray-50 uppercase tracking-tight">
+                  <a href={profilePath} className="px-8 py-5 text-[13px] font-black text-[#0A7F7A] border-b border-gray-50 uppercase tracking-tight" onClick={handleLinkClick}>
                     LOGGED IN AS {currentUser.role}
-                  </div>
+                  </a>
                   <button className="text-left px-8 py-5 text-[14px] font-black text-[#064F4B] border-b border-gray-50 uppercase tracking-tight" onClick={handleLogout}>LOGOUT</button>
                 </>
               ) : (

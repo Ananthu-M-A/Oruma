@@ -65,6 +65,24 @@ export async function getAppointments(accessToken: string): Promise<BookingRespo
   return response.json();
 }
 
+export async function getMyAppointments(accessToken: string): Promise<BookingResponse[]> {
+  const response = await fetch(`${API_BASE_URL}/appointments/me`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || 'Failed to fetch your appointments'
+    );
+  }
+
+  return response.json();
+}
+
 export async function getAppointment(
   appointmentId: string,
   accessToken: string

@@ -40,6 +40,13 @@ export class AppointmentController {
     return this.appointmentService.findAll();
   }
 
+  @Get('me')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PATIENT)
+  findMine(@Req() req: AuthenticatedRequest) {
+    return this.appointmentService.findForPatient(req.user);
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   findOne(@Param('id') id: string) {

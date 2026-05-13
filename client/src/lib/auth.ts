@@ -132,7 +132,7 @@ export function getCurrentUser(): AuthUser | null {
 }
 
 export function getRedirectPathForRole(role?: AuthRole) {
-  if (role === "THERAPIST") return "/therapists";
-  if (role === "ADMIN") return "/therapists";
-  return "/therapists";
+  if (role === "THERAPIST") return "/profile/therapist";
+  if (role === "ADMIN") return "/profile/admin";
+  return "/profile/patient";
 }

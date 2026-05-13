@@ -21,6 +21,10 @@ import SexualWellness from "../routes/services/sexual-wellness";
 import Team from "../routes/team";
 import TherapistDetail, { meta as therapistDetailMeta } from "../routes/therapist-detail";
 import Therapists from "../routes/therapists";
+import PatientProfile, { meta as patientProfileMeta } from "../routes/profile-patient";
+import TherapistProfile, { meta as therapistProfileMeta } from "../routes/profile-therapist";
+import AdminProfile, { meta as adminProfileMeta } from "../routes/profile-admin";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Route meta for document title
 import { meta as indexMeta } from "../routes/index";
@@ -56,6 +60,9 @@ const routeMeta: Record<string, { title?: string; description?: string }> = {
   "/login": loginMeta,
   "/online-counselling": onlineCounsellingMeta,
   "/register": registerMeta,
+  "/profile/patient": patientProfileMeta,
+  "/profile/therapist": therapistProfileMeta,
+  "/profile/admin": adminProfileMeta,
   "/services": servicesMeta,
   "/services/couple-therapy": coupleTherapyMeta,
   "/services/follow-up": followUpMeta,
@@ -113,6 +120,30 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/online-counselling" element={<OnlineCounselling />} />
+        <Route
+          path="/profile/patient"
+          element={
+            <ProtectedRoute allowedRoles={["PATIENT"]}>
+              <PatientProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/therapist"
+          element={
+            <ProtectedRoute allowedRoles={["THERAPIST"]}>
+              <TherapistProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/admin"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <AdminProfile />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/register" element={<Register />} />
         <Route path="/services" element={<Services />} />
         <Route path="/services/couple-therapy" element={<CoupleTherapy />} />

@@ -82,6 +82,19 @@ export class AppointmentService {
     });
   }
 
+  async findForPatient(patient: JwtPayload): Promise<Appointment[]> {
+    return this.appointmentRepo.find({
+      where: {
+        patient: {
+          id: patient.userId,
+        },
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
+
   async findOne(id: string): Promise<Appointment> {
     const appointment = await this.appointmentRepo.findOne({
       where: { id },
