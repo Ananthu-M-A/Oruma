@@ -29,6 +29,14 @@ export class UserService {
     return this.userRepository.count();
   }
 
+  countByRole(role: User['role']): Promise<number> {
+    return this.userRepository.count({
+      where: {
+        role,
+      },
+    });
+  }
+
   async updateEmail(id: string, email: string): Promise<User> {
     const user = await this.userRepository.findOneByOrFail({ id });
     user.email = email;

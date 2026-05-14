@@ -64,6 +64,7 @@ export default function TherapistDetailPage() {
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
   const [isAvailabilityLoading, setIsAvailabilityLoading] = useState(false);
   const [availabilityError, setAvailabilityError] = useState('');
 
@@ -132,9 +133,14 @@ export default function TherapistDetailPage() {
     };
   }, [therapist]);
 
-  const whatsappLink = therapist
-    ? `https://wa.me/918157039987?text=Hi,%20I%20want%20to%20book%20an%20appointment%20with%20${encodeURIComponent(therapist.name)}.`
-    : 'https://wa.me/918157039987';
+  const nextAvailableDaySlots = useMemo(() => {
+    if (availabilitySlots.length === 0) return [];
+
+    const firstSlot = availabilitySlots[0];
+    const firstDate = new Date(firstSlot.startTime).toDateString();
+
+    return availabilitySlots.filter((slot) => new Date(slot.startTime).toDateString() === firstDate);
+  }, [availabilitySlots]);
 
   return (
     <main className="min-h-screen bg-white font-body text-[#2E3E3C] overflow-x-hidden">
@@ -286,13 +292,17 @@ export default function TherapistDetailPage() {
                     </div>
                   )}
 
-                  {!isAvailabilityLoading && !availabilityError && availabilitySlots.length > 0 && (
+                  {!isAvailabilityLoading && !availabilityError && nextAvailableDaySlots.length > 0 && (
                     <div className="grid sm:grid-cols-2 gap-3 mt-6">
-                      {availabilitySlots.slice(0, 8).map((slot) => (
+                      {nextAvailableDaySlots.map((slot) => (
                         <button
                           key={slot.id}
-                          onClick={() => setIsModalOpen(true)}
-                          className="text-left rounded-[1.25rem] border border-[#064F4B]/10 bg-[#F5F8F7] p-4 hover:border-[#0A7F7A] hover:bg-[#0A7F7A]/5 transition-all"
+                          onClick={() => setSelectedSlot(slot)}
+                          className={`text-left rounded-[1.25rem] border p-4 transition-all ${
+                            selectedSlot?.id === slot.id
+                              ? 'border-[#0A7F7A] bg-[#0A7F7A]/10'
+                              : 'border-[#064F4B]/10 bg-[#F5F8F7] hover:border-[#0A7F7A] hover:bg-[#0A7F7A]/5'
+                          }`}
                         >
                           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
                             <LucideIcon name="calendar-check" size={14} />
@@ -305,30 +315,15 @@ export default function TherapistDetailPage() {
                   )}
                 </div>
 
-                <div className="mt-8 grid md:grid-cols-2 gap-4">
-                  {profile.packages.map((item) => (
-                    <div key={item.label} className="bg-[#064F4B] text-white rounded-[1.5rem] p-6">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-white/60">{item.label}</p>
-                      <p className="mt-2 text-xl font-black">{item.value}</p>
-                    </div>
-                  ))}
-                </div>
-
                 <div className="mt-10 flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={() => setIsModalOpen(true)}
-                    className="inline-flex items-center justify-center gap-2 bg-[#064F4B] text-white px-8 py-5 rounded-[1.25rem] font-black text-xs uppercase tracking-widest hover:bg-[#0A7F7A] transition-all shadow-xl shadow-[#064F4B]/20"
+                    disabled={!selectedSlot}
+                    className="inline-flex items-center justify-center gap-2 bg-[#064F4B] text-white px-8 py-5 rounded-[1.25rem] font-black text-xs uppercase tracking-widest hover:bg-[#0A7F7A] transition-all shadow-xl shadow-[#064F4B]/20 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <LucideIcon name="calendar" size={18} />
-                    Book Session
+                    {selectedSlot ? 'Book selected slot' : 'Select a slot to book'}
                   </button>
-                  <a
-                    href={whatsappLink}
-                    className="inline-flex items-center justify-center gap-2 bg-[#00D494] text-white px-8 py-5 rounded-[1.25rem] font-black text-xs uppercase tracking-widest hover:bg-[#00B37E] transition-all shadow-xl shadow-[#00D494]/20"
-                  >
-                    <LucideIcon name="message-circle" size={18} />
-                    WhatsApp
-                  </a>
                 </div>
               </div>
             </div>
@@ -343,6 +338,7 @@ export default function TherapistDetailPage() {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           therapist={mapForBooking(therapist)}
+          initialSlot={selectedSlot}
         />
       )}
     </main>

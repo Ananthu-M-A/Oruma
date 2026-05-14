@@ -111,7 +111,8 @@ export default function AdminProfilePage() {
           </div>
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
-            <Metric icon="users" label="Users" value={summary?.users ?? 0} />
+            <Metric icon="users" label="Patients" value={summary?.patients ?? 0} />
+            <Metric icon="user-round-check" label="Therapists" value={summary?.therapistUsers ?? therapists.length} />
             <Metric icon="calendar-check" label="Appointments" value={summary?.appointments ?? appointments.length} />
             <Metric icon="badge-indian-rupee" label="Revenue" value={`Rs.${(summary?.revenue ?? 0).toLocaleString("en-IN")}`} />
             <Metric icon="video" label="Completed sessions" value={summary?.sessions ?? 0} />

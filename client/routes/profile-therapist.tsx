@@ -289,11 +289,21 @@ export default function TherapistProfilePage() {
                   <form onSubmit={saveSlot} className="mt-5 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
                     <label>
                       <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Start</span>
-                      <input type="datetime-local" required value={slotForm.startTime} onChange={(event) => setSlotForm({ ...slotForm, startTime: event.target.value })} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+                      <input
+                        type="datetime-local"
+                        required
+                        min={toLocalInputValue(new Date(Date.now() + 60 * 1000).toISOString())}
+                        value={slotForm.startTime}
+                        onChange={(event) => {
+                          const startTime = event.target.value;
+                          setSlotForm({ startTime, endTime: addOneHour(startTime) });
+                        }}
+                        className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+                      />
                     </label>
                     <label>
                       <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">End</span>
-                      <input type="datetime-local" required value={slotForm.endTime} onChange={(event) => setSlotForm({ ...slotForm, endTime: event.target.value })} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+                      <input type="datetime-local" required readOnly value={slotForm.endTime} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#F5F8F7] px-4 py-3 font-bold text-[#064F4B] outline-none" />
                     </label>
                     <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#064F4B] px-5 py-4 text-xs font-black uppercase tracking-widest text-white">
                       <LucideIcon name={editingSlotId ? "save" : "plus"} size={16} />
@@ -374,6 +384,13 @@ function toLocalInputValue(value: string) {
   if (Number.isNaN(date.getTime())) return "";
   const offset = date.getTimezoneOffset() * 60000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
+function addOneHour(value: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return toLocalInputValue(new Date(date.getTime() + 60 * 60 * 1000).toISOString());
 }
 
 function Field({

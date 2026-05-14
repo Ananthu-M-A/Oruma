@@ -1,7 +1,8 @@
 import { API_BASE_URL } from "./auth";
 
 export type AdminSummary = {
-  users: number;
+  patients: number;
+  therapistUsers: number;
   therapists: number;
   activeTherapists: number;
   appointments: number;

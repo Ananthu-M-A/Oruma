@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Appointment } from '../appointment/entities/appointment.entity';
 import { AppointmentStatus } from '../appointment/entities/appointment-status.enum';
 import { Therapist } from '../therapist/entities/therapist.entity';
+import { Role } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
 
 @Injectable()
@@ -17,11 +18,13 @@ export class AdminService {
   ) {}
 
   async getDashboardSummary() {
-    const [userCount, therapists, appointments] = await Promise.all([
-      this.userService.countAll(),
+    const [patientCount, therapistUserCount, therapists, appointments] =
+      await Promise.all([
+        this.userService.countByRole(Role.PATIENT),
+        this.userService.countByRole(Role.THERAPIST),
       this.therapistRepo.find(),
       this.appointmentRepo.find(),
-    ]);
+      ]);
 
     const completedAppointments = appointments.filter(
       (appointment) => appointment.status === AppointmentStatus.COMPLETED,
@@ -31,7 +34,8 @@ export class AdminService {
     }, 0);
 
     return {
-      users: userCount,
+      patients: patientCount,
+      therapistUsers: therapistUserCount,
       therapists: therapists.length,
       activeTherapists: therapists.filter((therapist) => therapist.isActive)
         .length,

@@ -32,9 +32,7 @@ export class AvailabilityService {
     const startTime = new Date(dto.startTime);
     const endTime = new Date(dto.endTime);
 
-    if (endTime <= startTime) {
-      throw new BadRequestException('End time must be after start time');
-    }
+    this.validateSlotTime(startTime, endTime);
 
     const therapist = await this.therapistRepo.findOne({
       where: { id: dto.therapistId },
@@ -44,10 +42,49 @@ export class AvailabilityService {
       throw new NotFoundException('Therapist not found');
     }
 
+    await this.assertNoOverlap(dto.therapistId, startTime, endTime);
+
+    const slot = this.slotRepo.create({
+      therapist,
+      startTime,
+      endTime,
+    });
+
+    return this.slotRepo.save(slot);
+  }
+
+  private validateSlotTime(startTime: Date, endTime: Date) {
+    if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
+      throw new BadRequestException('Invalid slot time');
+    }
+
+    if (startTime <= new Date()) {
+      throw new BadRequestException('Past time slots cannot be added');
+    }
+
+    if (endTime <= startTime) {
+      throw new BadRequestException('End time must be after start time');
+    }
+
+    const oneHourMs = 60 * 60 * 1000;
+    if (endTime.getTime() - startTime.getTime() !== oneHourMs) {
+      throw new BadRequestException('Standard therapy slots must be 1 hour');
+    }
+  }
+
+  private async assertNoOverlap(
+    therapistId: string,
+    startTime: Date,
+    endTime: Date,
+    excludeSlotId?: string,
+  ) {
     const overlapping = await this.slotRepo
       .createQueryBuilder('slot')
       .where('slot.therapistId = :therapistId', {
-        therapistId: dto.therapistId,
+        therapistId,
+      })
+      .andWhere(excludeSlotId ? 'slot.id != :excludeSlotId' : '1 = 1', {
+        excludeSlotId,
       })
       .andWhere(
         `(
@@ -65,14 +102,6 @@ export class AvailabilityService {
     if (overlapping) {
       throw new BadRequestException('Overlapping slot exists');
     }
-
-    const slot = this.slotRepo.create({
-      therapist,
-      startTime,
-      endTime,
-    });
-
-    return this.slotRepo.save(slot);
   }
 
   async createOwn(dto: CreateOwnAvailabilitySlotDto, user: JwtPayload) {
@@ -138,32 +167,9 @@ export class AvailabilityService {
     const startTime = dto.startTime ? new Date(dto.startTime) : slot.startTime;
     const endTime = dto.endTime ? new Date(dto.endTime) : slot.endTime;
 
-    if (endTime <= startTime) {
-      throw new BadRequestException('End time must be after start time');
-    }
+    this.validateSlotTime(startTime, endTime);
 
-    const overlapping = await this.slotRepo
-      .createQueryBuilder('slot')
-      .where('slot.therapistId = :therapistId', {
-        therapistId: slot.therapist.id,
-      })
-      .andWhere('slot.id != :slotId', { slotId })
-      .andWhere(
-        `(
-          slot.startTime < :endTime
-          AND
-          slot.endTime > :startTime
-        )`,
-        {
-          startTime,
-          endTime,
-        },
-      )
-      .getOne();
-
-    if (overlapping) {
-      throw new BadRequestException('Overlapping slot exists');
-    }
+    await this.assertNoOverlap(slot.therapist.id, startTime, endTime, slotId);
 
     slot.startTime = startTime;
     slot.endTime = endTime;

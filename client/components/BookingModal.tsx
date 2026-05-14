@@ -9,7 +9,7 @@ import {
 import { createAppointment } from "../src/lib/booking";
 import { getCurrentUser, getAccessToken } from "../src/lib/auth";
 
-export default function BookingModal({ isOpen, onClose, therapist }) {
+export default function BookingModal({ isOpen, onClose, therapist, initialSlot }) {
   const [step, setStep] = useState(1);
   const [availabilitySlots, setAvailabilitySlots] = useState<
     AvailabilitySlot[]
@@ -34,6 +34,7 @@ export default function BookingModal({ isOpen, onClose, therapist }) {
 
   useEffect(() => {
     if (isOpen) {
+      const currentUser = getCurrentUser();
       setStep(1);
       setSubmitError("");
       setSubmitSuccess(false);
@@ -41,12 +42,13 @@ export default function BookingModal({ isOpen, onClose, therapist }) {
         ...prev,
         service: "Individual Therapy", // Reset to Individual as default
         package: "Single Session",
-        slotId: "",
-        date: "",
-        time: "",
+        slotId: initialSlot?.id ?? "",
+        date: initialSlot ? getSlotDateLabel(initialSlot) : "",
+        time: initialSlot ? getSlotTimeLabel(initialSlot) : "",
+        email: currentUser?.email ?? prev.email,
       }));
     }
-  }, [isOpen]);
+  }, [initialSlot, isOpen]);
 
   useEffect(() => {
     if (!isOpen || !therapist?.id) return;
@@ -232,7 +234,35 @@ export default function BookingModal({ isOpen, onClose, therapist }) {
     });
   };
 
-  const nextStep = () => setStep(step + 1);
+  const canContinue = () => {
+    if (step === 1) return Boolean(formData.service && formData.package);
+    if (step === 2) return Boolean(formData.slotId);
+    if (step === 3) {
+      return Boolean(
+        formData.name.trim() &&
+          formData.email.trim() &&
+          formData.phone.trim() &&
+          formData.mode,
+      );
+    }
+    return true;
+  };
+
+  const nextStep = () => {
+    setSubmitError("");
+
+    if (!getCurrentUser() || !getAccessToken()) {
+      setSubmitError("Please log in before booking an appointment.");
+      return;
+    }
+
+    if (!canContinue()) {
+      setSubmitError("Please complete the required options before continuing.");
+      return;
+    }
+
+    setStep(step + 1);
+  };
   const prevStep = () => setStep(step - 1);
 
   return (
@@ -277,6 +307,15 @@ export default function BookingModal({ isOpen, onClose, therapist }) {
 
         {/* Scrollable Content */}
         <div className="overflow-y-auto p-6">
+          {(!getCurrentUser() || !getAccessToken()) && (
+            <div className="mb-5 rounded-2xl bg-amber-50 p-4">
+              <p className="text-sm font-black text-amber-800">Please log in as a patient before booking.</p>
+              <a href="/login" className="mt-3 inline-flex rounded-full bg-[#064F4B] px-5 py-3 text-xs font-black uppercase tracking-widest text-white">
+                Login to continue
+              </a>
+            </div>
+          )}
+
           {/* Step 1: Service & Packages */}
           {step === 1 && (
             <div className="space-y-6">
@@ -420,7 +459,7 @@ export default function BookingModal({ isOpen, onClose, therapist }) {
                         No detailed slots are published yet.
                       </p>
                       <p className="text-xs font-medium text-gray-500 mt-1">
-                        Continue and our team will confirm the timing with you.
+                        Please choose another therapist or check again later.
                       </p>
                     </div>
                   )}
@@ -564,8 +603,8 @@ export default function BookingModal({ isOpen, onClose, therapist }) {
 
               <div className="text-center">
                 <p className="text-xs text-gray-400">
-                  Clicking confirm will book your appointment and send
-                  confirmation details via WhatsApp.
+                  Clicking confirm will book your selected slot and send
+                  confirmation details by email.
                 </p>
               </div>
             </div>
@@ -594,7 +633,7 @@ export default function BookingModal({ isOpen, onClose, therapist }) {
           {step < 4 ? (
             <button
               onClick={nextStep}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !getCurrentUser() || !getAccessToken()}
               className="w-full bg-[#064F4B] text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-[#0A7F7A] transition-all disabled:opacity-50"
             >
               Next Step
@@ -627,12 +666,11 @@ export default function BookingModal({ isOpen, onClose, therapist }) {
 
       if (!currentUser || !accessToken) {
         setSubmitError("Please log in to book an appointment");
-        // Could redirect to login here
         return;
       }
 
       // Validate required fields
-      if (!formData.slotId && availabilitySlots.length > 0) {
+      if (!formData.slotId) {
         setSubmitError("Please select a time slot");
         setIsSubmitting(false);
         return;
@@ -645,7 +683,7 @@ export default function BookingModal({ isOpen, onClose, therapist }) {
       }
 
       // Create appointment
-      const appointment = await createAppointment(
+      await createAppointment(
         {
           slotId: formData.slotId,
           notes: `Service: ${formData.service}\nPackage: ${formData.package}\nMode: ${formData.mode}\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}`,
@@ -654,16 +692,7 @@ export default function BookingModal({ isOpen, onClose, therapist }) {
       );
 
       setSubmitSuccess(true);
-
-      // Send WhatsApp message with confirmation
-      const confirmationText = `Hi ${therapist?.name}, I have successfully booked an appointment!%0A%0AAppointment ID: ${appointment.id}%0ADate: ${formData.date}%0ATime: ${formData.time}%0AMode: ${formData.mode}%0A%0AThank you!`;
-
-      // Optional: Send to therapist's WhatsApp or keep it for user reference
       setTimeout(() => {
-        window.open(
-          `https://wa.me/918157039987?text=${confirmationText}`,
-          "_blank",
-        );
         onClose();
       }, 2000);
     } catch (error) {
