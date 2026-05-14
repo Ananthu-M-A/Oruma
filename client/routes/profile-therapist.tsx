@@ -4,7 +4,18 @@ import Footer from "../components/Footer";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
 import { BookingResponse, getAppointments } from "../src/lib/booking";
-import { getMyTherapistProfile, Therapist, updateMyTherapistProfile } from "../src/lib/therapists";
+import {
+  AvailabilitySlot,
+  createMyAvailabilitySlot,
+  deleteMyAvailabilitySlot,
+  formatAvailabilitySlotRange,
+  getMyAvailabilitySlots,
+  getMyTherapistProfile,
+  getTherapistImage,
+  Therapist,
+  updateMyAvailabilitySlot,
+  updateMyTherapistProfile,
+} from "../src/lib/therapists";
 
 export const meta = {
   title: "Therapist Profile | Oruma",
@@ -29,7 +40,13 @@ function formatSlot(value?: string) {
 export default function TherapistProfilePage() {
   const user = getCurrentUser();
   const [appointments, setAppointments] = useState<BookingResponse[]>([]);
+  const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [profile, setProfile] = useState<Therapist | null>(null);
+  const [slotForm, setSlotForm] = useState({
+    startTime: "",
+    endTime: "",
+  });
+  const [editingSlotId, setEditingSlotId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     title: "",
@@ -55,9 +72,10 @@ export default function TherapistProfilePage() {
       return;
     }
 
-    Promise.all([getAppointments(token), getMyTherapistProfile(token)])
-      .then(([appointmentData, profileData]) => {
+    Promise.all([getAppointments(token), getMyTherapistProfile(token), getMyAvailabilitySlots(token)])
+      .then(([appointmentData, profileData, slotData]) => {
         setAppointments(appointmentData);
+        setSlots(slotData);
         setProfile(profileData);
         setForm({
           name: profileData.name,
@@ -104,11 +122,69 @@ export default function TherapistProfilePage() {
         bio: form.bio.trim() || undefined,
       });
       setProfile(updatedProfile);
-      setNotice("Profile saved. Admin can activate it when ready.");
+      setNotice("Profile updates submitted for admin verification.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save profile.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const refreshSlots = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+    setSlots(await getMyAvailabilitySlots(token));
+  };
+
+  const saveSlot = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const token = getAccessToken();
+    if (!token) return;
+
+    setError("");
+    setNotice("");
+    try {
+      const payload = {
+        startTime: new Date(slotForm.startTime).toISOString(),
+        endTime: new Date(slotForm.endTime).toISOString(),
+      };
+
+      if (editingSlotId) {
+        await updateMyAvailabilitySlot(token, editingSlotId, payload);
+        setNotice("Availability slot updated.");
+      } else {
+        await createMyAvailabilitySlot(token, payload);
+        setNotice("Availability slot added.");
+      }
+
+      setSlotForm({ startTime: "", endTime: "" });
+      setEditingSlotId(null);
+      await refreshSlots();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save slot.");
+    }
+  };
+
+  const editSlot = (slot: AvailabilitySlot) => {
+    setEditingSlotId(slot.id);
+    setSlotForm({
+      startTime: toLocalInputValue(slot.startTime),
+      endTime: toLocalInputValue(slot.endTime),
+    });
+  };
+
+  const removeSlot = async (slot: AvailabilitySlot) => {
+    const token = getAccessToken();
+    if (!token || !window.confirm("Delete this availability slot?")) return;
+
+    setError("");
+    setNotice("");
+    try {
+      await deleteMyAvailabilitySlot(token, slot.id);
+      setNotice("Availability slot removed.");
+      await refreshSlots();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to remove slot.");
     }
   };
 
@@ -156,6 +232,11 @@ export default function TherapistProfilePage() {
                 </div>
 
                 <form onSubmit={saveProfile} className="mt-8 grid gap-4 rounded-[1.5rem] border border-[#E2E8E6] bg-[#FBFDFC] p-5 md:grid-cols-2">
+                  {form.image && (
+                    <div className="md:col-span-2">
+                      <img src={getTherapistImage(form.image)} alt={form.name || "Therapist profile"} className="h-28 w-28 rounded-lg object-cover" />
+                    </div>
+                  )}
                   <Field label="Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} required />
                   <Field label="Title" value={form.title} onChange={(value) => setForm({ ...form, title: value })} required />
                   <Field label="Tags" value={form.tags} onChange={(value) => setForm({ ...form, tags: value })} />
@@ -163,7 +244,7 @@ export default function TherapistProfilePage() {
                   <Field label="Group" type="number" value={form.group} onChange={(value) => setForm({ ...form, group: value })} required />
                   <Field label="Individual fee" type="number" value={form.price} onChange={(value) => setForm({ ...form, price: value })} required />
                   <Field label="Couple fee" type="number" value={form.couplePrice} onChange={(value) => setForm({ ...form, couplePrice: value })} />
-                  <Field label="Image file" value={form.image} onChange={(value) => setForm({ ...form, image: value })} />
+                  <Field label="Profile picture URL or asset file" value={form.image} onChange={(value) => setForm({ ...form, image: value })} />
                   <Field label="Qualifications" value={form.qualifications} onChange={(value) => setForm({ ...form, qualifications: value })} />
                   <Field label="Specialization" value={form.specialization} onChange={(value) => setForm({ ...form, specialization: value })} />
                   <label className="md:col-span-2">
@@ -178,6 +259,58 @@ export default function TherapistProfilePage() {
                   </div>
                 </form>
                 {notice && <p className="mt-4 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
+
+                <section className="mt-8 rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Availability</p>
+                      <h3 className="mt-1 text-2xl font-heading font-black text-[#064F4B]">Time slots</h3>
+                    </div>
+                    <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B]">
+                      {slots.length} slots
+                    </span>
+                  </div>
+
+                  <form onSubmit={saveSlot} className="mt-5 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+                    <label>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Start</span>
+                      <input type="datetime-local" required value={slotForm.startTime} onChange={(event) => setSlotForm({ ...slotForm, startTime: event.target.value })} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+                    </label>
+                    <label>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">End</span>
+                      <input type="datetime-local" required value={slotForm.endTime} onChange={(event) => setSlotForm({ ...slotForm, endTime: event.target.value })} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+                    </label>
+                    <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#064F4B] px-5 py-4 text-xs font-black uppercase tracking-widest text-white">
+                      <LucideIcon name={editingSlotId ? "save" : "plus"} size={16} />
+                      {editingSlotId ? "Update" : "Add"}
+                    </button>
+                  </form>
+                  {editingSlotId && (
+                    <button type="button" onClick={() => { setEditingSlotId(null); setSlotForm({ startTime: "", endTime: "" }); }} className="mt-3 text-xs font-black uppercase tracking-widest text-[#0A7F7A]">
+                      Cancel slot edit
+                    </button>
+                  )}
+
+                  <div className="mt-5 overflow-hidden rounded-lg border border-[#E2E8E6]">
+                    {slots.length === 0 && <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">No availability slots yet.</p>}
+                    {slots.map((slot) => (
+                      <article key={slot.id} className="flex flex-col gap-3 border-b border-[#E2E8E6] p-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="font-black text-[#064F4B]">{formatAvailabilitySlotRange(slot)}</p>
+                          <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{slot.status}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="button" disabled={slot.status === "BOOKED"} onClick={() => editSlot(slot)} className="rounded-full border border-[#DDE8E5] p-3 text-[#064F4B] disabled:opacity-40" title="Edit slot">
+                            <LucideIcon name="pencil" size={16} />
+                          </button>
+                          <button type="button" disabled={slot.status === "BOOKED"} onClick={() => removeSlot(slot)} className="rounded-full border border-red-100 p-3 text-red-600 disabled:opacity-40" title="Delete slot">
+                            <LucideIcon name="trash-2" size={16} />
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
 
                 <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-[#E2E8E6]">
                   {isLoading && <p className="bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">Loading appointments...</p>}
@@ -209,6 +342,13 @@ export default function TherapistProfilePage() {
       <Footer />
     </main>
   );
+}
+
+function toLocalInputValue(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
 function Field({

@@ -52,6 +52,15 @@ export class Therapist {
   @Column({ nullable: true })
   bio: string;
 
+  @Column({ type: 'jsonb', nullable: true })
+  pendingProfileChanges: Record<string, unknown> | null;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+  })
+  pendingProfileSubmittedAt: Date | null;
+
   @Column({
     type: 'timestamp',
     nullable: true,

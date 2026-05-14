@@ -15,6 +15,8 @@ export type Therapist = {
   qualifications: string | null;
   specialization: string | null;
   bio: string | null;
+  pendingProfileChanges: Partial<TherapistPayload> | null;
+  pendingProfileSubmittedAt: string | null;
   nextAvailableSlot: string | null;
   isActive: boolean;
   createdAt: string;
@@ -152,6 +154,14 @@ export function updateTherapist(accessToken: string, id: string, payload: Partia
   return writeTherapist(`/therapists/${id}`, accessToken, "PATCH", payload);
 }
 
+export function approveTherapistProfileChanges(accessToken: string, id: string) {
+  return writeTherapist(`/therapists/${id}/profile-changes/approve`, accessToken, "PATCH", {});
+}
+
+export function rejectTherapistProfileChanges(accessToken: string, id: string) {
+  return writeTherapist(`/therapists/${id}/profile-changes/reject`, accessToken, "PATCH", {});
+}
+
 export async function getMyTherapistProfile(accessToken: string) {
   const response = await fetch(`${API_BASE_URL}/therapists/me/profile`, {
     headers: {
@@ -230,6 +240,91 @@ export async function getAvailabilitySlots(therapistId: string) {
   return (data as AvailabilitySlot[])
     .filter((slot) => new Date(slot.startTime).getTime() >= Date.now())
     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+}
+
+export async function getMyAvailabilitySlots(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/availability/me`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const data = (await response.json().catch(() => ({}))) as AvailabilitySlot[] | {
+    message?: string | string[];
+  };
+
+  if (!response.ok) {
+    const message = Array.isArray((data as { message?: string | string[] }).message)
+      ? ((data as { message: string[] }).message).join(" ")
+      : (data as { message?: string }).message ?? "Unable to load your slots.";
+    throw new Error(message);
+  }
+
+  return (data as AvailabilitySlot[]).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+}
+
+export async function createMyAvailabilitySlot(accessToken: string, payload: { startTime: string; endTime: string }) {
+  const response = await fetch(`${API_BASE_URL}/availability/me`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = (await response.json().catch(() => ({}))) as AvailabilitySlot | {
+    message?: string | string[];
+  };
+
+  if (!response.ok) {
+    const message = Array.isArray((data as { message?: string | string[] }).message)
+      ? ((data as { message: string[] }).message).join(" ")
+      : (data as { message?: string }).message ?? "Unable to create slot.";
+    throw new Error(message);
+  }
+
+  return data as AvailabilitySlot;
+}
+
+export async function updateMyAvailabilitySlot(accessToken: string, id: string, payload: { startTime: string; endTime: string }) {
+  const response = await fetch(`${API_BASE_URL}/availability/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = (await response.json().catch(() => ({}))) as AvailabilitySlot | {
+    message?: string | string[];
+  };
+
+  if (!response.ok) {
+    const message = Array.isArray((data as { message?: string | string[] }).message)
+      ? ((data as { message: string[] }).message).join(" ")
+      : (data as { message?: string }).message ?? "Unable to update slot.";
+    throw new Error(message);
+  }
+
+  return data as AvailabilitySlot;
+}
+
+export async function deleteMyAvailabilitySlot(accessToken: string, id: string) {
+  const response = await fetch(`${API_BASE_URL}/availability/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const data = (await response.json().catch(() => ({}))) as {
+    message?: string | string[];
+  };
+
+  if (!response.ok) {
+    const message = Array.isArray(data.message)
+      ? data.message.join(" ")
+      : data.message ?? "Unable to delete slot.";
+    throw new Error(message);
+  }
 }
 
 export function formatTherapistPrice(therapist: Therapist) {

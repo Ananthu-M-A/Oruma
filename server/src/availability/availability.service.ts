@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,6 +14,9 @@ import { SlotStatus } from './entities/slot-status.enum';
 
 import { CreateAvailabilitySlotDto } from './dto/create-availability-slot.dto';
 import { BulkCreateAvailabilityDto } from './dto/bulk-create-availability.dto';
+import { JwtPayload } from '../auth/strategies/jwt.strategy';
+import { CreateOwnAvailabilitySlotDto } from './dto/create-own-availability-slot.dto';
+import { UpdateAvailabilitySlotDto } from './dto/update-availability-slot.dto';
 
 @Injectable()
 export class AvailabilityService {
@@ -71,6 +75,15 @@ export class AvailabilityService {
     return this.slotRepo.save(slot);
   }
 
+  async createOwn(dto: CreateOwnAvailabilitySlotDto, user: JwtPayload) {
+    const therapist = await this.findTherapistForUser(user);
+
+    return this.create({
+      ...dto,
+      therapistId: therapist.id,
+    });
+  }
+
   async bulkCreate(dto: BulkCreateAvailabilityDto) {
     const results: AvailabilitySlot[] = [];
 
@@ -100,6 +113,64 @@ export class AvailabilityService {
     });
   }
 
+  async getOwnSlots(user: JwtPayload) {
+    const therapist = await this.findTherapistForUser(user);
+
+    return this.slotRepo.find({
+      where: {
+        therapist: {
+          id: therapist.id,
+        },
+      },
+      order: {
+        startTime: 'ASC',
+      },
+    });
+  }
+
+  async update(slotId: string, dto: UpdateAvailabilitySlotDto, user: JwtPayload) {
+    const slot = await this.findOwnedSlot(slotId, user);
+
+    if (slot.status === SlotStatus.BOOKED) {
+      throw new BadRequestException('Booked slots cannot be edited');
+    }
+
+    const startTime = dto.startTime ? new Date(dto.startTime) : slot.startTime;
+    const endTime = dto.endTime ? new Date(dto.endTime) : slot.endTime;
+
+    if (endTime <= startTime) {
+      throw new BadRequestException('End time must be after start time');
+    }
+
+    const overlapping = await this.slotRepo
+      .createQueryBuilder('slot')
+      .where('slot.therapistId = :therapistId', {
+        therapistId: slot.therapist.id,
+      })
+      .andWhere('slot.id != :slotId', { slotId })
+      .andWhere(
+        `(
+          slot.startTime < :endTime
+          AND
+          slot.endTime > :startTime
+        )`,
+        {
+          startTime,
+          endTime,
+        },
+      )
+      .getOne();
+
+    if (overlapping) {
+      throw new BadRequestException('Overlapping slot exists');
+    }
+
+    slot.startTime = startTime;
+    slot.endTime = endTime;
+
+    return this.slotRepo.save(slot);
+  }
+
   async markBooked(slotId: string) {
     const slot = await this.slotRepo.findOne({
       where: { id: slotId },
@@ -118,14 +189,14 @@ export class AvailabilityService {
     return this.slotRepo.save(slot);
   }
 
-  async delete(slotId: string) {
-    const slot = await this.slotRepo.findOne({
-      where: { id: slotId },
-    });
+  async delete(slotId: string, user?: JwtPayload) {
+    const slot = user
+      ? await this.findOwnedSlot(slotId, user)
+      : await this.slotRepo.findOne({
+          where: { id: slotId },
+        });
 
-    if (!slot) {
-      throw new NotFoundException('Slot not found');
-    }
+    if (!slot) throw new NotFoundException('Slot not found');
 
     if (slot.status === SlotStatus.BOOKED) {
       throw new BadRequestException('Booked slots cannot be deleted');
@@ -136,5 +207,38 @@ export class AvailabilityService {
     return {
       message: 'Slot deleted',
     };
+  }
+
+  private async findTherapistForUser(user: JwtPayload) {
+    const therapist = await this.therapistRepo.findOne({
+      where: {
+        account: {
+          id: user.userId,
+        },
+      },
+    });
+
+    if (!therapist) {
+      throw new NotFoundException('Therapist profile not found');
+    }
+
+    return therapist;
+  }
+
+  private async findOwnedSlot(slotId: string, user: JwtPayload) {
+    const slot = await this.slotRepo.findOne({
+      where: { id: slotId },
+      relations: ['therapist', 'therapist.account'],
+    });
+
+    if (!slot) {
+      throw new NotFoundException('Slot not found');
+    }
+
+    if (slot.therapist.account?.id !== user.userId) {
+      throw new ForbiddenException('You can only manage your own slots');
+    }
+
+    return slot;
   }
 }

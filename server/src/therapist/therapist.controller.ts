@@ -73,6 +73,22 @@ export class TherapistController {
     return this.therapistService.updateOwnProfile(req.user, dto);
   }
 
+  // ADMIN ONLY
+  @Patch(':id/profile-changes/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  approveProfileChanges(@Param('id') id: string) {
+    return this.therapistService.approveProfileChanges(id);
+  }
+
+  // ADMIN ONLY
+  @Patch(':id/profile-changes/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  rejectProfileChanges(@Param('id') id: string) {
+    return this.therapistService.rejectProfileChanges(id);
+  }
+
   // PUBLIC
   @Get(':id')
   findOne(@Param('id') id: string) {

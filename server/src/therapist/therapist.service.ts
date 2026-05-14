@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -167,7 +168,37 @@ export class TherapistService {
 
     void email;
     void isActive;
-    Object.assign(therapist, profileUpdates);
+    therapist.pendingProfileChanges = this.removeEmptyProfileChanges(
+      profileUpdates as Record<string, unknown>,
+    );
+    therapist.pendingProfileSubmittedAt = new Date();
+
+    return this.therapistRepo.save(therapist);
+  }
+
+  async approveProfileChanges(id: string): Promise<Therapist> {
+    const therapist = await this.findOne(id);
+
+    if (!therapist.pendingProfileChanges) {
+      throw new BadRequestException('No pending profile changes to approve');
+    }
+
+    Object.assign(therapist, therapist.pendingProfileChanges);
+    therapist.pendingProfileChanges = null;
+    therapist.pendingProfileSubmittedAt = null;
+
+    return this.therapistRepo.save(therapist);
+  }
+
+  async rejectProfileChanges(id: string): Promise<Therapist> {
+    const therapist = await this.findOne(id);
+
+    if (!therapist.pendingProfileChanges) {
+      throw new BadRequestException('No pending profile changes to reject');
+    }
+
+    therapist.pendingProfileChanges = null;
+    therapist.pendingProfileSubmittedAt = null;
 
     return this.therapistRepo.save(therapist);
   }
@@ -225,6 +256,12 @@ export class TherapistService {
 
   private generateTemporaryPassword() {
     return `Oruma-${randomBytes(6).toString('base64url')}`;
+  }
+
+  private removeEmptyProfileChanges(changes: Record<string, unknown>) {
+    return Object.fromEntries(
+      Object.entries(changes).filter(([, value]) => value !== undefined),
+    );
   }
 
   private async findOneWithAccount(id: string): Promise<Therapist> {
