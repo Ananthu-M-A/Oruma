@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { Appointment } from './entities/appointment.entity';
 import { AvailabilitySlot } from '../availability/entities/availability-slot.entity';
+import { MailModule } from '../mail/mail.module';
 
 import { AppointmentController } from './appointment.controller';
 import { AppointmentService } from './appointment.service';
@@ -12,6 +13,7 @@ import { AppointmentService } from './appointment.service';
   imports: [
     TypeOrmModule.forFeature([Appointment, AvailabilitySlot]),
     AuthModule,
+    MailModule,
   ],
   controllers: [AppointmentController],
   providers: [AppointmentService],

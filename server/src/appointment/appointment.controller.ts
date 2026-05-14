@@ -35,7 +35,7 @@ export class AppointmentController {
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.THERAPIST)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.THERAPIST)
   findAll() {
     return this.appointmentService.findAll();
   }
@@ -55,7 +55,7 @@ export class AppointmentController {
 
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.THERAPIST)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.THERAPIST)
   updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateAppointmentStatusDto,
@@ -65,7 +65,7 @@ export class AppointmentController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   remove(@Param('id') id: string) {
     return this.appointmentService.remove(id);
   }

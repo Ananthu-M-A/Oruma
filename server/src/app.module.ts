@@ -9,6 +9,7 @@ import { TherapistModule } from './therapist/therapist.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { MailModule } from './mail/mail.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { MailModule } from './mail/mail.module';
     AppointmentModule,
     AvailabilityModule,
     MailModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

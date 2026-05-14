@@ -25,6 +25,10 @@ export class UserService {
     return this.userRepository.save(createdUser);
   }
 
+  countAll(): Promise<number> {
+    return this.userRepository.count();
+  }
+
   async updateEmail(id: string, email: string): Promise<User> {
     const user = await this.userRepository.findOneByOrFail({ id });
     user.email = email;

@@ -3,7 +3,7 @@ import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
-import { BookingResponse, getAppointments } from "../src/lib/booking";
+import { BookingResponse, getAppointments, updateAppointmentStatus } from "../src/lib/booking";
 import {
   AvailabilitySlot,
   createMyAvailabilitySlot,
@@ -188,6 +188,21 @@ export default function TherapistProfilePage() {
     }
   };
 
+  const changeAppointmentStatus = async (appointment: BookingResponse, status: BookingResponse["status"]) => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setError("");
+    setNotice("");
+    try {
+      const updatedAppointment = await updateAppointmentStatus(appointment.id, status, token);
+      setAppointments((current) => current.map((item) => item.id === appointment.id ? updatedAppointment : item));
+      setNotice("Appointment status updated.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update appointment.");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#F8FBF8] font-body text-[#2E3E3C]">
       <DashboardNavbar />
@@ -319,7 +334,7 @@ export default function TherapistProfilePage() {
                     <p className="bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">No appointments have been booked yet.</p>
                   )}
                   {!isLoading && !error && appointments.map((appointment) => (
-                    <article key={appointment.id} className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 md:grid-cols-[1fr_1fr_auto] md:items-center">
+                    <article key={appointment.id} className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 md:grid-cols-[1fr_1fr_auto_auto] md:items-center">
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Patient</p>
                         <p className="mt-1 font-black text-[#064F4B]">{appointment.patient?.email ?? "Patient"}</p>
@@ -331,6 +346,16 @@ export default function TherapistProfilePage() {
                       <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
                         {appointment.status}
                       </span>
+                      <select
+                        value={appointment.status}
+                        onChange={(event) => changeAppointmentStatus(appointment, event.target.value as BookingResponse["status"])}
+                        className="rounded-full border border-[#DDE8E5] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B] outline-none"
+                      >
+                        <option value="PENDING">Pending</option>
+                        <option value="CONFIRMED">Confirmed</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="CANCELLED">Cancelled</option>
+                      </select>
                     </article>
                   ))}
                 </div>

@@ -13,6 +13,7 @@ import { AvailabilitySlot } from '../availability/entities/availability-slot.ent
 import { SlotStatus } from '../availability/entities/slot-status.enum';
 
 import { User } from '../user/entities/user.entity';
+import { MailService } from '../mail/mail.service';
 
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
@@ -25,6 +26,7 @@ export class AppointmentService {
 
     @InjectRepository(AvailabilitySlot)
     private readonly slotRepo: Repository<AvailabilitySlot>,
+    private readonly mailService: MailService,
   ) {}
 
   async create(
@@ -71,7 +73,26 @@ export class AppointmentService {
       notes: dto.notes,
     });
 
-    return this.appointmentRepo.save(appointment);
+    const savedAppointment = await this.appointmentRepo.save(appointment);
+
+    await this.mailService.send({
+      to: patient.email,
+      subject: 'Your Oruma appointment request is received',
+      text: [
+        'Your Oruma appointment request has been received.',
+        `Therapist: ${slot.therapist.name}`,
+        `Slot: ${slot.startTime.toISOString()} - ${slot.endTime.toISOString()}`,
+        'We will keep you updated on the confirmation status.',
+      ].join('\n'),
+      html: `
+        <p>Your Oruma appointment request has been received.</p>
+        <p><strong>Therapist:</strong> ${slot.therapist.name}</p>
+        <p><strong>Slot:</strong> ${slot.startTime.toISOString()} - ${slot.endTime.toISOString()}</p>
+        <p>We will keep you updated on the confirmation status.</p>
+      `,
+    });
+
+    return savedAppointment;
   }
 
   async findAll(): Promise<Appointment[]> {

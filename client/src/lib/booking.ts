@@ -122,3 +122,27 @@ export async function cancelAppointment(
     );
   }
 }
+
+export async function updateAppointmentStatus(
+  appointmentId: string,
+  status: BookingResponse['status'],
+  accessToken: string
+): Promise<BookingResponse> {
+  const response = await fetch(`${API_BASE_URL}/appointments/${appointmentId}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || 'Failed to update appointment status'
+    );
+  }
+
+  return response.json();
+}

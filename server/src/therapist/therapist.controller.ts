@@ -41,7 +41,7 @@ export class TherapistController {
   // ADMIN ONLY
   @Get('admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   findAllForAdmin() {
     return this.therapistService.findAllForAdmin();
   }
@@ -49,7 +49,7 @@ export class TherapistController {
   // ADMIN ONLY
   @Get('admin/performance')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   getPerformance() {
     return this.therapistService.getPerformance();
   }
@@ -76,7 +76,7 @@ export class TherapistController {
   // ADMIN ONLY
   @Patch(':id/profile-changes/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   approveProfileChanges(@Param('id') id: string) {
     return this.therapistService.approveProfileChanges(id);
   }
@@ -84,7 +84,7 @@ export class TherapistController {
   // ADMIN ONLY
   @Patch(':id/profile-changes/reject')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   rejectProfileChanges(@Param('id') id: string) {
     return this.therapistService.rejectProfileChanges(id);
   }
@@ -98,7 +98,7 @@ export class TherapistController {
   // ADMIN ONLY
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   create(@Body() dto: CreateTherapistDto) {
     return this.therapistService.create(dto);
   }
@@ -106,7 +106,7 @@ export class TherapistController {
   // ADMIN ONLY
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   update(
     @Param('id') id: string,
 
@@ -118,7 +118,7 @@ export class TherapistController {
   // ADMIN ONLY
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   remove(@Param('id') id: string) {
     return this.therapistService.remove(id);
   }

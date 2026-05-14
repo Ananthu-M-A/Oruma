@@ -1,4 +1,4 @@
-export type AuthRole = "PATIENT" | "THERAPIST" | "ADMIN";
+export type AuthRole = "PATIENT" | "THERAPIST" | "ADMIN" | "SUPER_ADMIN";
 
 export type AuthUser = {
   userId: string;
@@ -133,6 +133,6 @@ export function getCurrentUser(): AuthUser | null {
 
 export function getRedirectPathForRole(role?: AuthRole) {
   if (role === "THERAPIST") return "/profile/therapist";
-  if (role === "ADMIN") return "/profile/admin";
+  if (role === "ADMIN" || role === "SUPER_ADMIN") return "/profile/admin";
   return "/profile/patient";
 }

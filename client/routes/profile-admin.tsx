@@ -5,6 +5,7 @@ import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
+import { AdminSummary, getAdminSummary } from "../src/lib/admin";
 import { BookingResponse, getAppointments } from "../src/lib/booking";
 import { createTherapist, getAdminTherapists, Therapist } from "../src/lib/therapists";
 
@@ -17,6 +18,7 @@ export default function AdminProfilePage() {
   const user = getCurrentUser();
   const [appointments, setAppointments] = useState<BookingResponse[]>([]);
   const [therapists, setTherapists] = useState<Therapist[]>([]);
+  const [summary, setSummary] = useState<AdminSummary | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -31,12 +33,14 @@ export default function AdminProfilePage() {
       return;
     }
 
-    const [appointmentData, therapistData] = await Promise.all([
+    const [appointmentData, therapistData, summaryData] = await Promise.all([
       getAppointments(token),
       getAdminTherapists(token),
+      getAdminSummary(token),
     ]);
     setAppointments(appointmentData);
     setTherapists(therapistData);
+    setSummary(summaryData);
   };
 
   useEffect(() => {
@@ -107,9 +111,18 @@ export default function AdminProfilePage() {
           </div>
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
-            <Metric icon="calendar-check" label="Appointments" value={appointments.length} />
-            <Metric icon="clock-alert" label="Pending appointments" value={pendingCount} />
+            <Metric icon="users" label="Users" value={summary?.users ?? 0} />
+            <Metric icon="calendar-check" label="Appointments" value={summary?.appointments ?? appointments.length} />
+            <Metric icon="badge-indian-rupee" label="Revenue" value={`Rs.${(summary?.revenue ?? 0).toLocaleString("en-IN")}`} />
+            <Metric icon="video" label="Completed sessions" value={summary?.sessions ?? 0} />
+            <Metric icon="clock-alert" label="Pending appointments" value={summary?.pendingAppointments ?? pendingCount} />
             <Metric icon="user-round-cog" label="Awaiting activation" value={inactiveTherapistCount} />
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <StatusPanel title="Payments" rows={[`Collected: Rs.${(summary?.payments.collected ?? 0).toLocaleString("en-IN")}`, `Refunds: Rs.${summary?.payments.refunds ?? 0}`, `Pending: Rs.${summary?.payments.pending ?? 0}`]} />
+            <StatusPanel title="Case sheets" rows={[`Monitored: ${summary?.caseSheets.monitored ?? 0}`, `Updated: ${summary?.caseSheets.updated ?? 0}`]} />
+            <StatusPanel title="Tickets" rows={[`Open: ${summary?.tickets.open ?? 0}`, `Resolved: ${summary?.tickets.resolved ?? 0}`, `Therapist updates: ${summary?.pendingTherapistUpdates ?? 0}`]} />
           </div>
 
           {notice && <p className="mt-6 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
@@ -177,12 +190,25 @@ export default function AdminProfilePage() {
   );
 }
 
-function Metric({ icon, label, value }: { icon: string; label: string; value: number }) {
+function Metric({ icon, label, value }: { icon: string; label: string; value: number | string }) {
   return (
     <div className="rounded-lg bg-white p-6 shadow-sm border border-[#E2E8E6]">
       <LucideIcon name={icon} size={26} className="text-[#0A7F7A]" />
       <p className="mt-5 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</p>
       <p className="mt-2 text-4xl font-black text-[#064F4B]">{value}</p>
+    </div>
+  );
+}
+
+function StatusPanel({ title, rows }: { title: string; rows: string[] }) {
+  return (
+    <div className="rounded-lg bg-white p-6 shadow-sm border border-[#E2E8E6]">
+      <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">{title}</p>
+      <div className="mt-4 space-y-2">
+        {rows.map((row) => (
+          <p key={row} className="text-sm font-black text-[#064F4B]">{row}</p>
+        ))}
+      </div>
     </div>
   );
 }

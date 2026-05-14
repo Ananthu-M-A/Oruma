@@ -24,7 +24,7 @@ export class AuthController {
 
   @Get('admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   getAdminProfile(@Req() req: AuthenticatedRequest) {
     return req.user;
   }
