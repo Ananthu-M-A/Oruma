@@ -5,18 +5,8 @@ import { LucideIcon } from '@site-builder/icons';
 
 export const meta = {
   title: "Global Consultation | ORUMA - Mental Health Support Worldwide",
-  description: "Professional mental health support for the Indian diaspora and global citizens. 10% discount on all international sessions. 24/7 availability."
+  description: "Professional mental health support for the Indian diaspora and global citizens. 24/7 availability."
 };
-
-function GlobalOfferBanner() {
-  return (
-    <div className="bg-[#00D494] py-3 text-center">
-      <p className="text-[10px] md:text-xs font-black text-[#064F4B] uppercase tracking-[0.2em] animate-pulse">
-        🌍 Special Launch Offer: Flat <span className="text-white bg-[#064F4B] px-3 py-1 rounded-full mx-1">10% OFF</span> on All Global Consultations
-      </p>
-    </div>
-  );
-}
 
 function MechanismSection() {
   const steps = [
@@ -71,11 +61,10 @@ function MechanismSection() {
 }
 
 export default function NRIConsultationPage() {
-  const whatsappLink = "https://wa.me/918157039987?text=Hi,%20I'm%20contacting%20from%20abroad%20for%20a%20Global%20Consultation.%20I'd%20like%20to%20avail%20the%2010%%20offer.";
+  const whatsappLink = "https://wa.me/918157039987?text=Hi,%20I'm%20contacting%20from%20abroad%20for%20a%20Global%20Consultation.";
 
   return (
     <main className="min-h-screen bg-white font-body text-[#2E3E3C]">
-      <GlobalOfferBanner />
       <Navbar />
       
       {/* Hero Section */}
@@ -109,7 +98,7 @@ export default function NRIConsultationPage() {
                     href={whatsappLink} 
                     className="relative bg-white text-[#064F4B] px-12 py-6 rounded-full font-black text-sm uppercase tracking-[0.2em] hover:bg-[#064F4B] hover:text-white transition-all shadow-2xl flex items-center gap-3"
                   >
-                    Get 10% OFF Now
+                    Book Global Session
                     <LucideIcon name="arrow-right" size={16} />
                   </a>
                 </div>
@@ -133,8 +122,8 @@ export default function NRIConsultationPage() {
                   />
                   <div className="absolute -bottom-10 -left-10 bg-[#B7C8A3] p-10 rounded-[3rem] shadow-3xl border-8 border-[#064F4B]">
                      <div className="text-center">
-                        <p className="text-4xl font-black text-[#064F4B] mb-1">10%</p>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[#064F4B]/60 leading-none">Global<br/>Discount</p>
+                        <p className="text-4xl font-black text-[#064F4B] mb-1">24/7</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[#064F4B]/60 leading-none">Global<br/>Care</p>
                      </div>
                   </div>
                </div>
@@ -157,8 +146,8 @@ export default function NRIConsultationPage() {
                     <LucideIcon name="calendar-days" size={28} />
                   </div>
                   <div>
-                    <h4 className="text-xl font-black text-[#064F4B] mb-3 uppercase tracking-tighter">Friday Special Offers</h4>
-                    <p className="text-[#5F7F7A] font-medium leading-relaxed">Specific slots and exclusive offers available every Friday for our GCC and UAE clients. Make your weekend about wellness.</p>
+                    <h4 className="text-xl font-black text-[#064F4B] mb-3 uppercase tracking-tighter">Friday Availability</h4>
+                    <p className="text-[#5F7F7A] font-medium leading-relaxed">Dedicated slots are available every Friday for our GCC and UAE clients. Make your weekend about wellness.</p>
                   </div>
                 </div>
                 
@@ -181,7 +170,7 @@ export default function NRIConsultationPage() {
                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                      <div className="text-6xl mb-8 drop-shadow-2xl animate-bounce-slow">🇦🇪</div>
                      <h4 className="text-2xl font-black text-white mb-3 tracking-tight uppercase">UAE</h4>
-                     <div className="bg-[#00D494] text-[#064F4B] px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">Friday Special</div>
+                     <div className="bg-[#00D494] text-[#064F4B] px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">Friday Slots</div>
                   </div>
 
                   {/* GCC Card */}
@@ -224,9 +213,9 @@ export default function NRIConsultationPage() {
           </div>
           
           <div className="relative z-10">
-            <div className="inline-block bg-[#00D494] text-[#064F4B] px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-10">Limited Time Global Offer</div>
+            <div className="inline-block bg-[#00D494] text-[#064F4B] px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-10">Global Consultation</div>
             <h2 className="text-4xl md:text-8xl font-heading font-black text-white mb-12 leading-[1] tracking-tighter">Your Journey <br/><span className="text-[#B7C8A3]">Begins Anywhere.</span></h2>
-            <p className="text-white/60 text-xl mb-16 max-w-2xl mx-auto font-medium leading-relaxed">Avail our <span className="text-[#00D494] font-black">10% Global Discount</span> on your first session today. Available 24/7 for you.</p>
+            <p className="text-white/60 text-xl mb-16 max-w-2xl mx-auto font-medium leading-relaxed">Book professional mental health support from wherever you are. Available 24/7 for you.</p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <a href={whatsappLink} className="w-full sm:w-auto bg-[#00D494] text-[#064F4B] px-16 py-7 rounded-full font-black text-sm uppercase tracking-[0.2em] hover:bg-white hover:scale-105 transition-all shadow-2xl active:scale-95">

@@ -2,14 +2,12 @@ import React from 'react';
 import Navbar from '../../components/Navbar';
 import ServiceHero from '../../components/ServiceHero';
 import AssessmentBanner from '../../components/AssessmentBanner';
-import ServiceTherapistGrid from '../../components/ServiceTherapistGrid';
+import TherapistGrid from '../../components/TherapistGrid';
 import WhyChooseService from '../../components/WhyChooseService';
 import FAQSection from '../../components/FAQSection';
 import Footer from '../../components/Footer';
 import FloatingActions from '../../components/FloatingActions';
 import CoupleTherapyVideo from '../../components/CoupleTherapyVideo';
-import PricingSection from '../../components/PricingSection';
-import { LucideIcon } from '@site-builder/icons';
 
 export const meta = {
   title: "Couple Therapy | oruma.me",
@@ -30,11 +28,14 @@ export default function CoupleTherapyPage() {
 
       <AssessmentBanner />
 
-      <ServiceTherapistGrid />
+      <section className="py-20 bg-[#F5F8F7]">
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-4xl font-heading font-black text-[#064F4B] mb-10 uppercase tracking-tighter">Available Therapists</h2>
+          <TherapistGrid />
+        </div>
+      </section>
 
       <CoupleTherapyVideo />
-
-      <PricingSection />
 
       <WhyChooseService />
 

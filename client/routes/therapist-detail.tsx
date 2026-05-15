@@ -30,31 +30,7 @@ function mapForBooking(therapist: Therapist) {
     priceInd: `Rs.${therapist.price.toLocaleString('en-IN')}`,
     priceCouple: therapist.couplePrice ? `Rs.${therapist.couplePrice.toLocaleString('en-IN')}` : '-',
     image: getTherapistImage(therapist.image),
-    hasPackages: true,
   };
-}
-
-function getPackageSummary(group: number, hasCoupleTherapy: boolean) {
-  const individual =
-    group === 4
-      ? '4 sessions from Rs.5,400'
-      : group === 2 || group === 5
-        ? '4 sessions from Rs.7,200'
-        : '4 sessions from Rs.3,600';
-
-  if (!hasCoupleTherapy) return [{ label: 'Individual Therapy', value: individual }];
-
-  const couple =
-    group === 2
-      ? '4 sessions from Rs.10,800'
-      : group === 5
-        ? '4 sessions from Rs.8,100'
-        : '4 sessions from Rs.5,400';
-
-  return [
-    { label: 'Individual Therapy', value: individual },
-    { label: 'Couple Therapy', value: couple },
-  ];
 }
 
 export default function TherapistDetailPage() {
@@ -128,7 +104,6 @@ export default function TherapistDetailPage() {
       slot,
       hasCoupleTherapy,
       price: formatTherapistPrice(therapist),
-      packages: getPackageSummary(therapist.group, hasCoupleTherapy),
       tags: therapist.tags?.length ? therapist.tags : ['Mental Health', 'Counseling', 'Support'],
     };
   }, [therapist]);

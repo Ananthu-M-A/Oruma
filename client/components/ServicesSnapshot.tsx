@@ -11,12 +11,11 @@ export default function ServicesSnapshot() {
       href: '/therapists'
     },
     { 
-      title: 'NRI Consultation', 
-      icon: 'globe', 
-      color: 'bg-[#0A7F7A]/10',
-      iconColor: 'text-[#0A7F7A]',
-      href: '/consultation',
-      isNew: true
+      title: 'Individual Therapy', 
+      icon: 'user', 
+      color: 'bg-[#F5F8F7]',
+      iconColor: 'text-[#064F4B]',
+      href: '/services/individual-therapy'
     },
     { 
       title: 'Couple Therapy', 
@@ -26,33 +25,20 @@ export default function ServicesSnapshot() {
       href: '/services/couple-therapy'
     },
     { 
+      title: 'NRI Consultation', 
+      icon: 'globe', 
+      color: 'bg-[#0A7F7A]/10',
+      iconColor: 'text-[#0A7F7A]',
+      href: '/consultation',
+      isNew: true
+    },
+    { 
       title: 'Sexual Wellness', 
       icon: 'sparkles', 
       color: 'bg-[#F5F8F7]',
       iconColor: 'text-[#064F4B]',
       href: '/services/sexual-wellness'
     },
-    { 
-      title: 'Courses', 
-      icon: 'book-open', 
-      color: 'bg-[#F5F8F7]',
-      iconColor: 'text-[#0A7F7A]',
-      href: '/services#courses'
-    },
-    { 
-      title: 'Webinar', 
-      icon: 'video', 
-      color: 'bg-[#F5F8F7]',
-      iconColor: 'text-[#064F4B]',
-      href: '/services#webinar'
-    },
-    { 
-      title: 'Training Programs', 
-      icon: 'graduation-cap', 
-      color: 'bg-[#F5F8F7]',
-      iconColor: 'text-[#0A7F7A]',
-      href: '/services#training'
-    }
   ];
 
   return (
@@ -64,7 +50,7 @@ export default function ServicesSnapshot() {
         
         <div className="max-w-5xl mx-auto">
           {/* Desktop Grid */}
-          <div className="hidden md:grid grid-cols-7 gap-6">
+          <div className="hidden md:grid grid-cols-5 gap-6">
             {services.map(function(service, i) {
               return (
                 <a 

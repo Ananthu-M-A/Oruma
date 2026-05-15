@@ -35,7 +35,7 @@ import TraumaMechanism from '../../components/TraumaMechanism';
 
 // Global Components
 import AnxietyHowItWorks from '../../components/AnxietyHowItWorks';
-import AnxietyTherapistGrid from '../../components/AnxietyTherapistGrid';
+import TherapistGrid from '../../components/TherapistGrid';
 
 export const meta = {
   title: "Relationship, Breakup & Mental Health Concerns | oruma.me",
@@ -168,7 +168,9 @@ export default function ConcernsPage() {
           <h2 className="text-4xl lg:text-7xl font-heading font-black mb-6 leading-tight">Reclaim Your Life <br /> With <span className="italic text-[#0A7F7A]">Oruma</span></h2>
           <p className="text-xl text-[#5F7F7A] font-medium max-w-2xl mx-auto">Professional help for any concern, always anonymous and safe.</p>
         </div>
-        <AnxietyTherapistGrid />
+        <div className="max-w-7xl mx-auto px-6">
+          <TherapistGrid />
+        </div>
       </div>
 
       <FAQSection />

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { LucideIcon } from '@site-builder/icons';
 import BookingModal from './BookingModal';
 import {
-  formatTherapistPrice,
   formatTherapistSlot,
   getTherapistImage,
   getTherapists,
+  isSlotOnNextDay,
   Therapist,
 } from '../src/lib/therapists';
 
@@ -18,11 +19,22 @@ function mapForBooking(therapist: Therapist) {
     priceInd: `Rs.${therapist.price.toLocaleString('en-IN')}`,
     priceCouple: therapist.couplePrice ? `Rs.${therapist.couplePrice.toLocaleString('en-IN')}` : '-',
     image: getTherapistImage(therapist.image),
-    hasPackages: true,
   };
 }
 
-export default function TherapistGrid() {
+type TherapistGridProps = {
+  nextDayOnly?: boolean;
+  searchQuery?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+};
+
+export default function TherapistGrid({
+  nextDayOnly = false,
+  searchQuery = '',
+  emptyTitle = 'No therapists are available right now.',
+  emptyDescription = 'Please check back soon or contact Oruma directly.',
+}: TherapistGridProps) {
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [selectedTherapist, setSelectedTherapist] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,7 +46,9 @@ export default function TherapistGrid() {
 
     getTherapists()
       .then((data) => {
-        if (isMounted) setTherapists(data);
+        if (isMounted) {
+          setTherapists(nextDayOnly ? data.filter((therapist) => isSlotOnNextDay(therapist.nextAvailableSlot)) : data);
+        }
       })
       .catch((err) => {
         if (isMounted) setError(err instanceof Error ? err.message : 'Unable to load therapists.');
@@ -46,12 +60,29 @@ export default function TherapistGrid() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [nextDayOnly]);
 
   const handleBookNow = (therapist: Therapist) => {
     setSelectedTherapist(mapForBooking(therapist));
     setIsModalOpen(true);
   };
+
+  const visibleTherapists = therapists.filter((therapist) => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (!normalizedQuery) return true;
+
+    return [
+      therapist.name,
+      therapist.title,
+      therapist.specialization,
+      therapist.qualifications,
+      ...(therapist.tags ?? []),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(normalizedQuery);
+  });
 
   if (isLoading) {
     return (
@@ -71,11 +102,11 @@ export default function TherapistGrid() {
     );
   }
 
-  if (therapists.length === 0) {
+  if (visibleTherapists.length === 0) {
     return (
       <div className="py-12 text-center bg-[#F5F8F7] rounded-[2rem] px-6">
-        <p className="font-black text-[#064F4B]">No therapists are available right now.</p>
-        <p className="text-sm font-bold text-[#5F7F7A] mt-2">Please check back soon or contact Oruma directly.</p>
+        <p className="font-black text-[#064F4B]">{emptyTitle}</p>
+        <p className="text-sm font-bold text-[#5F7F7A] mt-2">{emptyDescription}</p>
       </div>
     );
   }
@@ -83,78 +114,73 @@ export default function TherapistGrid() {
   return (
     <div className="py-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
-        {therapists.map((therapist) => {
+        {visibleTherapists.map((therapist) => {
           const image = getTherapistImage(therapist.image);
           const slot = formatTherapistSlot(therapist.nextAvailableSlot);
+          const tags = therapist.tags?.length ? therapist.tags : ['Mental Health'];
+          const languageTags = tags.filter((tag) => ['english', 'malayalam', 'hindi', 'tamil', 'arabic'].includes(tag.toLowerCase()));
+          const languages = languageTags.length ? languageTags.join(', ') : 'Malayalam, English';
+          const specialization = therapist.specialization || tags.slice(0, 2).join(', ') || 'Mental health support';
 
           return (
-            <div key={therapist.id} className="bg-[#B7C8A3] rounded-[3rem] p-8 flex flex-col gap-6 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all group relative overflow-hidden">
+            <div key={therapist.id} className="bg-white rounded-[2rem] border border-[#E2E8E6] p-5 md:p-6 flex flex-col gap-5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden">
               <div className="flex gap-4 items-start">
-                <div className="relative w-20 h-20 shrink-0">
+                <div className="relative w-24 h-24 shrink-0">
                   {image ? (
                     <img
                       src={image}
                       alt={therapist.name}
-                      className="w-full h-full object-cover rounded-full border-4 border-white/50 shadow-sm transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-full object-cover rounded-2xl border border-[#E2E8E6] shadow-sm transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-full h-full bg-[#064F4B]/10 rounded-full border-4 border-white/50 flex items-center justify-center">
+                    <div className="w-full h-full bg-[#F5F8F7] rounded-2xl border border-[#E2E8E6] flex items-center justify-center">
                       <LucideIcon name="user" size={32} className="text-[#064F4B]/30" />
                     </div>
                   )}
-                  <div className="absolute bottom-1 right-1 w-4 h-4 bg-[#00D494] border-2 border-[#B7C8A3] rounded-full" />
                 </div>
 
                 <div className="flex-1 min-w-0 pt-1">
-                  <h3 className="text-xl font-black text-[#064F4B] leading-tight truncate">{therapist.name}</h3>
-                  <p className="text-[10px] font-black text-[#064F4B]/60 uppercase tracking-widest mt-1 truncate">{therapist.title}</p>
-                  <div className="mt-2 bg-[#D9E4D9]/80 backdrop-blur-sm inline-block px-3 py-1 rounded-full text-[8px] font-black text-[#0A7F7A] uppercase tracking-tighter">AVAILABLE NOW</div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 min-h-[50px]">
-                {(therapist.tags?.length ? therapist.tags : ['Mental Health']).slice(0, 4).map((tag) => (
-                  <span key={tag} className="text-[9px] font-extrabold text-[#064F4B] bg-white/40 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/20">{tag}</span>
-                ))}
-                <span className="text-[10px] font-black text-[#064F4B]/50 uppercase tracking-widest">{therapist.experience}+ HRS</span>
-              </div>
-
-              <div className="bg-black/5 rounded-[1.5rem] px-5 py-3 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <span className="text-[10px] font-black text-[#064F4B]/60 uppercase tracking-widest">Consultation Fee</span>
-                  <div className="bg-[#00D494]/20 text-[#0A7F7A] text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-tighter">Bundles Available</div>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-black text-[#064F4B]">Rs.{therapist.price.toLocaleString('en-IN')}</p>
-                  {therapist.couplePrice && (
-                    <p className="text-[9px] font-bold text-[#064F4B]/60 mt-0.5 tracking-tighter">Couple: Rs.{therapist.couplePrice.toLocaleString('en-IN')}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-[#064F4B]/5 mt-auto">
-                <div className="flex flex-col gap-3">
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="space-y-0.5">
-                      <p className="text-[8px] font-black text-[#064F4B]/50 uppercase tracking-widest">Next Available Slot</p>
-                      <p className="text-[11px] font-black text-[#064F4B]">{slot}</p>
-                    </div>
+                  <h3 className="text-2xl font-black text-[#064F4B] leading-tight">{therapist.name}</h3>
+                  <p className="text-xs font-black text-[#0A7F7A] uppercase tracking-widest mt-1">{therapist.title}</p>
+                  <div className="mt-3 bg-[#D9E4D9]/80 inline-block px-3 py-1 rounded-full text-[8px] font-black text-[#0A7F7A] uppercase tracking-tighter">
+                    {nextDayOnly ? 'AVAILABLE TOMORROW' : 'AVAILABLE'}
                   </div>
-                  <div className="flex gap-2">
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-left">
+                <InfoItem icon="briefcase" label="Experience" value="Professional care" />
+                <InfoItem icon="award" label="Qualification" value={therapist.qualifications || 'Verified professional'} />
+                <InfoItem icon="sparkles" label="Specialization" value={specialization} />
+                <InfoItem icon="clock" label="Therapy Hours" value={`${therapist.experience}+ hours`} />
+                <InfoItem icon="languages" label="Language" value={languages} />
+                <InfoItem icon="calendar-clock" label="Next Slot" value={slot} />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {tags.slice(0, 4).map((tag) => (
+                  <span key={tag} className="text-[9px] font-extrabold text-[#064F4B] bg-[#F5F8F7] px-4 py-1.5 rounded-full border border-[#E2E8E6]">{tag}</span>
+                ))}
+              </div>
+
+              <div className="pt-4 border-t border-[#E2E8E6] mt-auto">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <p className="text-xl font-black text-[#064F4B]">starts from ₹1000</p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Link
+                      to={`/therapists/${therapist.id}`}
+                      className="bg-[#F5F8F7] text-[#064F4B] border border-[#DDE8E5] px-5 py-4 rounded-[1.2rem] font-black text-[10px] hover:bg-white transition-all active:scale-95 uppercase tracking-widest flex items-center justify-center gap-2"
+                    >
+                      <LucideIcon name="user-round-search" size={14} />
+                      DETAILS
+                    </Link>
                     <button
                       onClick={() => handleBookNow(therapist)}
-                      className="flex-1 bg-[#064F4B] text-white py-4 rounded-[1.2rem] font-black text-[10px] hover:bg-[#0A7F7A] transition-all shadow-lg shadow-[#064F4B]/10 active:scale-95 uppercase tracking-widest flex items-center justify-center gap-2"
+                      className="bg-[#064F4B] text-white px-6 py-4 rounded-[1.2rem] font-black text-[10px] hover:bg-[#0A7F7A] transition-all shadow-lg shadow-[#064F4B]/10 active:scale-95 uppercase tracking-widest flex items-center justify-center gap-2"
                     >
                       <LucideIcon name="calendar" size={14} />
-                      BOOK SESSION
+                      BOOK NOW
                     </button>
-                    <a
-                      href={`https://wa.me/918157039987?text=Hi,%20I%20want%20to%20book%20an%20appointment%20with%20${encodeURIComponent(therapist.name)}`}
-                      className="w-14 bg-[#00D494] text-white rounded-[1.2rem] flex items-center justify-center hover:bg-[#00B37E] transition-all active:scale-95 shadow-lg shadow-[#00D494]/20"
-                      title="WhatsApp for Booking"
-                    >
-                      <LucideIcon name="message-circle" size={20} />
-                    </a>
                   </div>
                 </div>
               </div>
@@ -168,6 +194,18 @@ export default function TherapistGrid() {
         onClose={() => setIsModalOpen(false)}
         therapist={selectedTherapist}
       />
+    </div>
+  );
+}
+
+function InfoItem({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-[#F5F8F7] p-3 min-w-0">
+      <div className="flex items-center gap-2 text-[#0A7F7A]">
+        <LucideIcon name={icon} size={14} />
+        <p className="text-[8px] font-black uppercase tracking-widest">{label}</p>
+      </div>
+      <p className="mt-1 text-xs font-black text-[#064F4B] leading-snug line-clamp-2">{value}</p>
     </div>
   );
 }

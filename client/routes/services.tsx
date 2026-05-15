@@ -2,12 +2,11 @@ import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import CoupleTherapySection from '../components/CoupleTherapySection';
-import PricingSection from '../components/PricingSection';
 import { LucideIcon } from '@site-builder/icons';
 
 export const meta = {
-  title: "Services & Specialized Programs | ORUMA",
-  description: "Detailed point-by-point overview of our counselling programs, professional training, and courses."
+  title: "Services | ORUMA",
+  description: "Detailed overview of ORUMA's counselling and therapy services."
 };
 
 const programs = [
@@ -70,48 +69,6 @@ const programs = [
       'Parental Self-Care Strategies'
     ],
     link: '/concerns/all-concerns#postpartum'
-  }
-];
-
-const educationalServices = [
-  {
-    id: 'courses',
-    title: 'Self-Paced Courses',
-    desc: 'Learn emotional resilience at your own pace.',
-    icon: 'book-open',
-    color: 'bg-[#0A7F7A]/5',
-    details: [
-      'Managing Modern Anxiety',
-      'Mindful Parenting Modules',
-      'Emotional Intelligence 101'
-    ],
-    tag: 'Coming Soon'
-  },
-  {
-    id: 'webinar',
-    title: 'Expert Webinars',
-    desc: 'Live interactive sessions with professionals.',
-    icon: 'video',
-    color: 'bg-[#B7C8A3]/10',
-    details: [
-      'Understanding Mental Health',
-      'Relationship Trust Workshops',
-      'Stress Relief Techniques'
-    ],
-    tag: 'Monthly'
-  },
-  {
-    id: 'training',
-    title: 'Professional Training',
-    desc: 'Certified programs for psychology students.',
-    icon: 'award',
-    color: 'bg-orange-50',
-    details: [
-      'Clinical Practice Foundations',
-      'Counseling Ethics & Skills',
-      'Therapeutic Internship Program'
-    ],
-    tag: 'Certified'
   }
 ];
 
@@ -180,53 +137,8 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      {/* Pricing Section (Newly Added to make it visible as requested) */}
-      <PricingSection />
-
       {/* Couple Therapy Section */}
       <CoupleTherapySection />
-
-      {/* Training & Community */}
-      <section className="py-24 bg-[#064F4B]/5">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="flex items-center gap-4 mb-16">
-            <h2 className="text-3xl font-heading font-black text-[#064F4B]">Training & Community</h2>
-            <div className="h-px flex-grow bg-white" />
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {educationalServices.map((s) => {
-              return (
-                <div key={s.id} id={s.id} className="bg-white p-10 rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-500 scroll-mt-32 relative">
-                  <div className="absolute -top-3 -right-3 bg-[#0A7F7A] text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
-                    {s.tag}
-                  </div>
-                  <div className={`w-14 h-14 ${s.color} rounded-2xl flex items-center justify-center text-[#0A7F7A] mb-8`}>
-                    <LucideIcon name={s.icon} size={28} />
-                  </div>
-                  <h3 className="text-xl font-black text-[#1A1A1A] mb-4 uppercase tracking-tighter">{s.title}</h3>
-                  
-                  <ul className="space-y-4 mb-10">
-                    {s.details.map((detail, idx) => (
-                      <li key={idx} className="flex items-center gap-3 text-sm font-bold text-[#5F7F7A]">
-                        <LucideIcon name="check" size={14} className="text-[#0A7F7A]" />
-                        {detail}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <a 
-                    href="https://wa.me/918157039987?text=Hi,%20I'm%20interested%20in%20your%20training%20and%20courses" 
-                    className="w-full bg-[#F5F8F7] text-[#0A7F7A] py-4 rounded-2xl font-black text-xs text-center hover:bg-[#0A7F7A] hover:text-white transition-all block"
-                  >
-                    Request Information
-                  </a>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
 
       <Footer />
     </main>

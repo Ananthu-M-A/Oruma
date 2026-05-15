@@ -19,6 +19,7 @@ describe('TherapistService', () => {
     findByEmail: jest.fn(),
     create: jest.fn(),
     updateEmail: jest.fn(),
+    remove: jest.fn(),
   };
   const mailService = {
     send: jest.fn(),

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route, useLocation } from "react-router-dom";
 
 // Routes
 import Index from "../routes/index";
@@ -18,7 +18,6 @@ import CoupleTherapy from "../routes/services/couple-therapy";
 import FollowUp from "../routes/services/follow-up";
 import IndividualTherapy from "../routes/services/individual-therapy";
 import SexualWellness from "../routes/services/sexual-wellness";
-import Team from "../routes/team";
 import TherapistDetail, { meta as therapistDetailMeta } from "../routes/therapist-detail";
 import Therapists from "../routes/therapists";
 import PatientProfile, { meta as patientProfileMeta } from "../routes/profile-patient";
@@ -44,7 +43,6 @@ import { meta as coupleTherapyMeta } from "../routes/services/couple-therapy";
 import { meta as followUpMeta } from "../routes/services/follow-up";
 import { meta as individualTherapyMeta } from "../routes/services/individual-therapy";
 import { meta as sexualWellnessMeta } from "../routes/services/sexual-wellness";
-import { meta as teamMeta } from "../routes/team";
 import { meta as therapistsMeta } from "../routes/therapists";
 
 declare const lucide: { createIcons: () => void } | undefined;
@@ -70,7 +68,6 @@ const routeMeta: Record<string, { title?: string; description?: string }> = {
   "/services/follow-up": followUpMeta,
   "/services/individual-therapy": individualTherapyMeta,
   "/services/sexual-wellness": sexualWellnessMeta,
-  "/team": teamMeta,
   "/therapists/:id": therapistDetailMeta,
   "/therapists": therapistsMeta,
 };
@@ -160,7 +157,7 @@ export default function App() {
         <Route path="/services/follow-up" element={<FollowUp />} />
         <Route path="/services/individual-therapy" element={<IndividualTherapy />} />
         <Route path="/services/sexual-wellness" element={<SexualWellness />} />
-        <Route path="/team" element={<Team />} />
+        <Route path="/team" element={<Navigate to="/therapists" replace />} />
         <Route path="/therapists" element={<Therapists />} />
         <Route path="/therapists/:id" element={<TherapistDetail />} />
       </Routes>

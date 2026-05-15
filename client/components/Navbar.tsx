@@ -36,7 +36,7 @@ export default function Navbar() {
   };
 
   const services = [
-    { name: 'Individual Therapy', href: '/services#individual' },
+    { name: 'Individual Therapy', href: '/services/individual-therapy' },
     { name: 'Couple Therapy', href: '/services/couple-therapy' },
     { name: 'Postpartum Support', href: '/services#postpartum' },
     { name: 'Teenage Counselling', href: '/concerns/all-concerns#student' },
@@ -84,22 +84,7 @@ export default function Navbar() {
         }
       `}} />
 
-      {/* Announcement Bar */}
-      <div className="fixed top-0 left-0 right-0 bg-[#0A7F7A] text-white z-[1001] shadow-sm overflow-hidden h-8 flex items-center">
-        <div className="flex animate-marquee">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex items-center">
-              <p className="font-bold text-[10px] md:text-[11px] uppercase tracking-wider flex items-center">
-                <span className="italic opacity-70 lowercase font-medium px-4">first step</span>
-                Use <span className="text-[#B7C8A3] mx-1">"NEW15"</span> to get <span className="text-[#B7C8A3] mx-1">15% OFF</span> on your first session
-                <span className="mx-12 opacity-30">|</span>
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <nav className="fixed top-8 left-0 right-0 bg-white z-[1000] border-b border-gray-100 shadow-sm transition-all duration-300">
+      <nav className="fixed top-0 left-0 right-0 bg-white z-[1000] border-b border-gray-100 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-18 flex items-center justify-between relative">
           <a href="/" className="flex items-center gap-2 group h-full py-1.5">
              <img 
@@ -176,7 +161,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Menu Overlay */}
-        <div className={`fixed inset-0 top-8 bg-white z-[999] lg:hidden transition-all duration-300 ${
+        <div className={`fixed inset-0 top-0 bg-white z-[999] lg:hidden transition-all duration-300 ${
           isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
         }`}>
           <div className="h-full flex flex-col pt-8 pb-10 overflow-y-auto">

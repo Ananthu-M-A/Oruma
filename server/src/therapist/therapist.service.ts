@@ -204,9 +204,13 @@ export class TherapistService {
   }
 
   async remove(id: string): Promise<{ message: string }> {
-    const therapist = await this.findOne(id);
+    const therapist = await this.findOneWithAccount(id);
+    const accountId = therapist.account?.id;
 
     await this.therapistRepo.remove(therapist);
+    if (accountId) {
+      await this.userService.remove(accountId);
+    }
 
     return {
       message: 'Therapist deleted successfully',

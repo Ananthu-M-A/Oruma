@@ -9,7 +9,6 @@ import FAQSection from '../components/FAQSection';
 import FloatingActions from '../components/FloatingActions';
 import Footer from '../components/Footer';
 import ContactSection from '../components/ContactSection';
-import ConsultantsSection from '../components/ConsultantsSection';
 import CoupleTherapyVideo from '../components/CoupleTherapyVideo';
 import { LucideIcon } from '@site-builder/icons';
 
@@ -24,17 +23,6 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-white font-body text-[#2E3E3C]">
-      {/* NRI Promo Banner */}
-      <div className="bg-[#064F4B] text-white py-2 px-6 text-center text-[10px] font-black uppercase tracking-[0.2em] relative z-[60]">
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-4">
-          <span>Global Support for NRI Community</span>
-          <div className="w-1 h-1 bg-[#B7C8A3] rounded-full" />
-          <span className="text-[#B7C8A3]">Flat 10% OFF</span>
-          <div className="w-1 h-1 bg-[#B7C8A3] rounded-full" />
-          <a href="/consultation" className="underline hover:text-[#B7C8A3]">Learn More</a>
-        </div>
-      </div>
-
       <Navbar />
       
       <HeroSection />
@@ -48,23 +36,6 @@ export default function HomePage() {
 
       {/* Couple Therapy Spotlight Section */}
       <CoupleTherapyVideo />
-
-      {/* Consultants Section - Our Experts */}
-      <ConsultantsSection />
-
-      {/* Search Bar Area */}
-      <div className="max-w-7xl mx-auto px-6 mb-16">
-        <div className="relative group max-w-xl mx-auto">
-          <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-            <LucideIcon name="search" size={20} className="text-[#B7C8A3]" />
-          </div>
-          <input 
-            type="text" 
-            className="w-full bg-white border border-[#E2E8E6] rounded-full py-5 pl-14 pr-8 outline-none focus:ring-4 focus:ring-[#0A7F7A]/5 focus:border-[#0A7F7A] transition-all text-[#2E3E3C] shadow-sm placeholder:text-[#B7C8A3]" 
-            placeholder="Search by therapist name..." 
-          />
-        </div>
-      </div>
 
       {/* Impact Stats Strip */}
       <div className="max-w-7xl mx-auto px-6 pb-20">
@@ -102,12 +73,16 @@ export default function HomePage() {
       {/* All Available Therapists */}
       <div id="therapists" className="max-w-7xl mx-auto px-6 scroll-mt-24 pb-20">
         <div className="flex items-center justify-between mb-8 px-4 border-b border-[#064F4B]/5 pb-4">
-          <h2 className="text-3xl font-heading font-black text-[#064F4B]">Available Now</h2>
+          <h2 className="text-3xl font-heading font-black text-[#064F4B]">Available Tomorrow</h2>
           <a href="/therapists" className="text-[#0A7F7A] font-bold text-sm hover:underline flex items-center gap-1">
             View All <LucideIcon name="chevron-right" size={16} />
           </a>
         </div>
-        <TherapistGrid />
+        <TherapistGrid
+          nextDayOnly
+          emptyTitle="No therapists are available tomorrow."
+          emptyDescription="Please view all therapists or contact Oruma directly for help choosing a slot."
+        />
       </div>
 
       <ActionBanner 

@@ -1,12 +1,11 @@
 import React from 'react';
 import Navbar from '../../components/Navbar';
 import ServiceHero from '../../components/ServiceHero';
-import ServiceTherapistGrid from '../../components/ServiceTherapistGrid';
+import TherapistGrid from '../../components/TherapistGrid';
 import WhyChooseService from '../../components/WhyChooseService';
 import FAQSection from '../../components/FAQSection';
 import Footer from '../../components/Footer';
 import FloatingActions from '../../components/FloatingActions';
-import PricingSection from '../../components/PricingSection';
 
 export const meta = {
   title: "Individual Therapy | ORUMA Wellness",
@@ -25,9 +24,12 @@ export default function IndividualTherapyPage() {
         img="https://images.unsplash.com/photo-1527689368864-3a821dbccc48?auto=format&fit=crop&q=80&w=800"
       />
 
-      <ServiceTherapistGrid />
-
-      <PricingSection />
+      <section className="py-20 bg-[#F5F8F7]">
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-4xl font-heading font-black text-[#064F4B] mb-10 uppercase tracking-tighter">Available Therapists</h2>
+          <TherapistGrid />
+        </div>
+      </section>
 
       <WhyChooseService />
 

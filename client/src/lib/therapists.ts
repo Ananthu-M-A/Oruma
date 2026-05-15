@@ -402,6 +402,22 @@ export function formatTherapistSlot(slot: string | null) {
   });
 }
 
+export function isSlotOnNextDay(slot: string | null) {
+  if (!slot) return false;
+
+  const slotDate = new Date(slot);
+  if (Number.isNaN(slotDate.getTime())) return false;
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  return (
+    slotDate.getFullYear() === tomorrow.getFullYear() &&
+    slotDate.getMonth() === tomorrow.getMonth() &&
+    slotDate.getDate() === tomorrow.getDate()
+  );
+}
+
 export function getTherapistImage(image: string | null) {
   if (!image) return "";
   if (image.startsWith("http") || image.startsWith("/")) return image;

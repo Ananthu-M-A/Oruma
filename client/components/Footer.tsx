@@ -7,7 +7,8 @@ export default function Footer() {
       title: 'Service',
       links: [
         { name: 'Counselling', href: '/online-counselling' },
-        { name: 'Psychiatry', href: '/services' },
+        { name: 'Individual Therapy', href: '/services/individual-therapy' },
+        { name: 'Couple Therapy', href: '/services/couple-therapy' },
         { name: 'Sexual Wellness', href: '/services/sexual-wellness' },
         { name: 'Student Support', href: '/concerns/all-concerns#student' }
       ]
