@@ -10,6 +10,11 @@ export interface BookingResponse {
   patient: {
     id: string;
     email: string;
+    fullName?: string | null;
+    phone?: string | null;
+    age?: number | null;
+    gender?: string | null;
+    healthInfo?: Record<string, string> | null;
   };
   therapist: {
     id: string;

@@ -65,7 +65,7 @@ export class Therapist {
     type: 'timestamp',
     nullable: true,
   })
-  nextAvailableSlot: Date;
+  nextAvailableSlot: Date | null;
 
   @Column({
     default: false,

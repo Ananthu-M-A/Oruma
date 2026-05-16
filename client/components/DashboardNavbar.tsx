@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LucideIcon } from "@site-builder/icons";
-import { AuthRole, clearAccessToken, getCurrentUser } from "../src/lib/auth";
+import { AUTH_CHANGED_EVENT, AuthAccount, AuthRole, clearAccessToken, getCurrentUser, getMyAccount } from "../src/lib/auth";
 
 const roleHome: Record<AuthRole, string> = {
   PATIENT: "/profile/patient",
@@ -12,7 +12,23 @@ const roleHome: Record<AuthRole, string> = {
 
 export default function DashboardNavbar() {
   const user = getCurrentUser();
+  const [account, setAccount] = useState<AuthAccount | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadAccount = () => {
+      getMyAccount()
+        .then(setAccount)
+        .catch(() => setAccount(null));
+    };
+
+    loadAccount();
+    window.addEventListener(AUTH_CHANGED_EVENT, loadAccount);
+
+    return () => window.removeEventListener(AUTH_CHANGED_EVENT, loadAccount);
+  }, [user?.userId]);
 
   const handleLogout = () => {
     clearAccessToken();
@@ -46,9 +62,11 @@ export default function DashboardNavbar() {
               Book
             </Link>
           )}
-          <span className="hidden rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A] md:inline-flex">
-            {user?.role}
-          </span>
+          {user && (
+            <Link to={roleHome[user.role]} className="hidden rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A] md:inline-flex">
+              {(account?.fullName || user.email).slice(0, 28)} · {user.role}
+            </Link>
+          )}
           <button
             onClick={handleLogout}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#064F4B] text-white"

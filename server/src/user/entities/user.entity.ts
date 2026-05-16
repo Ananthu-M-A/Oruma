@@ -28,6 +28,21 @@ export class User {
   @Column({ type: 'enum', enum: Role, default: Role.PATIENT })
   role: Role;
 
+  @Column('varchar', { nullable: true })
+  fullName: string | null;
+
+  @Column('varchar', { nullable: true })
+  phone: string | null;
+
+  @Column('int', { nullable: true })
+  age: number | null;
+
+  @Column('varchar', { nullable: true })
+  gender: string | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  healthInfo: Record<string, unknown> | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

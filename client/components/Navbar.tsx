@@ -156,7 +156,7 @@ export default function Navbar() {
               <a href="/login" className="text-xs font-black text-[#0A7F7A] hover:text-[#064F4B] tracking-widest uppercase transition-colors">Login</a>
             )}
 
-            <a href={`https://wa.me/${phoneNumber}?text=Hi,%20I%20want%20to%20book%20an%20appointment`} className="bg-[#0A7F7A] text-white px-7 py-2 rounded-full text-[10px] font-black hover:bg-[#064F4B] transition-all active:scale-95 shadow-lg shadow-[#0A7F7A]/20 uppercase tracking-widest">Book Appointment</a>
+            <a href={currentUser ? "/therapists" : "/login"} className="bg-[#0A7F7A] text-white px-7 py-2 rounded-full text-[10px] font-black hover:bg-[#064F4B] transition-all active:scale-95 shadow-lg shadow-[#0A7F7A]/20 uppercase tracking-widest">Book Appointment</a>
           </div>
         </div>
 
@@ -241,7 +241,7 @@ export default function Navbar() {
 
             <div className="mt-auto px-8 py-10">
                <a 
-                href={`https://wa.me/${phoneNumber}?text=Hi,%20I%20want%20to%20book%20an%20appointment`}
+                href={currentUser ? "/therapists" : "/login"}
                 className="flex items-center justify-between bg-[#0A7F7A] text-white p-5 rounded-xl font-black text-lg shadow-2xl shadow-[#0A7F7A]/20 active:scale-95 transition-transform uppercase tracking-widest"
                 onClick={handleLinkClick}
               >

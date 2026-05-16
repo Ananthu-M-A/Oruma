@@ -7,7 +7,7 @@ import {
   getSlotTimeLabel,
 } from "../src/lib/therapists";
 import { createAppointment } from "../src/lib/booking";
-import { getAccessToken, getCurrentUser } from "../src/lib/auth";
+import { getAccessToken, getCurrentUser, getMyAccount } from "../src/lib/auth";
 
 export default function BookingModal({ isOpen, onClose, therapist, initialSlot }) {
   const [step, setStep] = useState(1);
@@ -32,6 +32,15 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
     if (!isOpen) return;
 
     const currentUser = getCurrentUser();
+    getMyAccount()
+      .then((account) => {
+        setFormData((prev) => ({
+          ...prev,
+          name: prev.name || account.fullName || "",
+          phone: prev.phone || account.phone || "",
+        }));
+      })
+      .catch(() => undefined);
     setStep(1);
     setSubmitError("");
     setSubmitSuccess(false);

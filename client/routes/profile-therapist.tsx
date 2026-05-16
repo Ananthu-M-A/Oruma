@@ -347,7 +347,15 @@ export default function TherapistProfilePage() {
                     <article key={appointment.id} className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 md:grid-cols-[1fr_1fr_auto_auto] md:items-center">
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Patient</p>
-                        <p className="mt-1 font-black text-[#064F4B]">{appointment.patient?.email ?? "Patient"}</p>
+                        <p className="mt-1 font-black text-[#064F4B]">{appointment.patient?.fullName || appointment.patient?.email || "Patient"}</p>
+                        {appointment.patient?.healthInfo && (
+                          <p className="mt-1 text-xs font-bold text-[#5F7F7A]">
+                            {[
+                              appointment.patient.healthInfo.primaryConcern,
+                              appointment.patient.healthInfo.currentSymptoms,
+                            ].filter(Boolean).join(" · ") || "Health info added"}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Slot</p>

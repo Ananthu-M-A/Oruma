@@ -5,8 +5,7 @@ export default function TherapistSearchHero() {
   const categories = [
     { name: 'Consultant Psychologist', icon: 'message-square', color: 'bg-[#0A7F7A]/10' },
     { name: 'Sexual Wellness', icon: 'heart', color: 'bg-[#B7C8A3]/20' },
-    { name: 'Clinical Psychologist', icon: 'user', color: 'bg-[#0A7F7A]/10' },
-    { name: 'Psychiatrist', icon: 'brain', color: 'bg-[#B7C8A3]/20' }
+    { name: 'Clinical Psychologist', icon: 'user', color: 'bg-[#0A7F7A]/10' }
   ];
 
   return (

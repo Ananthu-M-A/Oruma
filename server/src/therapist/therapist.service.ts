@@ -5,13 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '../auth/strategies/jwt.strategy';
 import { Appointment } from '../appointment/entities/appointment.entity';
 import { AppointmentStatus } from '../appointment/entities/appointment-status.enum';
+import { AvailabilitySlot } from '../availability/entities/availability-slot.entity';
+import { SlotStatus } from '../availability/entities/slot-status.enum';
 import { MailService } from '../mail/mail.service';
 import { Role } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
@@ -39,6 +41,8 @@ export class TherapistService {
     private readonly therapistRepo: Repository<Therapist>,
     @InjectRepository(Appointment)
     private readonly appointmentRepo: Repository<Appointment>,
+    @InjectRepository(AvailabilitySlot)
+    private readonly slotRepo: Repository<AvailabilitySlot>,
     private readonly userService: UserService,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
@@ -86,8 +90,8 @@ export class TherapistService {
     };
   }
 
-  findAll(): Promise<Therapist[]> {
-    return this.therapistRepo.find({
+  async findAll(): Promise<Therapist[]> {
+    const therapists = await this.therapistRepo.find({
       where: {
         isActive: true,
       },
@@ -95,6 +99,8 @@ export class TherapistService {
         createdAt: 'DESC',
       },
     });
+
+    return this.attachNextAvailableSlots(therapists);
   }
 
   findAllForAdmin(): Promise<Therapist[]> {
@@ -256,6 +262,30 @@ export class TherapistService {
         estimatedCompletedRevenue: completedAppointments * therapist.price,
       };
     });
+  }
+
+  private async attachNextAvailableSlots(therapists: Therapist[]) {
+    const now = new Date();
+
+    return Promise.all(
+      therapists.map(async (therapist) => {
+        const slot = await this.slotRepo.findOne({
+          where: {
+            therapist: {
+              id: therapist.id,
+            },
+            status: SlotStatus.AVAILABLE,
+            startTime: MoreThan(now),
+          },
+          order: {
+            startTime: 'ASC',
+          },
+        });
+
+        therapist.nextAvailableSlot = slot?.startTime ?? null;
+        return therapist;
+      }),
+    );
   }
 
   private generateTemporaryPassword() {

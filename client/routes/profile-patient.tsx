@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 import { LucideIcon } from "@site-builder/icons";
-import { getAccessToken, getCurrentUser } from "../src/lib/auth";
+import { AuthAccount, getAccessToken, getCurrentUser, getMyAccount, updateMyAccount } from "../src/lib/auth";
 import { BookingResponse, getMyAppointments } from "../src/lib/booking";
 
 export const meta = {
@@ -45,9 +45,26 @@ function AppointmentCard({ appointment }: { appointment: BookingResponse }) {
 
 export default function PatientProfilePage() {
   const user = getCurrentUser();
+  const [account, setAccount] = useState<AuthAccount | null>(null);
   const [appointments, setAppointments] = useState<BookingResponse[]>([]);
+  const [personalForm, setPersonalForm] = useState({
+    fullName: "",
+    phone: "",
+    age: "",
+    gender: "",
+  });
+  const [healthForm, setHealthForm] = useState({
+    primaryConcern: "",
+    currentSymptoms: "",
+    medication: "",
+    previousTherapy: "",
+    emergencyContact: "",
+    notes: "",
+  });
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     const token = getAccessToken();
@@ -56,8 +73,26 @@ export default function PatientProfilePage() {
       return;
     }
 
-    getMyAppointments(token)
-      .then(setAppointments)
+    Promise.all([getMyAppointments(token), getMyAccount()])
+      .then(([appointmentData, accountData]) => {
+        setAppointments(appointmentData);
+        setAccount(accountData);
+        setPersonalForm({
+          fullName: accountData.fullName ?? "",
+          phone: accountData.phone ?? "",
+          age: accountData.age ? String(accountData.age) : "",
+          gender: accountData.gender ?? "",
+        });
+        const healthInfo = (accountData.healthInfo ?? {}) as Record<string, string>;
+        setHealthForm({
+          primaryConcern: healthInfo.primaryConcern ?? "",
+          currentSymptoms: healthInfo.currentSymptoms ?? "",
+          medication: healthInfo.medication ?? "",
+          previousTherapy: healthInfo.previousTherapy ?? "",
+          emergencyContact: healthInfo.emergencyContact ?? "",
+          notes: healthInfo.notes ?? "",
+        });
+      })
       .catch((err) => setError(err instanceof Error ? err.message : "Unable to load appointments."))
       .finally(() => setIsLoading(false));
   }, []);
@@ -67,6 +102,28 @@ export default function PatientProfilePage() {
       .filter((appointment) => appointment.slot?.startTime && new Date(appointment.slot.startTime).getTime() >= Date.now())
       .sort((a, b) => new Date(a.slot.startTime).getTime() - new Date(b.slot.startTime).getTime())[0];
   }, [appointments]);
+
+  const saveProfile = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      const updated = await updateMyAccount({
+        fullName: personalForm.fullName,
+        phone: personalForm.phone,
+        age: personalForm.age ? Number(personalForm.age) : null,
+        gender: personalForm.gender,
+        healthInfo: healthForm,
+      });
+      setAccount(updated);
+      setNotice("Profile updated.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update profile.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[#F8FBF8] font-body text-[#2E3E3C]">
@@ -79,7 +136,7 @@ export default function PatientProfilePage() {
                 <LucideIcon name="heart-handshake" size={32} />
               </div>
               <p className="mt-8 text-[11px] font-black uppercase tracking-[0.22em] text-white/60">Patient profile</p>
-              <h1 className="mt-3 text-4xl md:text-5xl font-heading font-black leading-tight">Welcome back</h1>
+              <h1 className="mt-3 text-4xl md:text-5xl font-heading font-black leading-tight">Welcome back{account?.fullName ? `, ${account.fullName.split(" ")[0]}` : ""}</h1>
               <p className="mt-4 text-white/75 font-medium leading-relaxed">{user?.email}</p>
 
               <div className="mt-10 grid gap-3 sm:grid-cols-2">
@@ -132,9 +189,71 @@ export default function PatientProfilePage() {
               </div>
             </section>
           </div>
+
+          <form onSubmit={saveProfile} className="mt-8 grid gap-8 lg:grid-cols-2">
+            <section className="rounded-[2rem] border border-[#E2E8E6] bg-white p-6 md:p-8 shadow-sm">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Personal info</p>
+              <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Your details</h2>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <Field label="Full name" value={personalForm.fullName} onChange={(value) => setPersonalForm({ ...personalForm, fullName: value })} />
+                <Field label="Phone" value={personalForm.phone} onChange={(value) => setPersonalForm({ ...personalForm, phone: value })} />
+                <Field label="Age" type="number" value={personalForm.age} onChange={(value) => setPersonalForm({ ...personalForm, age: value })} />
+                <Field label="Gender" value={personalForm.gender} onChange={(value) => setPersonalForm({ ...personalForm, gender: value })} />
+              </div>
+            </section>
+
+            <section className="rounded-[2rem] border border-[#E2E8E6] bg-white p-6 md:p-8 shadow-sm">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Health info</p>
+              <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Care context</h2>
+              <div className="mt-6 grid gap-4">
+                <Field label="Primary concern" value={healthForm.primaryConcern} onChange={(value) => setHealthForm({ ...healthForm, primaryConcern: value })} />
+                <Field label="Current symptoms" value={healthForm.currentSymptoms} onChange={(value) => setHealthForm({ ...healthForm, currentSymptoms: value })} />
+                <Field label="Medication" value={healthForm.medication} onChange={(value) => setHealthForm({ ...healthForm, medication: value })} />
+                <Field label="Previous therapy" value={healthForm.previousTherapy} onChange={(value) => setHealthForm({ ...healthForm, previousTherapy: value })} />
+                <Field label="Emergency contact" value={healthForm.emergencyContact} onChange={(value) => setHealthForm({ ...healthForm, emergencyContact: value })} />
+                <label>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Additional notes</span>
+                  <textarea value={healthForm.notes} onChange={(event) => setHealthForm({ ...healthForm, notes: event.target.value })} className="mt-2 min-h-28 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+                </label>
+              </div>
+            </section>
+
+            <div className="lg:col-span-2">
+              {notice && <p className="mb-4 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
+              <button type="submit" disabled={isSaving} className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-7 py-4 text-xs font-black uppercase tracking-widest text-white disabled:opacity-60">
+                <LucideIcon name="save" size={16} />
+                {isSaving ? "Saving..." : "Save profile"}
+              </button>
+            </div>
+          </form>
         </div>
       </section>
       <Footer />
     </main>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+}) {
+  return (
+    <label>
+      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</span>
+      <input
+        type={type}
+        min={type === "number" ? 0 : undefined}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+      />
+    </label>
   );
 }

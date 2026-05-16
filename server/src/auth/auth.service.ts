@@ -10,7 +10,7 @@ import { UserService } from '../user/user.service';
 import { Role, User } from '../user/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 
-type RegisteredUser = Omit<User, 'password'>;
+type RegisteredUser = Pick<User, 'id' | 'email' | 'role' | 'createdAt'>;
 type AuthenticatedUser = {
   accessToken: string;
   user: Pick<User, 'id' | 'email' | 'role' | 'createdAt'>;

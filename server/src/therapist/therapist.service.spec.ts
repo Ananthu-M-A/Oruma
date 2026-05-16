@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Appointment } from '../appointment/entities/appointment.entity';
+import { AvailabilitySlot } from '../availability/entities/availability-slot.entity';
 import { MailService } from '../mail/mail.service';
 import { UserService } from '../user/user.service';
 import { Therapist } from './entities/therapist.entity';
@@ -14,6 +15,9 @@ describe('TherapistService', () => {
   };
   const appointmentRepository = {
     find: jest.fn(),
+  };
+  const slotRepository = {
+    findOne: jest.fn(),
   };
   const userService = {
     findByEmail: jest.fn(),
@@ -39,6 +43,10 @@ describe('TherapistService', () => {
         {
           provide: getRepositoryToken(Appointment),
           useValue: appointmentRepository,
+        },
+        {
+          provide: getRepositoryToken(AvailabilitySlot),
+          useValue: slotRepository,
         },
         {
           provide: UserService,

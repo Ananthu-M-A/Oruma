@@ -19,6 +19,14 @@ export class UserService {
     });
   }
 
+  findById(id: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
+  }
+
   create(user: Pick<User, 'email' | 'password' | 'role'>): Promise<User> {
     const createdUser = this.userRepository.create(user);
 
@@ -40,6 +48,18 @@ export class UserService {
   async updateEmail(id: string, email: string): Promise<User> {
     const user = await this.userRepository.findOneByOrFail({ id });
     user.email = email;
+
+    return this.userRepository.save(user);
+  }
+
+  async updateProfile(
+    id: string,
+    profile: Partial<
+      Pick<User, 'fullName' | 'phone' | 'age' | 'gender' | 'healthInfo'>
+    >,
+  ): Promise<User> {
+    const user = await this.userRepository.findOneByOrFail({ id });
+    Object.assign(user, profile);
 
     return this.userRepository.save(user);
   }

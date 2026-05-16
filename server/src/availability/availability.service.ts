@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 
 import { AvailabilitySlot } from './entities/availability-slot.entity';
 import { Therapist } from '../therapist/entities/therapist.entity';
@@ -135,6 +135,7 @@ export class AvailabilityService {
           id: therapistId,
         },
         status: SlotStatus.AVAILABLE,
+        startTime: MoreThan(new Date()),
       },
       order: {
         startTime: 'ASC',

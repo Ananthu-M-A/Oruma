@@ -4,6 +4,7 @@ export type AuthUser = {
   userId: string;
   email: string;
   role: AuthRole;
+  fullName?: string | null;
   exp?: number;
   iat?: number;
 };
@@ -12,6 +13,11 @@ export type AuthAccount = {
   id: string;
   email: string;
   role: AuthRole;
+  fullName?: string | null;
+  phone?: string | null;
+  age?: number | null;
+  gender?: string | null;
+  healthInfo?: Record<string, unknown> | null;
   createdAt: string;
 };
 
@@ -79,6 +85,33 @@ async function requestWithAuth<T>(path: string) {
   return data;
 }
 
+async function writeWithAuth<T>(path: string, payload: unknown, method: "PATCH" | "POST" = "PATCH") {
+  const token = getAccessToken();
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = (await response.json().catch(() => ({}))) as T & {
+    message?: string | string[];
+  };
+
+  if (!response.ok) {
+    if (response.status === 401) clearAccessToken();
+    const message = Array.isArray(data.message)
+      ? data.message.join(" ")
+      : data.message ?? "Unable to save profile.";
+    throw new Error(message);
+  }
+
+  window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
+  return data;
+}
+
 export function login(payload: LoginPayload) {
   return requestAuth("/auth/login", payload);
 }
@@ -89,6 +122,14 @@ export function register(payload: RegisterPayload) {
 
 export function getProfile() {
   return requestWithAuth<AuthUser>("/auth/profile");
+}
+
+export function getMyAccount() {
+  return requestWithAuth<AuthAccount>("/user/me");
+}
+
+export function updateMyAccount(payload: Partial<AuthAccount>) {
+  return writeWithAuth<AuthAccount>("/user/me", payload);
 }
 
 export function saveAccessToken(token: string) {
