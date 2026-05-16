@@ -3,6 +3,7 @@ import React, { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
+import ProfileTabs from "../components/ProfileTabs";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
 import { AdminSummary, getAdminSummary } from "../src/lib/admin";
@@ -25,6 +26,7 @@ export default function AdminProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
 
   const loadAdminData = async () => {
     const token = getAccessToken();
@@ -110,45 +112,96 @@ export default function AdminProfilePage() {
             </div>
           </div>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
-            <Metric icon="users" label="Patients" value={summary?.patients ?? 0} />
-            <Metric icon="user-round-check" label="Therapists" value={summary?.therapistUsers ?? therapists.length} />
-            <Metric icon="calendar-check" label="Appointments" value={summary?.appointments ?? appointments.length} />
-            <Metric icon="badge-indian-rupee" label="Revenue" value={`Rs.${(summary?.revenue ?? 0).toLocaleString("en-IN")}`} />
-            <Metric icon="video" label="Completed sessions" value={summary?.sessions ?? 0} />
-            <Metric icon="clock-alert" label="Pending appointments" value={summary?.pendingAppointments ?? pendingCount} />
-            <Metric icon="user-round-cog" label="Awaiting activation" value={inactiveTherapistCount} />
+          <ProfileTabs
+            tabs={[
+              { id: "overview", label: "Overview" },
+              { id: "appointments", label: "Appointments" },
+              { id: "therapists", label: "Therapists" },
+            ]}
+            activeTab={activeTab}
+            onChange={setActiveTab}
+            className="mt-10"
+          />
+
+          <div className="mt-8">
+            {notice && <p className="mb-6 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
+            {error && <p className="mb-6 rounded-lg bg-red-50 p-4 font-bold text-red-700">{error}</p>}
+
+            {activeTab === "overview" && (
+              <>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Metric icon="users" label="Patients" value={summary?.patients ?? 0} />
+                  <Metric icon="user-round-check" label="Therapists" value={summary?.therapistUsers ?? therapists.length} />
+                  <Metric icon="calendar-check" label="Appointments" value={summary?.appointments ?? appointments.length} />
+                  <Metric icon="badge-indian-rupee" label="Revenue" value={`Rs.${(summary?.revenue ?? 0).toLocaleString("en-IN")}`} />
+                  <Metric icon="video" label="Completed sessions" value={summary?.sessions ?? 0} />
+                  <Metric icon="clock-alert" label="Pending appointments" value={summary?.pendingAppointments ?? pendingCount} />
+                  <Metric icon="user-round-cog" label="Awaiting activation" value={inactiveTherapistCount} />
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-3">
+                  <StatusPanel title="Payments" rows={[`Collected: Rs.${(summary?.payments.collected ?? 0).toLocaleString("en-IN")}`, `Refunds: Rs.${summary?.payments.refunds ?? 0}`, `Pending: Rs.${summary?.payments.pending ?? 0}`]} />
+                  <StatusPanel title="Case sheets" rows={[`Monitored: ${summary?.caseSheets.monitored ?? 0}`, `Updated: ${summary?.caseSheets.updated ?? 0}`]} />
+                  <StatusPanel title="Tickets" rows={[`Open: ${summary?.tickets.open ?? 0}`, `Resolved: ${summary?.tickets.resolved ?? 0}`, `Therapist updates: ${summary?.pendingTherapistUpdates ?? 0}`]} />
+                </div>
+              </>
+            )}
+
+            {activeTab === "appointments" && (
+              <section className="rounded-lg bg-white p-6 shadow-sm border border-[#E2E8E6]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Latest activity</p>
+                <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Appointments</h2>
+                <div className="mt-6 overflow-hidden rounded-lg border border-[#E2E8E6]">
+                  {isLoading && <p className="bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">Loading admin data...</p>}
+                  {!isLoading && appointments.length === 0 && (
+                    <p className="bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">No appointment data is available yet.</p>
+                  )}
+                  {appointments.slice(0, 10).map((appointment) => (
+                    <article key={appointment.id} className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-center">
+                      <ActivityItem label="Patient" value={appointment.patient?.email ?? "Patient"} />
+                      <ActivityItem label="Therapist" value={appointment.therapist?.name ?? "Therapist"} />
+                      <ActivityItem label="Created" value={new Date(appointment.createdAt).toLocaleDateString("en-IN")} />
+                      <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+                        {appointment.status}
+                      </span>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {activeTab === "therapists" && (
+              <section className="rounded-lg bg-white p-6 shadow-sm border border-[#E2E8E6]">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Therapist manager</p>
+                    <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Therapists</h2>
+                  </div>
+                  <button onClick={() => setIsCreateOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-6 py-4 text-xs font-black uppercase tracking-widest text-white">
+                    <LucideIcon name="user-plus" size={16} />
+                    Create therapist
+                  </button>
+                </div>
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                  <StatusPanel title="Total therapists" rows={[`Count: ${therapists.length}`]} />
+                  <StatusPanel title="Inactive" rows={[`Awaiting activation: ${inactiveTherapistCount}`]} />
+                </div>
+                <div className="mt-6 overflow-hidden rounded-lg border border-[#E2E8E6]">
+                  {therapists.length === 0 && <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">No therapists have been registered yet.</p>}
+                  {therapists.map((therapist) => (
+                    <article key={therapist.id} className="grid gap-4 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 sm:grid-cols-[1fr_auto] sm:items-center">
+                      <div>
+                        <p className="font-black text-[#064F4B]">{therapist.name || therapist.email}</p>
+                        <p className="mt-1 text-sm font-bold text-[#5F7F7A]">{therapist.email}</p>
+                      </div>
+                      <span className={`w-fit rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-widest ${therapist.isActive ? "bg-[#EAF7F2] text-[#075E59]" : "bg-[#F5F8F7] text-[#064F4B]"}`}>
+                        {therapist.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
-
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
-            <StatusPanel title="Payments" rows={[`Collected: Rs.${(summary?.payments.collected ?? 0).toLocaleString("en-IN")}`, `Refunds: Rs.${summary?.payments.refunds ?? 0}`, `Pending: Rs.${summary?.payments.pending ?? 0}`]} />
-            <StatusPanel title="Case sheets" rows={[`Monitored: ${summary?.caseSheets.monitored ?? 0}`, `Updated: ${summary?.caseSheets.updated ?? 0}`]} />
-            <StatusPanel title="Tickets" rows={[`Open: ${summary?.tickets.open ?? 0}`, `Resolved: ${summary?.tickets.resolved ?? 0}`, `Therapist updates: ${summary?.pendingTherapistUpdates ?? 0}`]} />
-          </div>
-
-          {notice && <p className="mt-6 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
-          {error && <p className="mt-6 rounded-lg bg-red-50 p-4 font-bold text-red-700">{error}</p>}
-
-          <section className="mt-8 rounded-lg bg-white p-6 shadow-sm border border-[#E2E8E6]">
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Latest activity</p>
-            <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Appointments</h2>
-            <div className="mt-6 overflow-hidden rounded-lg border border-[#E2E8E6]">
-              {isLoading && <p className="bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">Loading admin data...</p>}
-              {!isLoading && appointments.length === 0 && (
-                <p className="bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">No appointment data is available yet.</p>
-              )}
-              {appointments.slice(0, 10).map((appointment) => (
-                <article key={appointment.id} className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-center">
-                  <ActivityItem label="Patient" value={appointment.patient?.email ?? "Patient"} />
-                  <ActivityItem label="Therapist" value={appointment.therapist?.name ?? "Therapist"} />
-                  <ActivityItem label="Created" value={new Date(appointment.createdAt).toLocaleDateString("en-IN")} />
-                  <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
-                    {appointment.status}
-                  </span>
-                </article>
-              ))}
-            </div>
-          </section>
         </div>
       </section>
 

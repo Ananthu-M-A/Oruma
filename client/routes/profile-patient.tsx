@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
+import ProfileTabs from "../components/ProfileTabs";
 import { LucideIcon } from "@site-builder/icons";
 import { AuthAccount, getAccessToken, getCurrentUser, getMyAccount, updateMyAccount } from "../src/lib/auth";
 import { BookingResponse, getMyAppointments } from "../src/lib/booking";
@@ -65,6 +66,7 @@ export default function PatientProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [activeTab, setActiveTab] = useState("appointments");
 
   useEffect(() => {
     const token = getAccessToken();
@@ -174,58 +176,82 @@ export default function PatientProfilePage() {
                 </Link>
               </div>
 
-              <div className="mt-8 space-y-4">
-                {isLoading && <p className="rounded-[1.25rem] bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">Loading appointments...</p>}
-                {!isLoading && error && <p className="rounded-[1.25rem] bg-red-50 p-5 font-bold text-red-700">{error}</p>}
-                {!isLoading && !error && appointments.length === 0 && (
-                  <div className="rounded-[1.5rem] bg-[#F5F8F7] p-7 text-center">
-                    <p className="font-black text-[#064F4B]">No appointments yet.</p>
-                    <p className="mt-2 text-sm font-bold text-[#5F7F7A]">Choose a therapist and book your first session.</p>
+              <ProfileTabs
+                tabs={[
+                  { id: "appointments", label: "Appointments" },
+                  { id: "personal", label: "Personal info" },
+                  { id: "health", label: "Health info" },
+                ]}
+                activeTab={activeTab}
+                onChange={setActiveTab}
+                className="mt-8"
+              />
+
+              <div className="mt-8">
+                {notice && <p className="mb-4 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
+                {error && <p className="mb-4 rounded-lg bg-red-50 p-4 font-bold text-red-700">{error}</p>}
+
+                {activeTab === "appointments" && (
+                  <div className="space-y-4">
+                    {isLoading && <p className="rounded-[1.25rem] bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">Loading appointments...</p>}
+                    {!isLoading && appointments.length === 0 && (
+                      <div className="rounded-[1.5rem] bg-[#F5F8F7] p-7 text-center">
+                        <p className="font-black text-[#064F4B]">No appointments yet.</p>
+                        <p className="mt-2 text-sm font-bold text-[#5F7F7A]">Choose a therapist and book your first session.</p>
+                      </div>
+                    )}
+                    {!isLoading && appointments.map((appointment) => (
+                      <AppointmentCard key={appointment.id} appointment={appointment} />
+                    ))}
                   </div>
                 )}
-                {!isLoading && !error && appointments.map((appointment) => (
-                  <AppointmentCard key={appointment.id} appointment={appointment} />
-                ))}
+
+                {activeTab === "personal" && (
+                  <form onSubmit={saveProfile} className="space-y-6">
+                    <section className="rounded-[2rem] border border-[#E2E8E6] bg-[#FBFDFC] p-6 md:p-8 shadow-sm">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Personal info</p>
+                      <h3 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Your details</h3>
+                      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                        <Field label="Full name" value={personalForm.fullName} onChange={(value) => setPersonalForm({ ...personalForm, fullName: value })} />
+                        <Field label="Phone" value={personalForm.phone} onChange={(value) => setPersonalForm({ ...personalForm, phone: value })} />
+                        <Field label="Age" type="number" value={personalForm.age} onChange={(value) => setPersonalForm({ ...personalForm, age: value })} />
+                        <Field label="Gender" value={personalForm.gender} onChange={(value) => setPersonalForm({ ...personalForm, gender: value })} />
+                      </div>
+                    </section>
+                    <button type="submit" disabled={isSaving} className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-7 py-4 text-xs font-black uppercase tracking-widest text-white disabled:opacity-60">
+                      <LucideIcon name="save" size={16} />
+                      {isSaving ? "Saving..." : "Save profile"}
+                    </button>
+                  </form>
+                )}
+
+                {activeTab === "health" && (
+                  <form onSubmit={saveProfile} className="space-y-6">
+                    <section className="rounded-[2rem] border border-[#E2E8E6] bg-[#FBFDFC] p-6 md:p-8 shadow-sm">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Health info</p>
+                      <h3 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Care context</h3>
+                      <div className="mt-6 grid gap-4">
+                        <Field label="Primary concern" value={healthForm.primaryConcern} onChange={(value) => setHealthForm({ ...healthForm, primaryConcern: value })} />
+                        <Field label="Current symptoms" value={healthForm.currentSymptoms} onChange={(value) => setHealthForm({ ...healthForm, currentSymptoms: value })} />
+                        <Field label="Medication" value={healthForm.medication} onChange={(value) => setHealthForm({ ...healthForm, medication: value })} />
+                        <Field label="Previous therapy" value={healthForm.previousTherapy} onChange={(value) => setHealthForm({ ...healthForm, previousTherapy: value })} />
+                        <Field label="Emergency contact" value={healthForm.emergencyContact} onChange={(value) => setHealthForm({ ...healthForm, emergencyContact: value })} />
+                        <label>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Additional notes</span>
+                          <textarea value={healthForm.notes} onChange={(event) => setHealthForm({ ...healthForm, notes: event.target.value })} className="mt-2 min-h-28 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+                        </label>
+                      </div>
+                    </section>
+                    <button type="submit" disabled={isSaving} className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-7 py-4 text-xs font-black uppercase tracking-widest text-white disabled:opacity-60">
+                      <LucideIcon name="save" size={16} />
+                      {isSaving ? "Saving..." : "Save profile"}
+                    </button>
+                  </form>
+                )}
               </div>
             </section>
           </div>
 
-          <form onSubmit={saveProfile} className="mt-8 grid gap-8 lg:grid-cols-2">
-            <section className="rounded-[2rem] border border-[#E2E8E6] bg-white p-6 md:p-8 shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Personal info</p>
-              <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Your details</h2>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <Field label="Full name" value={personalForm.fullName} onChange={(value) => setPersonalForm({ ...personalForm, fullName: value })} />
-                <Field label="Phone" value={personalForm.phone} onChange={(value) => setPersonalForm({ ...personalForm, phone: value })} />
-                <Field label="Age" type="number" value={personalForm.age} onChange={(value) => setPersonalForm({ ...personalForm, age: value })} />
-                <Field label="Gender" value={personalForm.gender} onChange={(value) => setPersonalForm({ ...personalForm, gender: value })} />
-              </div>
-            </section>
-
-            <section className="rounded-[2rem] border border-[#E2E8E6] bg-white p-6 md:p-8 shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Health info</p>
-              <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Care context</h2>
-              <div className="mt-6 grid gap-4">
-                <Field label="Primary concern" value={healthForm.primaryConcern} onChange={(value) => setHealthForm({ ...healthForm, primaryConcern: value })} />
-                <Field label="Current symptoms" value={healthForm.currentSymptoms} onChange={(value) => setHealthForm({ ...healthForm, currentSymptoms: value })} />
-                <Field label="Medication" value={healthForm.medication} onChange={(value) => setHealthForm({ ...healthForm, medication: value })} />
-                <Field label="Previous therapy" value={healthForm.previousTherapy} onChange={(value) => setHealthForm({ ...healthForm, previousTherapy: value })} />
-                <Field label="Emergency contact" value={healthForm.emergencyContact} onChange={(value) => setHealthForm({ ...healthForm, emergencyContact: value })} />
-                <label>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Additional notes</span>
-                  <textarea value={healthForm.notes} onChange={(event) => setHealthForm({ ...healthForm, notes: event.target.value })} className="mt-2 min-h-28 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
-                </label>
-              </div>
-            </section>
-
-            <div className="lg:col-span-2">
-              {notice && <p className="mb-4 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
-              <button type="submit" disabled={isSaving} className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-7 py-4 text-xs font-black uppercase tracking-widest text-white disabled:opacity-60">
-                <LucideIcon name="save" size={16} />
-                {isSaving ? "Saving..." : "Save profile"}
-              </button>
-            </div>
-          </form>
         </div>
       </section>
       <Footer />

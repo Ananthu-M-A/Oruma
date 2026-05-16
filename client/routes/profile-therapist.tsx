@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
+import ProfileTabs from "../components/ProfileTabs";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
 import { BookingResponse, getAppointments, updateAppointmentStatus } from "../src/lib/booking";
@@ -64,6 +65,7 @@ export default function TherapistProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
     const token = getAccessToken();
@@ -235,7 +237,7 @@ export default function TherapistProfilePage() {
                 </span>
               </aside>
 
-              <section>
+              <section className="rounded-[2rem] border border-[#E2E8E6] bg-white p-6 md:p-8 shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Appointments</p>
@@ -246,136 +248,157 @@ export default function TherapistProfilePage() {
                   </span>
                 </div>
 
-                <form onSubmit={saveProfile} className="mt-8 grid gap-4 rounded-[1.5rem] border border-[#E2E8E6] bg-[#FBFDFC] p-5 md:grid-cols-2">
-                  {form.image && (
-                    <div className="md:col-span-2">
-                      <img src={getTherapistImage(form.image)} alt={form.name || "Therapist profile"} className="h-28 w-28 rounded-lg object-cover" />
-                    </div>
-                  )}
-                  <Field label="Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} required />
-                  <Field label="Title" value={form.title} onChange={(value) => setForm({ ...form, title: value })} required />
-                  <Field label="Tags" value={form.tags} onChange={(value) => setForm({ ...form, tags: value })} />
-                  <Field label="Experience" type="number" value={form.experience} onChange={(value) => setForm({ ...form, experience: value })} required />
-                  <Field label="Group" type="number" value={form.group} onChange={(value) => setForm({ ...form, group: value })} required />
-                  <Field label="Individual fee" type="number" value={form.price} onChange={(value) => setForm({ ...form, price: value })} required />
-                  <Field label="Couple fee" type="number" value={form.couplePrice} onChange={(value) => setForm({ ...form, couplePrice: value })} />
-                  <Field label="Profile picture URL or asset file" value={form.image} onChange={(value) => setForm({ ...form, image: value })} />
-                  <Field label="Qualifications" value={form.qualifications} onChange={(value) => setForm({ ...form, qualifications: value })} />
-                  <Field label="Specialization" value={form.specialization} onChange={(value) => setForm({ ...form, specialization: value })} />
-                  <label className="md:col-span-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Bio</span>
-                    <textarea value={form.bio} onChange={(event) => setForm({ ...form, bio: event.target.value })} className="mt-2 min-h-28 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
-                  </label>
-                  <div className="md:col-span-2">
-                    <button type="submit" disabled={isSaving} className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-6 py-4 text-xs font-black uppercase tracking-widest text-white disabled:opacity-60">
-                      <LucideIcon name="save" size={16} />
-                      {isSaving ? "Saving..." : "Save profile"}
-                    </button>
-                  </div>
-                </form>
-                {notice && <p className="mt-4 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
+                <ProfileTabs
+                  tabs={[
+                    { id: "profile", label: "Profile" },
+                    { id: "availability", label: "Availability" },
+                    { id: "appointments", label: "Appointments" },
+                  ]}
+                  activeTab={activeTab}
+                  onChange={setActiveTab}
+                  className="mt-8"
+                />
 
-                <section className="mt-8 rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Availability</p>
-                      <h3 className="mt-1 text-2xl font-heading font-black text-[#064F4B]">Time slots</h3>
-                    </div>
-                    <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B]">
-                      {slots.length} slots
-                    </span>
-                  </div>
+                <div className="mt-8">
+                  {notice && <p className="mb-4 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
+                  {error && <p className="mb-4 rounded-lg bg-red-50 p-4 font-bold text-red-700">{error}</p>}
 
-                  <form onSubmit={saveSlot} className="mt-5 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
-                    <label>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Start</span>
-                      <input
-                        type="datetime-local"
-                        required
-                        min={toLocalInputValue(new Date(Date.now() + 60 * 1000).toISOString())}
-                        value={slotForm.startTime}
-                        onChange={(event) => {
-                          const startTime = event.target.value;
-                          setSlotForm({ startTime, endTime: addOneHour(startTime) });
-                        }}
-                        className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
-                      />
-                    </label>
-                    <label>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">End</span>
-                      <input type="datetime-local" required readOnly value={slotForm.endTime} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#F5F8F7] px-4 py-3 font-bold text-[#064F4B] outline-none" />
-                    </label>
-                    <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#064F4B] px-5 py-4 text-xs font-black uppercase tracking-widest text-white">
-                      <LucideIcon name={editingSlotId ? "save" : "plus"} size={16} />
-                      {editingSlotId ? "Update" : "Add"}
-                    </button>
-                  </form>
-                  {editingSlotId && (
-                    <button type="button" onClick={() => { setEditingSlotId(null); setSlotForm({ startTime: "", endTime: "" }); }} className="mt-3 text-xs font-black uppercase tracking-widest text-[#0A7F7A]">
-                      Cancel slot edit
-                    </button>
+                  {activeTab === "profile" && (
+                    <form onSubmit={saveProfile} className="grid gap-4 rounded-[1.5rem] border border-[#E2E8E6] bg-[#FBFDFC] p-5 md:grid-cols-2">
+                      {form.image && (
+                        <div className="md:col-span-2">
+                          <img src={getTherapistImage(form.image)} alt={form.name || "Therapist profile"} className="h-28 w-28 rounded-lg object-cover" />
+                        </div>
+                      )}
+                      <Field label="Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} required />
+                      <Field label="Title" value={form.title} onChange={(value) => setForm({ ...form, title: value })} required />
+                      <Field label="Tags" value={form.tags} onChange={(value) => setForm({ ...form, tags: value })} />
+                      <Field label="Experience" type="number" value={form.experience} onChange={(value) => setForm({ ...form, experience: value })} required />
+                      <Field label="Group" type="number" value={form.group} onChange={(value) => setForm({ ...form, group: value })} required />
+                      <Field label="Individual fee" type="number" value={form.price} onChange={(value) => setForm({ ...form, price: value })} required />
+                      <Field label="Couple fee" type="number" value={form.couplePrice} onChange={(value) => setForm({ ...form, couplePrice: value })} />
+                      <Field label="Profile picture URL or asset file" value={form.image} onChange={(value) => setForm({ ...form, image: value })} />
+                      <Field label="Qualifications" value={form.qualifications} onChange={(value) => setForm({ ...form, qualifications: value })} />
+                      <Field label="Specialization" value={form.specialization} onChange={(value) => setForm({ ...form, specialization: value })} />
+                      <label className="md:col-span-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Bio</span>
+                        <textarea value={form.bio} onChange={(event) => setForm({ ...form, bio: event.target.value })} className="mt-2 min-h-28 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+                      </label>
+                      <div className="md:col-span-2">
+                        <button type="submit" disabled={isSaving} className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-6 py-4 text-xs font-black uppercase tracking-widest text-white disabled:opacity-60">
+                          <LucideIcon name="save" size={16} />
+                          {isSaving ? "Saving..." : "Save profile"}
+                        </button>
+                      </div>
+                    </form>
                   )}
 
-                  <div className="mt-5 overflow-hidden rounded-lg border border-[#E2E8E6]">
-                    {slots.length === 0 && <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">No availability slots yet.</p>}
-                    {slots.map((slot) => (
-                      <article key={slot.id} className="flex flex-col gap-3 border-b border-[#E2E8E6] p-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
+                  {activeTab === "availability" && (
+                    <section className="rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                          <p className="font-black text-[#064F4B]">{formatAvailabilitySlotRange(slot)}</p>
-                          <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{slot.status}</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Availability</p>
+                          <h3 className="mt-1 text-2xl font-heading font-black text-[#064F4B]">Time slots</h3>
                         </div>
-                        <div className="flex gap-2">
-                          <button type="button" disabled={slot.status === "BOOKED"} onClick={() => editSlot(slot)} className="rounded-full border border-[#DDE8E5] p-3 text-[#064F4B] disabled:opacity-40" title="Edit slot">
-                            <LucideIcon name="pencil" size={16} />
-                          </button>
-                          <button type="button" disabled={slot.status === "BOOKED"} onClick={() => removeSlot(slot)} className="rounded-full border border-red-100 p-3 text-red-600 disabled:opacity-40" title="Delete slot">
-                            <LucideIcon name="trash-2" size={16} />
-                          </button>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </section>
+                        <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B]">
+                          {slots.length} slots
+                        </span>
+                      </div>
 
-                <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-[#E2E8E6]">
-                  {isLoading && <p className="bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">Loading appointments...</p>}
-                  {!isLoading && error && <p className="bg-red-50 p-5 font-bold text-red-700">{error}</p>}
-                  {!isLoading && !error && appointments.length === 0 && (
-                    <p className="bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">No appointments have been booked yet.</p>
+                      <form onSubmit={saveSlot} className="mt-5 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+                        <label>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Start</span>
+                          <input
+                            type="datetime-local"
+                            required
+                            min={toLocalInputValue(new Date(Date.now() + 60 * 1000).toISOString())}
+                            value={slotForm.startTime}
+                            onChange={(event) => {
+                              const startTime = event.target.value;
+                              setSlotForm({ startTime, endTime: addOneHour(startTime) });
+                            }}
+                            className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+                          />
+                        </label>
+                        <label>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">End</span>
+                          <input type="datetime-local" required readOnly value={slotForm.endTime} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#F5F8F7] px-4 py-3 font-bold text-[#064F4B] outline-none" />
+                        </label>
+                        <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#064F4B] px-5 py-4 text-xs font-black uppercase tracking-widest text-white">
+                          <LucideIcon name={editingSlotId ? "save" : "plus"} size={16} />
+                          {editingSlotId ? "Update" : "Add"}
+                        </button>
+                      </form>
+                      {editingSlotId && (
+                        <button type="button" onClick={() => { setEditingSlotId(null); setSlotForm({ startTime: "", endTime: "" }); }} className="mt-3 text-xs font-black uppercase tracking-widest text-[#0A7F7A]">
+                          Cancel slot edit
+                        </button>
+                      )}
+
+                      <div className="mt-5 overflow-hidden rounded-lg border border-[#E2E8E6]">
+                        {slots.length === 0 && <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">No availability slots yet.</p>}
+                        {slots.map((slot) => (
+                          <article key={slot.id} className="flex flex-col gap-3 border-b border-[#E2E8E6] p-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <p className="font-black text-[#064F4B]">{formatAvailabilitySlotRange(slot)}</p>
+                              <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{slot.status}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button type="button" disabled={slot.status === "BOOKED"} onClick={() => editSlot(slot)} className="rounded-full border border-[#DDE8E5] p-3 text-[#064F4B] disabled:opacity-40" title="Edit slot">
+                                <LucideIcon name="pencil" size={16} />
+                              </button>
+                              <button type="button" disabled={slot.status === "BOOKED"} onClick={() => removeSlot(slot)} className="rounded-full border border-red-100 p-3 text-red-600 disabled:opacity-40" title="Delete slot">
+                                <LucideIcon name="trash-2" size={16} />
+                              </button>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
                   )}
-                  {!isLoading && !error && appointments.map((appointment) => (
-                    <article key={appointment.id} className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 md:grid-cols-[1fr_1fr_auto_auto] md:items-center">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Patient</p>
-                        <p className="mt-1 font-black text-[#064F4B]">{appointment.patient?.fullName || appointment.patient?.email || "Patient"}</p>
-                        {appointment.patient?.healthInfo && (
-                          <p className="mt-1 text-xs font-bold text-[#5F7F7A]">
-                            {[
-                              appointment.patient.healthInfo.primaryConcern,
-                              appointment.patient.healthInfo.currentSymptoms,
-                            ].filter(Boolean).join(" · ") || "Health info added"}
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Slot</p>
-                        <p className="mt-1 font-bold text-[#064F4B]">{formatSlot(appointment.slot?.startTime)}</p>
-                      </div>
-                      <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
-                        {appointment.status}
-                      </span>
-                      <select
-                        value={appointment.status}
-                        onChange={(event) => changeAppointmentStatus(appointment, event.target.value as BookingResponse["status"])}
-                        className="rounded-full border border-[#DDE8E5] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B] outline-none"
-                      >
-                        <option value="PENDING">Pending</option>
-                        <option value="CONFIRMED">Confirmed</option>
-                        <option value="COMPLETED">Completed</option>
-                        <option value="CANCELLED">Cancelled</option>
-                      </select>
-                    </article>
-                  ))}
+
+                  {activeTab === "appointments" && (
+                    <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-[#E2E8E6]">
+                      {isLoading && <p className="bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">Loading appointments...</p>}
+                      {!isLoading && error && <p className="bg-red-50 p-5 font-bold text-red-700">{error}</p>}
+                      {!isLoading && !error && appointments.length === 0 && (
+                        <p className="bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">No appointments have been booked yet.</p>
+                      )}
+                      {!isLoading && !error && appointments.map((appointment) => (
+                        <article key={appointment.id} className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 md:grid-cols-[1fr_1fr_auto_auto] md:items-center">
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Patient</p>
+                            <p className="mt-1 font-black text-[#064F4B]">{appointment.patient?.fullName || appointment.patient?.email || "Patient"}</p>
+                            {appointment.patient?.healthInfo && (
+                              <p className="mt-1 text-xs font-bold text-[#5F7F7A]">
+                                {[
+                                  appointment.patient.healthInfo.primaryConcern,
+                                  appointment.patient.healthInfo.currentSymptoms,
+                                ].filter(Boolean).join(" · ") || "Health info added"}
+                              </p>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Slot</p>
+                            <p className="mt-1 font-bold text-[#064F4B]">{formatSlot(appointment.slot?.startTime)}</p>
+                          </div>
+                          <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+                            {appointment.status}
+                          </span>
+                          <select
+                            value={appointment.status}
+                            onChange={(event) => changeAppointmentStatus(appointment, event.target.value as BookingResponse["status"])}
+                            className="rounded-full border border-[#DDE8E5] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B] outline-none"
+                          >
+                            <option value="PENDING">Pending</option>
+                            <option value="CONFIRMED">Confirmed</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="CANCELLED">Cancelled</option>
+                          </select>
+                        </article>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </section>
             </div>
