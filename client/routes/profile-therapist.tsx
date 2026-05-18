@@ -18,6 +18,7 @@ import {
   updateMyTherapistProfile,
 } from "../src/lib/therapists";
 import { CaseSheet, getCaseSheets, upsertCaseSheet } from "../src/lib/operations";
+import { uploadMedia } from "../src/lib/media";
 
 export const meta = {
   title: "Therapist Profile | Oruma",
@@ -71,8 +72,16 @@ export default function TherapistProfilePage() {
     interventionPlan: "",
     followUpPlan: "",
   });
+  const [mediaDrafts, setMediaDrafts] = useState<{
+    image: { file: File; previewUrl: string } | null;
+    voiceIntro: { file: File; previewUrl: string } | null;
+  }>({
+    image: null,
+    voiceIntro: null,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingField, setUploadingField] = useState<"image" | "voiceIntro" | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [activeTab, setActiveTab] = useState("profile");
@@ -89,25 +98,37 @@ export default function TherapistProfilePage() {
         setAppointments(appointmentData);
         setSlots(slotData);
         setCaseSheets(caseSheetData);
+        const effectiveProfile = {
+          ...profileData,
+          ...(profileData.pendingProfileChanges ?? {}),
+        };
+
         setProfile(profileData);
         setForm({
-          name: profileData.name,
-          title: profileData.title,
-          tags: profileData.tags?.join(", ") ?? "",
-          experience: String(profileData.experience),
-          group: String(profileData.group),
-          price: String(profileData.price),
-          couplePrice: profileData.couplePrice ? String(profileData.couplePrice) : "",
-          image: profileData.image ?? "",
-          voiceIntro: profileData.voiceIntro ?? "",
-          qualifications: profileData.qualifications ?? "",
-          specialization: profileData.specialization ?? "",
-          bio: profileData.bio ?? "",
+          name: effectiveProfile.name,
+          title: effectiveProfile.title,
+          tags: effectiveProfile.tags?.join(", ") ?? "",
+          experience: String(effectiveProfile.experience),
+          group: String(effectiveProfile.group),
+          price: String(effectiveProfile.price),
+          couplePrice: effectiveProfile.couplePrice ? String(effectiveProfile.couplePrice) : "",
+          image: effectiveProfile.image ?? "",
+          voiceIntro: effectiveProfile.voiceIntro ?? "",
+          qualifications: effectiveProfile.qualifications ?? "",
+          specialization: effectiveProfile.specialization ?? "",
+          bio: effectiveProfile.bio ?? "",
         });
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Unable to load appointment list."))
       .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (mediaDrafts.image?.previewUrl) URL.revokeObjectURL(mediaDrafts.image.previewUrl);
+      if (mediaDrafts.voiceIntro?.previewUrl) URL.revokeObjectURL(mediaDrafts.voiceIntro.previewUrl);
+    };
+  }, [mediaDrafts.image?.previewUrl, mediaDrafts.voiceIntro?.previewUrl]);
 
   const upcoming = useMemo(() => {
     return appointments.filter((appointment) => appointment.slot?.startTime && new Date(appointment.slot.startTime).getTime() >= Date.now());
@@ -130,8 +151,8 @@ export default function TherapistProfilePage() {
         group: Number(form.group),
         price: Number(form.price),
         couplePrice: form.couplePrice ? Number(form.couplePrice) : null,
-        image: form.image.trim() || undefined,
-        voiceIntro: form.voiceIntro.trim() || undefined,
+        image: form.image.trim(),
+        voiceIntro: form.voiceIntro.trim(),
         qualifications: form.qualifications.trim() || undefined,
         specialization: form.specialization.trim() || undefined,
         bio: form.bio.trim() || undefined,
@@ -142,6 +163,51 @@ export default function TherapistProfilePage() {
       setError(err instanceof Error ? err.message : "Unable to save profile.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const selectProfileMedia = (file: File, field: "image" | "voiceIntro") => {
+    setMediaDrafts((current) => {
+      if (current[field]?.previewUrl) URL.revokeObjectURL(current[field].previewUrl);
+
+      return {
+        ...current,
+        [field]: {
+          file,
+          previewUrl: URL.createObjectURL(file),
+        },
+      };
+    });
+  };
+
+  const clearProfileMedia = (field: "image" | "voiceIntro") => {
+    setMediaDrafts((current) => {
+      if (current[field]?.previewUrl) URL.revokeObjectURL(current[field].previewUrl);
+      return { ...current, [field]: null };
+    });
+    setForm((current) => ({ ...current, [field]: "" }));
+  };
+
+  const uploadProfileMedia = async (field: "image" | "voiceIntro") => {
+    const token = getAccessToken();
+    const draft = mediaDrafts[field];
+    if (!token || !draft) return;
+
+    setUploadingField(field);
+    setError("");
+    setNotice("");
+    try {
+      const media = await uploadMedia(token, draft.file);
+      setForm((current) => ({ ...current, [field]: media.url }));
+      setMediaDrafts((current) => {
+        if (current[field]?.previewUrl) URL.revokeObjectURL(current[field].previewUrl);
+        return { ...current, [field]: null };
+      });
+      setNotice(field === "image" ? "Profile image uploaded. Save profile to submit it for approval." : "Voice intro uploaded. Save profile to submit it for approval.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to upload media.");
+    } finally {
+      setUploadingField(null);
     }
   };
 
@@ -299,14 +365,14 @@ export default function TherapistProfilePage() {
                 <div className="mt-8">
                   {notice && <p className="mb-4 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
                   {error && <p className="mb-4 rounded-lg bg-red-50 p-4 font-bold text-red-700">{error}</p>}
+                  {activeTab === "profile" && profile?.pendingProfileChanges && (
+                    <p className="mb-4 rounded-lg bg-amber-50 p-4 text-sm font-bold text-amber-800">
+                      Your latest profile changes are waiting for admin approval. Public therapist pages show approved media until then.
+                    </p>
+                  )}
 
                   {activeTab === "profile" && (
                     <form onSubmit={saveProfile} className="grid gap-4 rounded-[1.5rem] border border-[#E2E8E6] bg-[#FBFDFC] p-5 md:grid-cols-2">
-                      {form.image && (
-                        <div className="md:col-span-2">
-                          <img src={getTherapistImage(form.image)} alt={form.name || "Therapist profile"} className="h-28 w-28 rounded-lg object-cover" />
-                        </div>
-                      )}
                       <Field label="Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} required />
                       <Field label="Title" value={form.title} onChange={(value) => setForm({ ...form, title: value })} required />
                       <Field label="Tags" value={form.tags} onChange={(value) => setForm({ ...form, tags: value })} />
@@ -314,13 +380,28 @@ export default function TherapistProfilePage() {
                       <Field label="Group" type="number" value={form.group} onChange={(value) => setForm({ ...form, group: value })} required />
                       <Field label="Individual fee" type="number" value={form.price} onChange={(value) => setForm({ ...form, price: value })} required />
                       <Field label="Couple fee" type="number" value={form.couplePrice} onChange={(value) => setForm({ ...form, couplePrice: value })} />
-                      <Field label="Profile picture URL or asset file" value={form.image} onChange={(value) => setForm({ ...form, image: value })} />
-                      <Field label="Voice intro audio URL" value={form.voiceIntro} onChange={(value) => setForm({ ...form, voiceIntro: value })} />
-                      {form.voiceIntro && (
-                        <div className="md:col-span-2">
-                          <audio controls src={form.voiceIntro} className="w-full" />
-                        </div>
-                      )}
+                      <MediaUploadField
+                        label="Profile image"
+                        accept="image/*"
+                        value={form.image}
+                        draftPreviewUrl={mediaDrafts.image?.previewUrl ?? ""}
+                        isUploading={uploadingField === "image"}
+                        onSelect={(file) => selectProfileMedia(file, "image")}
+                        onUpload={() => uploadProfileMedia("image")}
+                        onClear={() => clearProfileMedia("image")}
+                        preview="image"
+                      />
+                      <MediaUploadField
+                        label="Voice intro"
+                        accept="audio/*"
+                        value={form.voiceIntro}
+                        draftPreviewUrl={mediaDrafts.voiceIntro?.previewUrl ?? ""}
+                        isUploading={uploadingField === "voiceIntro"}
+                        onSelect={(file) => selectProfileMedia(file, "voiceIntro")}
+                        onUpload={() => uploadProfileMedia("voiceIntro")}
+                        onClear={() => clearProfileMedia("voiceIntro")}
+                        preview="audio"
+                      />
                       <Field label="Qualifications" value={form.qualifications} onChange={(value) => setForm({ ...form, qualifications: value })} />
                       <Field label="Specialization" value={form.specialization} onChange={(value) => setForm({ ...form, specialization: value })} />
                       <label className="md:col-span-2">
@@ -494,6 +575,80 @@ function TextArea({ label, value, onChange }: { label: string; value: string; on
       <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</span>
       <textarea value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-24 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
     </label>
+  );
+}
+
+function MediaUploadField({
+  label,
+  accept,
+  value,
+  draftPreviewUrl,
+  isUploading,
+  onSelect,
+  onUpload,
+  onClear,
+  preview,
+}: {
+  label: string;
+  accept: string;
+  value: string;
+  draftPreviewUrl: string;
+  isUploading: boolean;
+  onSelect: (file: File) => void;
+  onUpload: () => void;
+  onClear: () => void;
+  preview: "image" | "audio";
+}) {
+  const uploadedValue = preview === "image" ? getTherapistImage(value) : value;
+  const previewValue = draftPreviewUrl || uploadedValue;
+  const hasDraft = Boolean(draftPreviewUrl);
+
+  return (
+    <div className="rounded-lg border border-[#DDE8E5] bg-white p-4 md:col-span-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</p>
+          {hasDraft && <p className="mt-1 text-xs font-black text-[#0A7F7A]">Preview before upload</p>}
+        </div>
+        {(value || hasDraft) && (
+          <button type="button" onClick={onClear} className="w-fit rounded-full border border-red-100 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-600">
+            Remove
+          </button>
+        )}
+      </div>
+
+      {previewValue && preview === "image" && (
+        <img src={previewValue} alt={`${label} preview`} className="mt-4 h-32 w-32 rounded-lg object-cover" />
+      )}
+      {previewValue && preview === "audio" && <audio controls src={previewValue} className="mt-4 w-full" />}
+
+      <div className="mt-4 flex flex-wrap gap-3">
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#DDE8E5] bg-white px-5 py-3 text-xs font-black uppercase tracking-widest text-[#064F4B]">
+          <LucideIcon name={preview === "image" ? "image-plus" : "mic"} size={16} />
+          Choose {label}
+          <input
+            type="file"
+            accept={accept}
+            disabled={isUploading}
+            className="sr-only"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) onSelect(file);
+              event.target.value = "";
+            }}
+          />
+        </label>
+        <button
+          type="button"
+          disabled={!hasDraft || isUploading}
+          onClick={onUpload}
+          className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-5 py-3 text-xs font-black uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <LucideIcon name="cloud-upload" size={16} />
+          {isUploading ? "Uploading..." : "Upload"}
+        </button>
+      </div>
+    </div>
   );
 }
 

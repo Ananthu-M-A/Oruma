@@ -13,6 +13,7 @@ import { AdminModule } from './admin/admin.module';
 import { PaymentModule } from './payment/payment.module';
 import { TicketModule } from './ticket/ticket.module';
 import { CaseSheetModule } from './case-sheet/case-sheet.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { CaseSheetModule } from './case-sheet/case-sheet.module';
     PaymentModule,
     TicketModule,
     CaseSheetModule,
+    MediaModule,
     AdminModule,
   ],
   controllers: [AppController],
