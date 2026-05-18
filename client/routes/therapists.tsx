@@ -13,6 +13,8 @@ export const meta = {
 
 export default function TherapistListingPage() {
   const [query, setQuery] = useState('');
+  const [maxFee, setMaxFee] = useState('');
+  const [nextDayOnly, setNextDayOnly] = useState(false);
 
   return (
     <main className="min-h-screen bg-white font-body text-[#2E3E3C] overflow-x-hidden">
@@ -36,6 +38,25 @@ export default function TherapistListingPage() {
                 placeholder="Search by therapist name, title, or specialization..."
               />
             </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+              <label>
+                <span className="sr-only">Maximum fee</span>
+                <select
+                  value={maxFee}
+                  onChange={(event) => setMaxFee(event.target.value)}
+                  className="w-full rounded-full border border-[#E2E8E6] bg-[#F5F8F7] px-5 py-4 text-sm font-black text-[#064F4B] outline-none focus:border-[#0A7F7A] focus:bg-white"
+                >
+                  <option value="">Any fee</option>
+                  <option value="1000">Up to Rs.1,000</option>
+                  <option value="1500">Up to Rs.1,500</option>
+                  <option value="2500">Up to Rs.2,500</option>
+                </select>
+              </label>
+              <label className="inline-flex items-center gap-3 rounded-full border border-[#E2E8E6] bg-[#F5F8F7] px-5 py-4 text-sm font-black text-[#064F4B]">
+                <input type="checkbox" checked={nextDayOnly} onChange={(event) => setNextDayOnly(event.target.checked)} className="h-4 w-4 accent-[#0A7F7A]" />
+                Available tomorrow
+              </label>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -47,6 +68,8 @@ export default function TherapistListingPage() {
 
           <TherapistGrid
             searchQuery={query}
+            maxFee={maxFee ? Number(maxFee) : null}
+            nextDayOnly={nextDayOnly}
             emptyTitle="No therapists found."
             emptyDescription="Try another search or contact us to help you choose."
           />

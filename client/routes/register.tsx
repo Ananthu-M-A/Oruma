@@ -13,6 +13,9 @@ export const meta = {
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [primaryConcern, setPrimaryConcern] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -30,7 +33,13 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      await register({ email, password });
+      await register({
+        email,
+        password,
+        fullName,
+        phone,
+        healthInfo: primaryConcern ? { primaryConcern } : null,
+      });
       navigate("/login", {
         state: { message: "Account created. Please login to continue." },
       });
@@ -71,6 +80,33 @@ export default function RegisterPage() {
             )}
 
             <form className="space-y-5" onSubmit={handleSubmit}>
+              <div className="grid md:grid-cols-2 gap-4">
+                <label className="block">
+                  <span className="block text-xs font-black text-[#064F4B] uppercase tracking-widest mb-2">
+                    Full name
+                  </span>
+                  <input
+                    value={fullName}
+                    onChange={(event) => setFullName(event.target.value)}
+                    className="w-full rounded-2xl border border-[#DDE8E2] bg-white px-5 py-4 outline-none transition focus:border-[#0A7F7A] focus:ring-4 focus:ring-[#0A7F7A]/10"
+                    placeholder="Your name"
+                    autoComplete="name"
+                  />
+                </label>
+                <label className="block">
+                  <span className="block text-xs font-black text-[#064F4B] uppercase tracking-widest mb-2">
+                    Phone
+                  </span>
+                  <input
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    className="w-full rounded-2xl border border-[#DDE8E2] bg-white px-5 py-4 outline-none transition focus:border-[#0A7F7A] focus:ring-4 focus:ring-[#0A7F7A]/10"
+                    placeholder="Contact number"
+                    autoComplete="tel"
+                  />
+                </label>
+              </div>
+
               <label className="block">
                 <span className="block text-xs font-black text-[#064F4B] uppercase tracking-widest mb-2">
                   Email address
@@ -83,6 +119,18 @@ export default function RegisterPage() {
                   placeholder="you@example.com"
                   autoComplete="email"
                   required
+                />
+              </label>
+
+              <label className="block">
+                <span className="block text-xs font-black text-[#064F4B] uppercase tracking-widest mb-2">
+                  Primary concern
+                </span>
+                <input
+                  value={primaryConcern}
+                  onChange={(event) => setPrimaryConcern(event.target.value)}
+                  className="w-full rounded-2xl border border-[#DDE8E2] bg-white px-5 py-4 outline-none transition focus:border-[#0A7F7A] focus:ring-4 focus:ring-[#0A7F7A]/10"
+                  placeholder="Anxiety, relationship support, work stress..."
                 />
               </label>
 

@@ -6,6 +6,9 @@ import { AppointmentStatus } from '../appointment/entities/appointment-status.en
 import { Therapist } from '../therapist/entities/therapist.entity';
 import { Role } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
+import { CaseSheetService } from '../case-sheet/case-sheet.service';
+import { PaymentService } from '../payment/payment.service';
+import { TicketService } from '../ticket/ticket.service';
 
 @Injectable()
 export class AdminService {
@@ -15,15 +18,29 @@ export class AdminService {
     @InjectRepository(Therapist)
     private readonly therapistRepo: Repository<Therapist>,
     private readonly userService: UserService,
+    private readonly paymentService: PaymentService,
+    private readonly ticketService: TicketService,
+    private readonly caseSheetService: CaseSheetService,
   ) {}
 
   async getDashboardSummary() {
-    const [patientCount, therapistUserCount, therapists, appointments] =
+    const [
+      patientCount,
+      therapistUserCount,
+      therapists,
+      appointments,
+      paymentSummary,
+      ticketSummary,
+      caseSheetSummary,
+    ] =
       await Promise.all([
         this.userService.countByRole(Role.PATIENT),
         this.userService.countByRole(Role.THERAPIST),
-      this.therapistRepo.find(),
-      this.appointmentRepo.find(),
+        this.therapistRepo.find(),
+        this.appointmentRepo.find(),
+        this.paymentService.getSummary(),
+        this.ticketService.getSummary(),
+        this.caseSheetService.getSummary(),
       ]);
 
     const completedAppointments = appointments.filter(
@@ -48,19 +65,9 @@ export class AdminService {
       pendingTherapistUpdates: therapists.filter(
         (therapist) => therapist.pendingProfileChanges,
       ).length,
-      payments: {
-        collected: revenue,
-        refunds: 0,
-        pending: 0,
-      },
-      tickets: {
-        open: 0,
-        resolved: 0,
-      },
-      caseSheets: {
-        monitored: appointments.length,
-        updated: completedAppointments.length,
-      },
+      payments: paymentSummary,
+      tickets: ticketSummary,
+      caseSheets: caseSheetSummary,
     };
   }
 }

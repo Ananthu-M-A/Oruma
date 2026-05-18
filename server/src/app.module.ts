@@ -10,6 +10,9 @@ import { AppointmentModule } from './appointment/appointment.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { MailModule } from './mail/mail.module';
 import { AdminModule } from './admin/admin.module';
+import { PaymentModule } from './payment/payment.module';
+import { TicketModule } from './ticket/ticket.module';
+import { CaseSheetModule } from './case-sheet/case-sheet.module';
 
 @Module({
   imports: [
@@ -24,6 +27,9 @@ import { AdminModule } from './admin/admin.module';
     AppointmentModule,
     AvailabilityModule,
     MailModule,
+    PaymentModule,
+    TicketModule,
+    CaseSheetModule,
     AdminModule,
   ],
   controllers: [AppController],

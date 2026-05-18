@@ -36,8 +36,8 @@ export class AppointmentController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.THERAPIST)
-  findAll() {
-    return this.appointmentService.findAll();
+  findAll(@Req() req: AuthenticatedRequest) {
+    return this.appointmentService.findForUser(req.user);
   }
 
   @Get('me')
@@ -49,8 +49,8 @@ export class AppointmentController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id') id: string) {
-    return this.appointmentService.findOne(id);
+  findOne(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.appointmentService.findOneForUser(id, req.user);
   }
 
   @Patch(':id/status')
@@ -59,8 +59,9 @@ export class AppointmentController {
   updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateAppointmentStatusDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.appointmentService.updateStatus(id, dto);
+    return this.appointmentService.updateStatus(id, dto, req.user);
   }
 
   @Delete(':id')

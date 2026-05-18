@@ -9,6 +9,17 @@ import { getAccessToken, getCurrentUser } from "../src/lib/auth";
 import { AdminSummary, getAdminSummary } from "../src/lib/admin";
 import { BookingResponse, getAppointments } from "../src/lib/booking";
 import { createTherapist, getAdminTherapists, Therapist } from "../src/lib/therapists";
+import {
+  CaseSheet,
+  createPayment,
+  getCaseSheets,
+  getPayments,
+  getTickets,
+  Payment,
+  refundPayment,
+  Ticket,
+  updateTicket,
+} from "../src/lib/operations";
 
 export const meta = {
   title: "Admin Profile | Oruma",
@@ -19,6 +30,9 @@ export default function AdminProfilePage() {
   const user = getCurrentUser();
   const [appointments, setAppointments] = useState<BookingResponse[]>([]);
   const [therapists, setTherapists] = useState<Therapist[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [caseSheets, setCaseSheets] = useState<CaseSheet[]>([]);
   const [summary, setSummary] = useState<AdminSummary | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -27,6 +41,8 @@ export default function AdminProfilePage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
+  const [paymentForm, setPaymentForm] = useState({ appointmentId: "", amount: "", reference: "" });
+  const [refundForm, setRefundForm] = useState<Record<string, string>>({});
 
   const loadAdminData = async () => {
     const token = getAccessToken();
@@ -35,14 +51,79 @@ export default function AdminProfilePage() {
       return;
     }
 
-    const [appointmentData, therapistData, summaryData] = await Promise.all([
+    const [appointmentData, therapistData, summaryData, paymentData, ticketData, caseSheetData] = await Promise.all([
       getAppointments(token),
       getAdminTherapists(token),
       getAdminSummary(token),
+      getPayments(token),
+      getTickets(token),
+      getCaseSheets(token),
     ]);
     setAppointments(appointmentData);
     setTherapists(therapistData);
     setSummary(summaryData);
+    setPayments(paymentData);
+    setTickets(ticketData);
+    setCaseSheets(caseSheetData);
+  };
+
+  const handleRecordPayment = async (event: FormEvent) => {
+    event.preventDefault();
+    const token = getAccessToken();
+    if (!token) return;
+
+    setIsSaving(true);
+    setError("");
+    setNotice("");
+
+    try {
+      await createPayment(token, {
+        appointmentId: paymentForm.appointmentId,
+        amount: Number(paymentForm.amount),
+        reference: paymentForm.reference,
+      });
+      setPaymentForm({ appointmentId: "", amount: "", reference: "" });
+      setNotice("Payment recorded.");
+      await loadAdminData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to record payment.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRefund = async (payment: Payment) => {
+    const token = getAccessToken();
+    const amount = Number(refundForm[payment.id]);
+    if (!token || !amount) return;
+
+    setIsSaving(true);
+    setError("");
+    setNotice("");
+
+    try {
+      await refundPayment(token, payment.id, { amount });
+      setRefundForm((current) => ({ ...current, [payment.id]: "" }));
+      setNotice("Refund recorded.");
+      await loadAdminData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to record refund.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTicketStatus = async (ticket: Ticket, status: Ticket["status"]) => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    try {
+      await updateTicket(token, ticket.id, { status });
+      setNotice("Ticket updated.");
+      await loadAdminData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update ticket.");
+    }
   };
 
   useEffect(() => {
@@ -117,6 +198,9 @@ export default function AdminProfilePage() {
               { id: "overview", label: "Overview" },
               { id: "appointments", label: "Appointments" },
               { id: "therapists", label: "Therapists" },
+              { id: "payments", label: "Payments" },
+              { id: "cases", label: "Case sheets" },
+              { id: "tickets", label: "Tickets" },
             ]}
             activeTab={activeTab}
             onChange={setActiveTab}
@@ -201,6 +285,76 @@ export default function AdminProfilePage() {
                 </div>
               </section>
             )}
+
+            {activeTab === "payments" && (
+              <section className="rounded-lg border border-[#E2E8E6] bg-white p-6 shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Payment monitoring</p>
+                <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Payments & refunds</h2>
+                <form onSubmit={handleRecordPayment} className="mt-6 grid gap-4 md:grid-cols-[1fr_160px_1fr_auto] md:items-end">
+                  <Field label="Appointment" value={paymentForm.appointmentId} onChange={(value) => setPaymentForm({ ...paymentForm, appointmentId: value })} required options={appointments.map((appointment) => ({ value: appointment.id, label: `${appointment.patient?.email ?? "Patient"} - ${appointment.therapist?.name ?? "Therapist"}` }))} />
+                  <Field label="Amount" type="number" value={paymentForm.amount} onChange={(value) => setPaymentForm({ ...paymentForm, amount: value })} required />
+                  <Field label="Reference" value={paymentForm.reference} onChange={(value) => setPaymentForm({ ...paymentForm, reference: value })} />
+                  <button disabled={isSaving} className="rounded-full bg-[#064F4B] px-5 py-4 text-xs font-black uppercase tracking-widest text-white">Record</button>
+                </form>
+                <div className="mt-6 overflow-hidden rounded-lg border border-[#E2E8E6]">
+                  {payments.length === 0 && <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">No payments recorded yet.</p>}
+                  {payments.map((payment) => (
+                    <article key={payment.id} className="grid gap-3 border-b border-[#E2E8E6] p-5 last:border-b-0 lg:grid-cols-[1fr_120px_120px_auto] lg:items-center">
+                      <ActivityItem label="Patient" value={payment.patient?.email ?? "Patient"} />
+                      <ActivityItem label="Paid" value={`Rs.${payment.amount.toLocaleString("en-IN")}`} />
+                      <ActivityItem label="Refunded" value={`Rs.${payment.refundedAmount.toLocaleString("en-IN")}`} />
+                      <div className="flex gap-2">
+                        <input type="number" min="1" placeholder="Refund" value={refundForm[payment.id] ?? ""} onChange={(event) => setRefundForm({ ...refundForm, [payment.id]: event.target.value })} className="w-28 rounded-lg border border-[#DDE8E5] px-3 py-2 text-sm font-bold outline-none" />
+                        <button type="button" onClick={() => handleRefund(payment)} className="rounded-full border border-[#DDE8E5] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B]">Refund</button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {activeTab === "cases" && (
+              <section className="rounded-lg border border-[#E2E8E6] bg-white p-6 shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Case sheet monitoring</p>
+                <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Case sheets</h2>
+                <div className="mt-6 overflow-hidden rounded-lg border border-[#E2E8E6]">
+                  {caseSheets.length === 0 && <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">No case sheets have been submitted yet.</p>}
+                  {caseSheets.map((sheet) => (
+                    <article key={sheet.id} className="grid gap-3 border-b border-[#E2E8E6] p-5 last:border-b-0 md:grid-cols-3">
+                      <ActivityItem label="Patient" value={sheet.patient?.email ?? "Patient"} />
+                      <ActivityItem label="Therapist" value={sheet.therapist?.name ?? "Therapist"} />
+                      <ActivityItem label="Updated" value={new Date(sheet.updatedAt).toLocaleString("en-IN")} />
+                      <p className="text-sm font-bold text-[#5F7F7A] md:col-span-3">{sheet.presentingConcern || sheet.clinicalNotes || "No notes entered."}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {activeTab === "tickets" && (
+              <section className="rounded-lg border border-[#E2E8E6] bg-white p-6 shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Ticket management</p>
+                <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Support tickets</h2>
+                <div className="mt-6 overflow-hidden rounded-lg border border-[#E2E8E6]">
+                  {tickets.length === 0 && <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">No tickets yet.</p>}
+                  {tickets.map((ticket) => (
+                    <article key={ticket.id} className="grid gap-3 border-b border-[#E2E8E6] p-5 last:border-b-0 md:grid-cols-[1fr_auto] md:items-center">
+                      <div>
+                        <p className="font-black text-[#064F4B]">{ticket.subject}</p>
+                        <p className="mt-1 text-sm font-bold text-[#5F7F7A]">{ticket.createdBy?.email ?? "User"} · {ticket.category}</p>
+                        <p className="mt-2 text-sm font-medium text-[#5F7F7A]">{ticket.message}</p>
+                      </div>
+                      <select value={ticket.status} onChange={(event) => handleTicketStatus(ticket, event.target.value as Ticket["status"])} className="rounded-full border border-[#DDE8E5] bg-white px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#064F4B] outline-none">
+                        <option value="OPEN">Open</option>
+                        <option value="IN_PROGRESS">In progress</option>
+                        <option value="RESOLVED">Resolved</option>
+                        <option value="CLOSED">Closed</option>
+                      </select>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </section>
@@ -273,5 +427,37 @@ function ActivityItem({ label, value }: { label: string; value: string }) {
       <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</p>
       <p className="mt-1 font-bold text-[#064F4B]">{value}</p>
     </div>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  required,
+  type = "text",
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+  type?: string;
+  options?: { value: string; label: string }[];
+}) {
+  return (
+    <label className="block">
+      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</span>
+      {options ? (
+        <select required={required} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]">
+          <option value="">Select</option>
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      ) : (
+        <input type={type} required={required} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+      )}
+    </label>
   );
 }

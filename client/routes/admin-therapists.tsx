@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useState } from "react";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 import { LucideIcon } from "@site-builder/icons";
@@ -27,6 +27,17 @@ export default function AdminTherapistsPage() {
   const [sortBy, setSortBy] = useState("pending");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [editing, setEditing] = useState<Therapist | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    title: "",
+    specialization: "",
+    qualifications: "",
+    price: "",
+    couplePrice: "",
+    voiceIntro: "",
+    bio: "",
+  });
 
   const loadData = async () => {
     const token = getAccessToken();
@@ -127,6 +138,46 @@ export default function AdminTherapistsPage() {
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to verify profile changes.");
+    }
+  };
+
+  const openEditor = (therapist: Therapist) => {
+    setEditing(therapist);
+    setEditForm({
+      name: therapist.name,
+      title: therapist.title,
+      specialization: therapist.specialization ?? "",
+      qualifications: therapist.qualifications ?? "",
+      price: String(therapist.price),
+      couplePrice: therapist.couplePrice ? String(therapist.couplePrice) : "",
+      voiceIntro: therapist.voiceIntro ?? "",
+      bio: therapist.bio ?? "",
+    });
+  };
+
+  const saveEditor = async (event: FormEvent) => {
+    event.preventDefault();
+    const token = getAccessToken();
+    if (!token || !editing) return;
+
+    setError("");
+    setNotice("");
+    try {
+      await updateTherapist(token, editing.id, {
+        name: editForm.name.trim(),
+        title: editForm.title.trim(),
+        specialization: editForm.specialization.trim() || undefined,
+        qualifications: editForm.qualifications.trim() || undefined,
+        price: Number(editForm.price),
+        couplePrice: editForm.couplePrice ? Number(editForm.couplePrice) : null,
+        voiceIntro: editForm.voiceIntro.trim() || undefined,
+        bio: editForm.bio.trim() || undefined,
+      });
+      setEditing(null);
+      setNotice("Therapist updated.");
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save therapist.");
     }
   };
 
@@ -233,6 +284,13 @@ export default function AdminTherapistsPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button
+                        onClick={() => openEditor(therapist)}
+                        className="inline-flex items-center gap-2 rounded-full border border-[#DDE8E5] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#064F4B]"
+                      >
+                        <LucideIcon name="pencil" size={16} />
+                        Edit
+                      </button>
+                      <button
                         onClick={() => toggleActive(therapist)}
                         className="inline-flex items-center gap-2 rounded-full border border-[#DDE8E5] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#064F4B]"
                       >
@@ -254,7 +312,57 @@ export default function AdminTherapistsPage() {
           </section>
         </div>
       </section>
+      {editing && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#064F4B]/40 p-4">
+          <form onSubmit={saveEditor} className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Edit therapist</p>
+                <h2 className="mt-2 text-2xl font-heading font-black text-[#064F4B]">{editing.email}</h2>
+              </div>
+              <button type="button" onClick={() => setEditing(null)} className="rounded-full p-2 text-[#064F4B] hover:bg-[#F5F8F7]">
+                <LucideIcon name="x" size={18} />
+              </button>
+            </div>
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <EditField label="Name" value={editForm.name} onChange={(value) => setEditForm({ ...editForm, name: value })} required />
+              <EditField label="Title" value={editForm.title} onChange={(value) => setEditForm({ ...editForm, title: value })} required />
+              <EditField label="Specialization" value={editForm.specialization} onChange={(value) => setEditForm({ ...editForm, specialization: value })} />
+              <EditField label="Qualifications" value={editForm.qualifications} onChange={(value) => setEditForm({ ...editForm, qualifications: value })} />
+              <EditField label="Individual fee" type="number" value={editForm.price} onChange={(value) => setEditForm({ ...editForm, price: value })} required />
+              <EditField label="Couple fee" type="number" value={editForm.couplePrice} onChange={(value) => setEditForm({ ...editForm, couplePrice: value })} />
+              <EditField label="Voice intro URL" value={editForm.voiceIntro} onChange={(value) => setEditForm({ ...editForm, voiceIntro: value })} />
+              <label className="md:col-span-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Bio</span>
+                <textarea value={editForm.bio} onChange={(event) => setEditForm({ ...editForm, bio: event.target.value })} className="mt-2 min-h-28 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+              </label>
+            </div>
+            <button className="mt-6 rounded-full bg-[#064F4B] px-6 py-4 text-xs font-black uppercase tracking-widest text-white">Save therapist</button>
+          </form>
+        </div>
+      )}
       <Footer />
     </main>
+  );
+}
+
+function EditField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  required,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  required?: boolean;
+}) {
+  return (
+    <label>
+      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</span>
+      <input type={type} required={required} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+    </label>
   );
 }

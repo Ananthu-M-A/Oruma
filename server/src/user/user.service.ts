@@ -27,7 +27,10 @@ export class UserService {
     });
   }
 
-  create(user: Pick<User, 'email' | 'password' | 'role'>): Promise<User> {
+  create(
+    user: Pick<User, 'email' | 'password' | 'role'> &
+      Partial<Pick<User, 'fullName' | 'phone' | 'age' | 'gender' | 'healthInfo'>>,
+  ): Promise<User> {
     const createdUser = this.userRepository.create(user);
 
     return this.userRepository.save(createdUser);

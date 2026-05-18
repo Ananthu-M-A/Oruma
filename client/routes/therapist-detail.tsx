@@ -220,6 +220,13 @@ export default function TherapistDetailPage() {
                   </div>
                 </div>
 
+                {therapist.voiceIntro && (
+                  <div className="mt-6 rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5 shadow-sm">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Voice introduction</p>
+                    <audio controls src={therapist.voiceIntro} className="mt-4 w-full" />
+                  </div>
+                )}
+
                 <div className="mt-10 bg-white rounded-[2rem] p-6 md:p-8 shadow-sm">
                   <h2 className="text-2xl font-heading font-black text-[#064F4B] uppercase tracking-tighter">About</h2>
                   <p className="mt-4 text-[#5F7F7A] font-medium leading-relaxed">

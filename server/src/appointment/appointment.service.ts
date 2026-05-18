@@ -12,7 +12,7 @@ import { Appointment } from './entities/appointment.entity';
 import { AvailabilitySlot } from '../availability/entities/availability-slot.entity';
 import { SlotStatus } from '../availability/entities/slot-status.enum';
 
-import { User } from '../user/entities/user.entity';
+import { Role, User } from '../user/entities/user.entity';
 import { MailService } from '../mail/mail.service';
 
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
@@ -103,6 +103,29 @@ export class AppointmentService {
     });
   }
 
+  async findForUser(user: JwtPayload): Promise<Appointment[]> {
+    if (user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) {
+      return this.findAll();
+    }
+
+    if (user.role === Role.THERAPIST) {
+      return this.appointmentRepo.find({
+        where: {
+          therapist: {
+            account: {
+              id: user.userId,
+            },
+          },
+        },
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+    }
+
+    return this.findForPatient(user);
+  }
+
   async findForPatient(patient: JwtPayload): Promise<Appointment[]> {
     return this.appointmentRepo.find({
       where: {
@@ -119,6 +142,7 @@ export class AppointmentService {
   async findOne(id: string): Promise<Appointment> {
     const appointment = await this.appointmentRepo.findOne({
       where: { id },
+      relations: ['therapist.account'],
     });
 
     if (!appointment) {
@@ -128,11 +152,38 @@ export class AppointmentService {
     return appointment;
   }
 
+  async findOneForUser(id: string, user: JwtPayload): Promise<Appointment> {
+    const appointment = await this.findOne(id);
+
+    if (user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) {
+      return appointment;
+    }
+
+    if (
+      user.role === Role.PATIENT &&
+      appointment.patient?.id === user.userId
+    ) {
+      return appointment;
+    }
+
+    if (
+      user.role === Role.THERAPIST &&
+      appointment.therapist?.account?.id === user.userId
+    ) {
+      return appointment;
+    }
+
+    throw new NotFoundException('Appointment not found');
+  }
+
   async updateStatus(
     id: string,
     dto: UpdateAppointmentStatusDto,
+    user?: JwtPayload,
   ): Promise<Appointment> {
-    const appointment = await this.findOne(id);
+    const appointment = user
+      ? await this.findOneForUser(id, user)
+      : await this.findOne(id);
 
     appointment.status = dto.status;
 

@@ -26,7 +26,13 @@ type LoginPayload = {
   password: string;
 };
 
-type RegisterPayload = LoginPayload;
+type RegisterPayload = LoginPayload & {
+  fullName?: string;
+  phone?: string;
+  age?: number | null;
+  gender?: string;
+  healthInfo?: Record<string, unknown> | null;
+};
 
 type AuthResponse = {
   accessToken?: string;

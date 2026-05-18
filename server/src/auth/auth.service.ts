@@ -36,6 +36,11 @@ export class AuthService {
       email,
       password: hashedPassword,
       role: Role.PATIENT,
+      fullName: dto.fullName?.trim() || null,
+      phone: dto.phone?.trim() || null,
+      age: dto.age ?? null,
+      gender: dto.gender?.trim() || null,
+      healthInfo: dto.healthInfo ?? null,
     });
 
     return {

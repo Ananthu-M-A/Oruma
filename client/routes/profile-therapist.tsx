@@ -17,6 +17,7 @@ import {
   updateMyAvailabilitySlot,
   updateMyTherapistProfile,
 } from "../src/lib/therapists";
+import { CaseSheet, getCaseSheets, upsertCaseSheet } from "../src/lib/operations";
 
 export const meta = {
   title: "Therapist Profile | Oruma",
@@ -42,6 +43,7 @@ export default function TherapistProfilePage() {
   const user = getCurrentUser();
   const [appointments, setAppointments] = useState<BookingResponse[]>([]);
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
+  const [caseSheets, setCaseSheets] = useState<CaseSheet[]>([]);
   const [profile, setProfile] = useState<Therapist | null>(null);
   const [slotForm, setSlotForm] = useState({
     startTime: "",
@@ -57,9 +59,17 @@ export default function TherapistProfilePage() {
     price: "0",
     couplePrice: "",
     image: "",
+    voiceIntro: "",
     qualifications: "",
     specialization: "",
     bio: "",
+  });
+  const [caseForm, setCaseForm] = useState({
+    appointmentId: "",
+    presentingConcern: "",
+    clinicalNotes: "",
+    interventionPlan: "",
+    followUpPlan: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -74,10 +84,11 @@ export default function TherapistProfilePage() {
       return;
     }
 
-    Promise.all([getAppointments(token), getMyTherapistProfile(token), getMyAvailabilitySlots(token)])
-      .then(([appointmentData, profileData, slotData]) => {
+    Promise.all([getAppointments(token), getMyTherapistProfile(token), getMyAvailabilitySlots(token), getCaseSheets(token)])
+      .then(([appointmentData, profileData, slotData, caseSheetData]) => {
         setAppointments(appointmentData);
         setSlots(slotData);
+        setCaseSheets(caseSheetData);
         setProfile(profileData);
         setForm({
           name: profileData.name,
@@ -88,6 +99,7 @@ export default function TherapistProfilePage() {
           price: String(profileData.price),
           couplePrice: profileData.couplePrice ? String(profileData.couplePrice) : "",
           image: profileData.image ?? "",
+          voiceIntro: profileData.voiceIntro ?? "",
           qualifications: profileData.qualifications ?? "",
           specialization: profileData.specialization ?? "",
           bio: profileData.bio ?? "",
@@ -119,6 +131,7 @@ export default function TherapistProfilePage() {
         price: Number(form.price),
         couplePrice: form.couplePrice ? Number(form.couplePrice) : null,
         image: form.image.trim() || undefined,
+        voiceIntro: form.voiceIntro.trim() || undefined,
         qualifications: form.qualifications.trim() || undefined,
         specialization: form.specialization.trim() || undefined,
         bio: form.bio.trim() || undefined,
@@ -129,6 +142,29 @@ export default function TherapistProfilePage() {
       setError(err instanceof Error ? err.message : "Unable to save profile.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const saveCaseSheet = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const token = getAccessToken();
+    if (!token) return;
+
+    setError("");
+    setNotice("");
+    try {
+      const saved = await upsertCaseSheet(token, caseForm);
+      setCaseSheets((current) => [saved, ...current.filter((sheet) => sheet.id !== saved.id)]);
+      setCaseForm({
+        appointmentId: "",
+        presentingConcern: "",
+        clinicalNotes: "",
+        interventionPlan: "",
+        followUpPlan: "",
+      });
+      setNotice("Case sheet saved.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save case sheet.");
     }
   };
 
@@ -253,6 +289,7 @@ export default function TherapistProfilePage() {
                     { id: "profile", label: "Profile" },
                     { id: "availability", label: "Availability" },
                     { id: "appointments", label: "Appointments" },
+                    { id: "cases", label: "Case sheets" },
                   ]}
                   activeTab={activeTab}
                   onChange={setActiveTab}
@@ -278,6 +315,12 @@ export default function TherapistProfilePage() {
                       <Field label="Individual fee" type="number" value={form.price} onChange={(value) => setForm({ ...form, price: value })} required />
                       <Field label="Couple fee" type="number" value={form.couplePrice} onChange={(value) => setForm({ ...form, couplePrice: value })} />
                       <Field label="Profile picture URL or asset file" value={form.image} onChange={(value) => setForm({ ...form, image: value })} />
+                      <Field label="Voice intro audio URL" value={form.voiceIntro} onChange={(value) => setForm({ ...form, voiceIntro: value })} />
+                      {form.voiceIntro && (
+                        <div className="md:col-span-2">
+                          <audio controls src={form.voiceIntro} className="w-full" />
+                        </div>
+                      )}
                       <Field label="Qualifications" value={form.qualifications} onChange={(value) => setForm({ ...form, qualifications: value })} />
                       <Field label="Specialization" value={form.specialization} onChange={(value) => setForm({ ...form, specialization: value })} />
                       <label className="md:col-span-2">
@@ -399,6 +442,41 @@ export default function TherapistProfilePage() {
                       ))}
                     </div>
                   )}
+
+                  {activeTab === "cases" && (
+                    <section className="rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Case sheet updates</p>
+                      <h3 className="mt-1 text-2xl font-heading font-black text-[#064F4B]">Session notes</h3>
+                      <form onSubmit={saveCaseSheet} className="mt-5 grid gap-4">
+                        <label>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Appointment</span>
+                          <select required value={caseForm.appointmentId} onChange={(event) => setCaseForm({ ...caseForm, appointmentId: event.target.value })} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]">
+                            <option value="">Select appointment</option>
+                            {appointments.map((appointment) => (
+                              <option key={appointment.id} value={appointment.id}>
+                                {(appointment.patient?.fullName || appointment.patient?.email || "Patient")} - {formatSlot(appointment.slot?.startTime)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <TextArea label="Presenting concern" value={caseForm.presentingConcern} onChange={(value) => setCaseForm({ ...caseForm, presentingConcern: value })} />
+                        <TextArea label="Clinical notes" value={caseForm.clinicalNotes} onChange={(value) => setCaseForm({ ...caseForm, clinicalNotes: value })} />
+                        <TextArea label="Intervention plan" value={caseForm.interventionPlan} onChange={(value) => setCaseForm({ ...caseForm, interventionPlan: value })} />
+                        <TextArea label="Follow-up plan" value={caseForm.followUpPlan} onChange={(value) => setCaseForm({ ...caseForm, followUpPlan: value })} />
+                        <button className="w-fit rounded-full bg-[#064F4B] px-6 py-4 text-xs font-black uppercase tracking-widest text-white">Save case sheet</button>
+                      </form>
+                      <div className="mt-6 overflow-hidden rounded-lg border border-[#E2E8E6]">
+                        {caseSheets.length === 0 && <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">No case sheets yet.</p>}
+                        {caseSheets.map((sheet) => (
+                          <article key={sheet.id} className="border-b border-[#E2E8E6] p-5 last:border-b-0">
+                            <p className="font-black text-[#064F4B]">{sheet.patient?.fullName || sheet.patient?.email || "Patient"}</p>
+                            <p className="mt-1 text-xs font-black uppercase tracking-widest text-[#5F7F7A]">Updated {new Date(sheet.updatedAt).toLocaleString("en-IN")}</p>
+                            <p className="mt-3 text-sm font-bold text-[#5F7F7A]">{sheet.presentingConcern || sheet.clinicalNotes || "No notes entered."}</p>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  )}
                 </div>
               </section>
             </div>
@@ -407,6 +485,15 @@ export default function TherapistProfilePage() {
       </section>
       <Footer />
     </main>
+  );
+}
+
+function TextArea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <label>
+      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</span>
+      <textarea value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-24 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+    </label>
   );
 }
 

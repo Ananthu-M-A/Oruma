@@ -26,6 +26,7 @@ function mapForBooking(therapist: Therapist) {
 type TherapistGridProps = {
   nextDayOnly?: boolean;
   searchQuery?: string;
+  maxFee?: number | null;
   emptyTitle?: string;
   emptyDescription?: string;
 };
@@ -33,6 +34,7 @@ type TherapistGridProps = {
 export default function TherapistGrid({
   nextDayOnly = false,
   searchQuery = '',
+  maxFee = null,
   emptyTitle = 'No therapists are available right now.',
   emptyDescription = 'Please check back soon or contact Oruma directly.',
 }: TherapistGridProps) {
@@ -80,6 +82,8 @@ export default function TherapistGrid({
   };
 
   const visibleTherapists = therapists.filter((therapist) => {
+    if (maxFee && therapist.price > maxFee) return false;
+
     const normalizedQuery = searchQuery.trim().toLowerCase();
     if (!normalizedQuery) return true;
 
@@ -161,18 +165,16 @@ export default function TherapistGrid({
                 </div>
 
                 <div className="flex items-center gap-4 border-b border-[#E2E8E6] py-6">
-                  <button className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1A1A1A] text-white" type="button" title="Voice intro">
-                    <LucideIcon name="play" size={20} fill="currentColor" />
-                  </button>
-                  <div className="flex flex-1 items-center gap-1 overflow-hidden">
-                    {Array.from({ length: 32 }).map((_, index) => (
-                      <span
-                        key={index}
-                        className="w-1 rounded-full bg-[#1A1A1A]/30"
-                        style={{ height: `${12 + ((index * 7) % 28)}px` }}
-                      />
-                    ))}
-                  </div>
+                  {therapist.voiceIntro ? (
+                    <audio controls src={therapist.voiceIntro} className="h-10 min-w-0 flex-1" />
+                  ) : (
+                    <>
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1A1A1A] text-white" title="Voice intro pending">
+                        <LucideIcon name="mic-off" size={20} />
+                      </span>
+                      <p className="flex-1 text-sm font-black text-[#1A1A1A]/50">Voice intro pending</p>
+                    </>
+                  )}
                   <Link
                     to={`/therapists/${therapist.id}`}
                     className="shrink-0 rounded-full border border-[#1A1A1A] px-5 py-3 text-xs font-black text-[#1A1A1A] transition-all hover:bg-[#1A1A1A] hover:text-white"
@@ -184,7 +186,7 @@ export default function TherapistGrid({
                 <div className="grid grid-cols-3 gap-4 border-b border-[#E2E8E6] py-6">
                   <StatItem value={`${therapist.experience}+`} label="Therapy hrs" />
                   <StatItem value={languages} label="Languages" />
-                  <StatItem value="₹1000" label="Starts from" />
+                  <StatItem value={`Rs.${therapist.price.toLocaleString('en-IN')}`} label="Starts from" />
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 border-b border-[#E2E8E6] py-5 sm:grid-cols-2">

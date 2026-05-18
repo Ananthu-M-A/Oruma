@@ -6,6 +6,7 @@ import ProfileTabs from "../components/ProfileTabs";
 import { LucideIcon } from "@site-builder/icons";
 import { AuthAccount, getAccessToken, getCurrentUser, getMyAccount, updateMyAccount } from "../src/lib/auth";
 import { BookingResponse, getMyAppointments } from "../src/lib/booking";
+import { createTicket, getTickets, Ticket } from "../src/lib/operations";
 
 export const meta = {
   title: "Patient Profile | Oruma",
@@ -48,6 +49,7 @@ export default function PatientProfilePage() {
   const user = getCurrentUser();
   const [account, setAccount] = useState<AuthAccount | null>(null);
   const [appointments, setAppointments] = useState<BookingResponse[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [personalForm, setPersonalForm] = useState({
     fullName: "",
     phone: "",
@@ -62,6 +64,11 @@ export default function PatientProfilePage() {
     emergencyContact: "",
     notes: "",
   });
+  const [ticketForm, setTicketForm] = useState({
+    subject: "",
+    category: "Booking",
+    message: "",
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
@@ -75,9 +82,10 @@ export default function PatientProfilePage() {
       return;
     }
 
-    Promise.all([getMyAppointments(token), getMyAccount()])
-      .then(([appointmentData, accountData]) => {
+    Promise.all([getMyAppointments(token), getMyAccount(), getTickets(token)])
+      .then(([appointmentData, accountData, ticketData]) => {
         setAppointments(appointmentData);
+        setTickets(ticketData);
         setAccount(accountData);
         setPersonalForm({
           fullName: accountData.fullName ?? "",
@@ -122,6 +130,26 @@ export default function PatientProfilePage() {
       setNotice("Profile updated.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to update profile.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const submitTicket = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const token = getAccessToken();
+    if (!token) return;
+
+    setIsSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      const ticket = await createTicket(token, ticketForm);
+      setTickets((current) => [ticket, ...current]);
+      setTicketForm({ subject: "", category: "Booking", message: "" });
+      setNotice("Support ticket created.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to create ticket.");
     } finally {
       setIsSaving(false);
     }
@@ -181,6 +209,7 @@ export default function PatientProfilePage() {
                   { id: "appointments", label: "Appointments" },
                   { id: "personal", label: "Personal info" },
                   { id: "health", label: "Health info" },
+                  { id: "tickets", label: "Tickets" },
                 ]}
                 activeTab={activeTab}
                 onChange={setActiveTab}
@@ -247,6 +276,44 @@ export default function PatientProfilePage() {
                       {isSaving ? "Saving..." : "Save profile"}
                     </button>
                   </form>
+                )}
+
+                {activeTab === "tickets" && (
+                  <section className="space-y-6">
+                    <form onSubmit={submitTicket} className="rounded-[2rem] border border-[#E2E8E6] bg-[#FBFDFC] p-6 md:p-8 shadow-sm">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Support</p>
+                      <h3 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Raise a ticket</h3>
+                      <div className="mt-6 grid gap-4">
+                        <Field label="Subject" value={ticketForm.subject} onChange={(value) => setTicketForm({ ...ticketForm, subject: value })} />
+                        <label>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Category</span>
+                          <select value={ticketForm.category} onChange={(event) => setTicketForm({ ...ticketForm, category: event.target.value })} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]">
+                            <option>Booking</option>
+                            <option>Payment</option>
+                            <option>Therapist</option>
+                            <option>Technical</option>
+                            <option>General</option>
+                          </select>
+                        </label>
+                        <label>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Message</span>
+                          <textarea required value={ticketForm.message} onChange={(event) => setTicketForm({ ...ticketForm, message: event.target.value })} className="mt-2 min-h-28 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+                        </label>
+                      </div>
+                      <button disabled={isSaving} className="mt-6 rounded-full bg-[#064F4B] px-7 py-4 text-xs font-black uppercase tracking-widest text-white disabled:opacity-60">Create ticket</button>
+                    </form>
+                    <div className="space-y-4">
+                      {tickets.length === 0 && <p className="rounded-[1.25rem] bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">No tickets yet.</p>}
+                      {tickets.map((ticket) => (
+                        <article key={ticket.id} className="rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5 shadow-sm">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">{ticket.status}</p>
+                          <h3 className="mt-2 font-black text-[#064F4B]">{ticket.subject}</h3>
+                          <p className="mt-1 text-sm font-bold text-[#5F7F7A]">{ticket.category}</p>
+                          <p className="mt-3 text-sm font-medium text-[#5F7F7A]">{ticket.message}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
                 )}
               </div>
             </section>
