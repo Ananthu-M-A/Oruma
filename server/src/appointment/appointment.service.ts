@@ -151,7 +151,7 @@ export class AppointmentService {
   }
 
   async findForUser(user: JwtPayload): Promise<Appointment[]> {
-    if (user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) {
+    if (user.role === Role.ADMIN) {
       return this.findAll();
     }
 
@@ -202,7 +202,7 @@ export class AppointmentService {
   async findOneForUser(id: string, user: JwtPayload): Promise<Appointment> {
     const appointment = await this.findOne(id);
 
-    if (user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) {
+    if (user.role === Role.ADMIN) {
       return appointment;
     }
 

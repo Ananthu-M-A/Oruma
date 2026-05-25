@@ -7,7 +7,7 @@ import { AdminService } from './admin.service';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
+@Roles(Role.ADMIN)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 

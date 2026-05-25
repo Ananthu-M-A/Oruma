@@ -24,7 +24,7 @@ export class CaseSheetController {
 
   @Patch()
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.THERAPIST)
+  @Roles(Role.ADMIN, Role.THERAPIST)
   upsert(@Body() dto: UpsertCaseSheetDto, @Req() req: { user: JwtPayload }) {
     return this.caseSheetService.upsert(dto, req.user);
   }

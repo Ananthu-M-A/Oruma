@@ -27,7 +27,7 @@ export class TicketService {
   }
 
   findForUser(user: JwtPayload) {
-    if (user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) {
+    if (user.role === Role.ADMIN) {
       return this.ticketRepo.find({ order: { createdAt: 'DESC' } });
     }
 

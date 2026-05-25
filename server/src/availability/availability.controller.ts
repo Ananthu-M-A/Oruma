@@ -33,14 +33,14 @@ export class AvailabilityController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.THERAPIST)
+  @Roles(Role.ADMIN, Role.THERAPIST)
   create(@Body() dto: CreateAvailabilitySlotDto) {
     return this.availabilityService.create(dto);
   }
 
   @Post('bulk')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.THERAPIST)
+  @Roles(Role.ADMIN, Role.THERAPIST)
   bulkCreate(@Body() dto: BulkCreateAvailabilityDto) {
     return this.availabilityService.bulkCreate(dto);
   }
@@ -80,7 +80,7 @@ export class AvailabilityController {
 
   @Delete(':slotId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.THERAPIST)
+  @Roles(Role.ADMIN, Role.THERAPIST)
   delete(@Param('slotId') slotId: string, @Req() req: AuthenticatedRequest) {
     return this.availabilityService.delete(
       slotId,

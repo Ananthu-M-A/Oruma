@@ -9,7 +9,7 @@ import { PaymentService } from './payment.service';
 
 @Controller('payments')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN, Role.SUPER_ADMIN)
+@Roles(Role.ADMIN)
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 

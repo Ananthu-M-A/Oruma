@@ -51,7 +51,7 @@ type CloudinaryResponse = {
 
 @Controller('media')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.THERAPIST)
+@Roles(Role.ADMIN, Role.THERAPIST)
 export class MediaController {
   @Post('upload')
   @UseInterceptors(

@@ -25,7 +25,7 @@ export class TicketController {
 
   @Patch(':id')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @Roles(Role.ADMIN)
   update(@Param('id') id: string, @Body() dto: UpdateTicketDto) {
     return this.ticketService.update(id, dto);
   }

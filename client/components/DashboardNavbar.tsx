@@ -7,7 +7,6 @@ const roleHome: Record<AuthRole, string> = {
   PATIENT: "/profile/patient",
   THERAPIST: "/profile/therapist",
   ADMIN: "/profile/admin",
-  SUPER_ADMIN: "/profile/admin",
 };
 
 export default function DashboardNavbar() {
@@ -47,7 +46,7 @@ export default function DashboardNavbar() {
         </Link>
 
         <nav className="flex items-center gap-2">
-          {(user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") && (
+          {user?.role === "ADMIN" && (
             <>
               <Link to="/profile/admin" className="hidden rounded-full px-4 py-2 text-xs font-black uppercase tracking-widest text-[#064F4B] hover:bg-[#F5F8F7] sm:inline-flex">
                 Overview

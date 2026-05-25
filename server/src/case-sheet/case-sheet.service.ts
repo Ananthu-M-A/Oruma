@@ -16,7 +16,7 @@ export class CaseSheetService {
   ) {}
 
   async findForUser(user: JwtPayload) {
-    if (user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) {
+    if (user.role === Role.ADMIN) {
       return this.caseSheetRepo.find({ order: { updatedAt: 'DESC' } });
     }
 
@@ -67,7 +67,7 @@ export class CaseSheetService {
 
     if (!caseSheet) throw new NotFoundException('Case sheet not found');
 
-    if (user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) return caseSheet;
+    if (user.role === Role.ADMIN) return caseSheet;
     if (user.role === Role.PATIENT && caseSheet.patient?.id === user.userId) return caseSheet;
     if (
       user.role === Role.THERAPIST &&
