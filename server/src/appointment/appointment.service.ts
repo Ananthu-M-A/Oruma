@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { JwtPayload } from '../auth/strategies/jwt.strategy';
 import { Appointment } from './entities/appointment.entity';
@@ -14,6 +14,7 @@ import { SlotStatus } from '../availability/entities/slot-status.enum';
 
 import { Role, User } from '../user/entities/user.entity';
 import { MailService } from '../mail/mail.service';
+import { WhatsAppService } from '../whatsapp/whatsapp.service';
 
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
@@ -27,72 +28,118 @@ export class AppointmentService {
     @InjectRepository(AvailabilitySlot)
     private readonly slotRepo: Repository<AvailabilitySlot>,
     private readonly mailService: MailService,
+    private readonly whatsAppService: WhatsAppService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(
     dto: CreateAppointmentDto,
     patient: JwtPayload,
   ): Promise<Appointment> {
-    const slot = await this.slotRepo.findOne({
-      where: {
-        id: dto.slotId,
+    const savedAppointment = await this.dataSource.transaction(
+      async (manager) => {
+        const slotRepo = manager.getRepository(AvailabilitySlot);
+        const appointmentRepo = manager.getRepository(Appointment);
+        const userRepo = manager.getRepository(User);
+
+        const slot = await slotRepo
+          .createQueryBuilder('slot')
+          .setLock('pessimistic_write')
+          .leftJoinAndSelect('slot.therapist', 'therapist')
+          .where('slot.id = :slotId', { slotId: dto.slotId })
+          .getOne();
+
+        if (!slot) {
+          throw new NotFoundException('Slot not found');
+        }
+
+        if (slot.status !== SlotStatus.AVAILABLE) {
+          throw new BadRequestException('Selected slot is unavailable');
+        }
+
+        const existingAppointment = await appointmentRepo.findOne({
+          where: {
+            slot: {
+              id: slot.id,
+            },
+          },
+        });
+
+        if (existingAppointment) {
+          throw new BadRequestException('Slot already booked');
+        }
+
+        const patientAccount = await userRepo.findOne({
+          where: {
+            id: patient.userId,
+          },
+        });
+
+        slot.status = SlotStatus.BOOKED;
+        await slotRepo.save(slot);
+
+        const appointment = appointmentRepo.create({
+          patient: {
+            id: patient.userId,
+          } as User,
+          therapist: slot.therapist,
+          slot,
+          notes: dto.notes,
+          contactName: dto.contactName?.trim() || patientAccount?.fullName || null,
+          contactEmail: dto.contactEmail?.trim().toLowerCase() || patient.email,
+          contactPhone: dto.contactPhone?.trim() || patientAccount?.phone || null,
+          service: dto.service?.trim() || null,
+          mode: dto.mode?.trim() || null,
+        });
+
+        return appointmentRepo.save(appointment);
       },
-      relations: ['therapist'],
-    });
+    );
 
-    if (!slot) {
-      throw new NotFoundException('Slot not found');
-    }
+    await this.sendBookingNotifications(savedAppointment, patient);
 
-    if (slot.status !== SlotStatus.AVAILABLE) {
-      throw new BadRequestException('Selected slot is unavailable');
-    }
+    return savedAppointment;
+  }
 
-    const existingAppointment = await this.appointmentRepo.findOne({
-      where: {
-        slot: {
-          id: slot.id,
-        },
-      },
-    });
-
-    if (existingAppointment) {
-      throw new BadRequestException('Slot already booked');
-    }
-
-    slot.status = SlotStatus.BOOKED;
-
-    await this.slotRepo.save(slot);
-
-    const appointment = this.appointmentRepo.create({
-      patient: {
-        id: patient.userId,
-      } as User,
-      therapist: slot.therapist,
-      slot,
-      notes: dto.notes,
-    });
-
-    const savedAppointment = await this.appointmentRepo.save(appointment);
+  private async sendBookingNotifications(
+    appointment: Appointment,
+    patient: JwtPayload,
+  ) {
+    const slotRange = `${appointment.slot.startTime.toISOString()} - ${appointment.slot.endTime.toISOString()}`;
+    const service = appointment.service ?? 'Therapy session';
 
     await this.mailService.send({
       to: patient.email,
       subject: 'Your Oruma appointment request is received',
       text: [
         'Your Oruma appointment request has been received.',
-        `Therapist: ${slot.therapist.name}`,
-        `Slot: ${slot.startTime.toISOString()} - ${slot.endTime.toISOString()}`,
+        `Service: ${service}`,
+        `Therapist: ${appointment.therapist.name}`,
+        `Slot: ${slotRange}`,
         'We will keep you updated on the confirmation status.',
       ].join('\n'),
       html: `
         <p>Your Oruma appointment request has been received.</p>
-        <p><strong>Therapist:</strong> ${slot.therapist.name}</p>
-        <p><strong>Slot:</strong> ${slot.startTime.toISOString()} - ${slot.endTime.toISOString()}</p>
+        <p><strong>Service:</strong> ${service}</p>
+        <p><strong>Therapist:</strong> ${appointment.therapist.name}</p>
+        <p><strong>Slot:</strong> ${slotRange}</p>
         <p>We will keep you updated on the confirmation status.</p>
       `,
     });
 
-    return savedAppointment;
+    const whatsAppText = [
+      'Your Oruma appointment request has been received.',
+      `Service: ${service}`,
+      `Therapist: ${appointment.therapist.name}`,
+      `Slot: ${slotRange}`,
+      'We will keep you updated on the confirmation status.',
+    ].join('\n');
+
+    await this.whatsAppService.send({
+      to: appointment.contactPhone,
+      text: whatsAppText,
+      templateParameters: [service, appointment.therapist.name, slotRange],
+    });
   }
 
   async findAll(): Promise<Appointment[]> {

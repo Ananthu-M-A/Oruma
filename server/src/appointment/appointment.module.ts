@@ -5,15 +5,18 @@ import { AuthModule } from '../auth/auth.module';
 import { Appointment } from './entities/appointment.entity';
 import { AvailabilitySlot } from '../availability/entities/availability-slot.entity';
 import { MailModule } from '../mail/mail.module';
+import { User } from '../user/entities/user.entity';
+import { WhatsAppModule } from '../whatsapp/whatsapp.module';
 
 import { AppointmentController } from './appointment.controller';
 import { AppointmentService } from './appointment.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Appointment, AvailabilitySlot]),
+    TypeOrmModule.forFeature([Appointment, AvailabilitySlot, User]),
     AuthModule,
     MailModule,
+    WhatsAppModule,
   ],
   controllers: [AppointmentController],
   providers: [AppointmentService],

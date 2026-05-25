@@ -149,6 +149,11 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
       await createAppointment(
         {
           slotId: formData.slotId,
+          contactName: formData.name,
+          contactEmail: formData.email,
+          contactPhone: formData.phone,
+          service: formData.service,
+          mode: formData.mode,
           notes: `Service: ${formData.service}\nMode: ${formData.mode}\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}`,
         },
         accessToken,
@@ -353,7 +358,7 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
           {submitSuccess && (
             <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
               <p className="text-sm font-bold text-green-700">Appointment booked successfully.</p>
-              <p className="text-xs text-green-600 mt-1">Confirmation details have been sent to your WhatsApp and email.</p>
+              <p className="text-xs text-green-600 mt-1">Confirmation notifications have been queued for email and WhatsApp where configured.</p>
             </div>
           )}
 

@@ -6,6 +6,7 @@ import {
   OneToOne,
   JoinColumn,
   CreateDateColumn,
+  Index,
 } from 'typeorm';
 
 import { User } from '../../user/entities/user.entity';
@@ -32,6 +33,7 @@ export class Appointment {
     eager: true,
   })
   @JoinColumn()
+  @Index('IDX_appointment_slot_unique', { unique: true })
   slot: AvailabilitySlot;
 
   @Column({
@@ -43,6 +45,21 @@ export class Appointment {
 
   @Column({ type: 'text', nullable: true })
   notes: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  contactName: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  contactEmail: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  contactPhone: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  service: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  mode: string | null;
 
   @Column({ type: 'text', nullable: true })
   meetingLink: string;

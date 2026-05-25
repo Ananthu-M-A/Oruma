@@ -2,6 +2,11 @@ import { API_BASE_URL } from './auth';
 
 export interface BookingData {
   slotId: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  service?: string;
+  mode?: string;
   notes?: string;
 }
 
