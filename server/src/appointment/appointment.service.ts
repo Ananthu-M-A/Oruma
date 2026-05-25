@@ -44,7 +44,7 @@ export class AppointmentService {
 
         const slot = await slotRepo
           .createQueryBuilder('slot')
-          .setLock('pessimistic_write')
+          .setLock('pessimistic_write', undefined, ['slot'])
           .leftJoinAndSelect('slot.therapist', 'therapist')
           .where('slot.id = :slotId', { slotId: dto.slotId })
           .getOne();

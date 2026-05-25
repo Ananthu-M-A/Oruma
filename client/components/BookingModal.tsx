@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { LucideIcon } from "@site-builder/icons";
 import {
   AvailabilitySlot,
@@ -10,6 +11,7 @@ import { createAppointment } from "../src/lib/booking";
 import { getAccessToken, getCurrentUser, getMyAccount } from "../src/lib/auth";
 
 export default function BookingModal({ isOpen, onClose, therapist, initialSlot }) {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([]);
   const [isAvailabilityLoading, setIsAvailabilityLoading] = useState(false);
@@ -162,6 +164,11 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
       setSubmitSuccess(true);
       setTimeout(() => {
         onClose();
+        navigate("/profile/patient", {
+          state: {
+            notice: "Appointment booked successfully. Your session request is now in your appointments.",
+          },
+        });
       }, 2000);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Failed to book appointment. Please try again.");

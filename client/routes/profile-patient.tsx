@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 import ProfileTabs from "../components/ProfileTabs";
@@ -47,6 +47,8 @@ function AppointmentCard({ appointment }: { appointment: BookingResponse }) {
 
 export default function PatientProfilePage() {
   const user = getCurrentUser();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [account, setAccount] = useState<AuthAccount | null>(null);
   const [appointments, setAppointments] = useState<BookingResponse[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -74,6 +76,14 @@ export default function PatientProfilePage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [activeTab, setActiveTab] = useState("appointments");
+
+  useEffect(() => {
+    const state = location.state as { notice?: string } | null;
+    if (!state?.notice) return;
+
+    setNotice(state.notice);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
     const token = getAccessToken();
