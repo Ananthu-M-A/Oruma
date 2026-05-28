@@ -78,10 +78,11 @@ export default function PatientProfilePage() {
   const [activeTab, setActiveTab] = useState("appointments");
 
   useEffect(() => {
-    const state = location.state as { notice?: string } | null;
+    const state = location.state as { notice?: string; activeTab?: string } | null;
     if (!state?.notice) return;
 
     setNotice(state.notice);
+    if (state.activeTab) setActiveTab(state.activeTab);
     navigate(location.pathname, { replace: true, state: null });
   }, [location.pathname, location.state, navigate]);
 
@@ -227,7 +228,19 @@ export default function PatientProfilePage() {
               />
 
               <div className="mt-8">
-                {notice && <p className="mb-4 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
+                {notice && (
+                  <div className="mb-4 rounded-2xl border border-[#BFE8D9] bg-[#EAF7F2] p-4">
+                    <p className="font-bold text-[#075E59]">{notice}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button type="button" onClick={() => setActiveTab("personal")} className="rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B]">
+                        Personal info
+                      </button>
+                      <button type="button" onClick={() => setActiveTab("health")} className="rounded-full bg-[#064F4B] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white">
+                        Health info
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {error && <p className="mb-4 rounded-lg bg-red-50 p-4 font-bold text-red-700">{error}</p>}
 
                 {activeTab === "appointments" && (

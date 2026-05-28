@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
+import { Role, User } from './entities/user.entity';
 
 @Injectable()
 export class UserService {
@@ -15,8 +15,27 @@ export class UserService {
       where: {
         email,
       },
-      select: ['id', 'email', 'password', 'role'],
+      select: ['id', 'email', 'password', 'role', 'createdAt'],
     });
+  }
+
+  findPatientByEmailOrPhone(identifier: string): Promise<User | null> {
+    const email = identifier.trim().toLowerCase();
+    const phone = identifier.replace(/\D/g, '');
+    const query = this.userRepository
+      .createQueryBuilder('user')
+      .where('user.role = :role', { role: Role.PATIENT });
+
+    if (email.includes('@')) {
+      query.andWhere('user.email = :email', { email });
+    } else {
+      query.andWhere(
+        "regexp_replace(COALESCE(user.phone, ''), '\\D', '', 'g') = :phone",
+        { phone },
+      );
+    }
+
+    return query.getOne();
   }
 
   findById(id: string): Promise<User | null> {

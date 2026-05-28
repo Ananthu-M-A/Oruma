@@ -155,7 +155,9 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
         notes: `Service: ${formData.service}\nMode: ${formData.mode}\nName: ${formData.name}\nEmail: ${formData.email || "Not shared"}\nPhone: ${formData.phone}`,
       };
 
-      if (currentUser && accessToken) {
+      const isQuickBooking = !currentUser || !accessToken;
+
+      if (!isQuickBooking) {
         await createAppointment(bookingPayload, accessToken);
       } else {
         const result = await createQuickAppointment(bookingPayload);
@@ -167,7 +169,10 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
         onClose();
         navigate("/profile/patient", {
           state: {
-            notice: "Appointment booked successfully. Your session request is now in your appointments.",
+            notice: isQuickBooking
+              ? "Appointment booked successfully. Please complete your Personal info and Health info so your therapist can prepare better for the session."
+              : "Appointment booked successfully. Your session request is now in your appointments.",
+            activeTab: isQuickBooking ? "personal" : "appointments",
           },
         });
       }, 2000);

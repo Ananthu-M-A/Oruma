@@ -8,6 +8,10 @@ import { StringValue } from 'ms';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { LoginOtp } from './entities/login-otp.entity';
+import { MailModule } from '../mail/mail.module';
+import { WhatsAppModule } from '../whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -23,6 +27,9 @@ import { RolesGuard } from './guards/roles.guard';
       }),
     }),
     UserModule,
+    TypeOrmModule.forFeature([LoginOtp]),
+    MailModule,
+    WhatsAppModule,
   ],
   providers: [AuthService, JwtStrategy, RolesGuard],
   controllers: [AuthController],

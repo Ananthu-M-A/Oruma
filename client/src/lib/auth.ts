@@ -41,13 +41,15 @@ type AuthResponse = {
   email?: string;
   role?: AuthRole;
   createdAt?: string;
+  message?: string;
+  devCode?: string;
 };
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "/api";
 const ACCESS_TOKEN_KEY = "oruma_access_token";
 export const AUTH_CHANGED_EVENT = "oruma-auth-changed";
 
-async function requestAuth(path: string, payload: LoginPayload | RegisterPayload) {
+async function requestAuth(path: string, payload: Record<string, unknown>) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
     headers: {
@@ -120,6 +122,14 @@ async function writeWithAuth<T>(path: string, payload: unknown, method: "PATCH" 
 
 export function login(payload: LoginPayload) {
   return requestAuth("/auth/login", payload);
+}
+
+export function requestLoginOtp(payload: { identifier: string }) {
+  return requestAuth("/auth/login/otp/request", payload);
+}
+
+export function verifyLoginOtp(payload: { identifier: string; code: string }) {
+  return requestAuth("/auth/login/otp/verify", payload);
 }
 
 export function register(payload: RegisterPayload) {

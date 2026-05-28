@@ -6,6 +6,8 @@ describe('AuthController', () => {
   let controller: AuthController;
   const authService = {
     login: jest.fn(),
+    requestLoginOtp: jest.fn(),
+    verifyLoginOtp: jest.fn(),
     register: jest.fn(),
   };
 

@@ -2,6 +2,8 @@ import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { RequestLoginOtpDto } from './dto/request-login-otp.dto';
+import { VerifyLoginOtpDto } from './dto/verify-login-otp.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
@@ -32,6 +34,16 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Post('login/otp/request')
+  requestLoginOtp(@Body() dto: RequestLoginOtpDto) {
+    return this.authService.requestLoginOtp(dto);
+  }
+
+  @Post('login/otp/verify')
+  verifyLoginOtp(@Body() dto: VerifyLoginOtpDto) {
+    return this.authService.verifyLoginOtp(dto);
   }
 
   @Post('register')
