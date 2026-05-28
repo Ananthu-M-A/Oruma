@@ -67,12 +67,7 @@ export default function TherapistGrid({
 
   const handleBookNow = (therapist: Therapist) => {
     const user = getCurrentUser();
-    if (!user) {
-      window.location.href = '/login';
-      return;
-    }
-
-    if (user.role !== 'PATIENT') {
+    if (user && user.role !== 'PATIENT') {
       window.location.href = '/therapists';
       return;
     }

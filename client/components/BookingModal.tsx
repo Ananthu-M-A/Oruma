@@ -7,8 +7,8 @@ import {
   getSlotDateLabel,
   getSlotTimeLabel,
 } from "../src/lib/therapists";
-import { createAppointment } from "../src/lib/booking";
-import { getAccessToken, getCurrentUser, getMyAccount } from "../src/lib/auth";
+import { createAppointment, createQuickAppointment } from "../src/lib/booking";
+import { getAccessToken, getCurrentUser, getMyAccount, saveAccessToken } from "../src/lib/auth";
 
 export default function BookingModal({ isOpen, onClose, therapist, initialSlot }) {
   const navigate = useNavigate();
@@ -34,15 +34,17 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
     if (!isOpen) return;
 
     const currentUser = getCurrentUser();
-    getMyAccount()
-      .then((account) => {
-        setFormData((prev) => ({
-          ...prev,
-          name: prev.name || account.fullName || "",
-          phone: prev.phone || account.phone || "",
-        }));
-      })
-      .catch(() => undefined);
+    if (currentUser) {
+      getMyAccount()
+        .then((account) => {
+          setFormData((prev) => ({
+            ...prev,
+            name: prev.name || account.fullName || "",
+            phone: prev.phone || account.phone || "",
+          }));
+        })
+        .catch(() => undefined);
+    }
     setStep(1);
     setSubmitError("");
     setSubmitSuccess(false);
@@ -102,18 +104,13 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
     if (step === 1) return Boolean(formData.service);
     if (step === 2) return Boolean(formData.slotId);
     if (step === 3) {
-      return Boolean(formData.name.trim() && formData.email.trim() && formData.phone.trim() && formData.mode);
+      return Boolean(formData.name.trim() && formData.phone.trim() && formData.mode);
     }
     return true;
   };
 
   const nextStep = () => {
     setSubmitError("");
-
-    if (!getCurrentUser() || !getAccessToken()) {
-      setSubmitError("Please log in before booking an appointment.");
-      return;
-    }
 
     if (!canContinue()) {
       setSubmitError("Please complete the required options before continuing.");
@@ -133,8 +130,8 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
       const currentUser = getCurrentUser();
       const accessToken = getAccessToken();
 
-      if (!currentUser || !accessToken) {
-        setSubmitError("Please log in to book an appointment");
+      if (currentUser && currentUser.role !== "PATIENT") {
+        setSubmitError("Please use a patient account to book an appointment.");
         return;
       }
 
@@ -143,23 +140,27 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
         return;
       }
 
-      if (!formData.name || !formData.email || !formData.phone) {
+      if (!formData.name || !formData.phone) {
         setSubmitError("Please fill in all required information");
         return;
       }
 
-      await createAppointment(
-        {
-          slotId: formData.slotId,
-          contactName: formData.name,
-          contactEmail: formData.email,
-          contactPhone: formData.phone,
-          service: formData.service,
-          mode: formData.mode,
-          notes: `Service: ${formData.service}\nMode: ${formData.mode}\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}`,
-        },
-        accessToken,
-      );
+      const bookingPayload = {
+        slotId: formData.slotId,
+        contactName: formData.name,
+        contactEmail: formData.email,
+        contactPhone: formData.phone,
+        service: formData.service,
+        mode: formData.mode,
+        notes: `Service: ${formData.service}\nMode: ${formData.mode}\nName: ${formData.name}\nEmail: ${formData.email || "Not shared"}\nPhone: ${formData.phone}`,
+      };
+
+      if (currentUser && accessToken) {
+        await createAppointment(bookingPayload, accessToken);
+      } else {
+        const result = await createQuickAppointment(bookingPayload);
+        saveAccessToken(result.accessToken);
+      }
 
       setSubmitSuccess(true);
       setTimeout(() => {
@@ -202,15 +203,6 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
         </div>
 
         <div className="overflow-y-auto p-6">
-          {(!getCurrentUser() || !getAccessToken()) && (
-            <div className="mb-5 rounded-2xl bg-amber-50 p-4">
-              <p className="text-sm font-black text-amber-800">Please log in as a patient before booking.</p>
-              <a href="/login" className="mt-3 inline-flex rounded-full bg-[#064F4B] px-5 py-3 text-xs font-black uppercase tracking-widest text-white">
-                Login to continue
-              </a>
-            </div>
-          )}
-
           {step === 1 && (
             <div className="space-y-6">
               {therapist && (
@@ -315,7 +307,7 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
                 <input type="text" placeholder="Enter your full name" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#A3B899]" value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} />
               </label>
               <label className="block space-y-1">
-                <span className="text-sm font-bold text-gray-700">Email</span>
+                <span className="text-sm font-bold text-gray-700">Email (optional)</span>
                 <input type="email" placeholder="Enter your email" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#A3B899]" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} />
               </label>
               <label className="block space-y-1">
@@ -376,7 +368,7 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
           )}
 
           {step < 4 ? (
-            <button onClick={nextStep} disabled={isSubmitting || !getCurrentUser() || !getAccessToken()} className="w-full bg-[#064F4B] text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-[#0A7F7A] transition-all disabled:opacity-50">
+            <button onClick={nextStep} disabled={isSubmitting} className="w-full bg-[#064F4B] text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-[#0A7F7A] transition-all disabled:opacity-50">
               Next Step
             </button>
           ) : (

@@ -3,9 +3,12 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 
 import { JwtPayload } from '../auth/strategies/jwt.strategy';
 import { Appointment } from './entities/appointment.entity';
@@ -21,6 +24,8 @@ import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto'
 
 @Injectable()
 export class AppointmentService {
+  private readonly quickBookingEmailDomain = 'quick-booking.oruma.local';
+
   constructor(
     @InjectRepository(Appointment)
     private readonly appointmentRepo: Repository<Appointment>,
@@ -30,102 +35,260 @@ export class AppointmentService {
     private readonly mailService: MailService,
     private readonly whatsAppService: WhatsAppService,
     private readonly dataSource: DataSource,
+    private readonly jwtService: JwtService,
   ) {}
 
   async create(
     dto: CreateAppointmentDto,
     patient: JwtPayload,
   ): Promise<Appointment> {
-    const savedAppointment = await this.dataSource.transaction(
-      async (manager) => {
-        const slotRepo = manager.getRepository(AvailabilitySlot);
-        const appointmentRepo = manager.getRepository(Appointment);
-        const userRepo = manager.getRepository(User);
-
-        const slot = await slotRepo
-          .createQueryBuilder('slot')
-          .setLock('pessimistic_write', undefined, ['slot'])
-          .leftJoinAndSelect('slot.therapist', 'therapist')
-          .where('slot.id = :slotId', { slotId: dto.slotId })
-          .getOne();
-
-        if (!slot) {
-          throw new NotFoundException('Slot not found');
-        }
-
-        if (slot.status !== SlotStatus.AVAILABLE) {
-          throw new BadRequestException('Selected slot is unavailable');
-        }
-
-        const existingAppointment = await appointmentRepo.findOne({
-          where: {
-            slot: {
-              id: slot.id,
-            },
-          },
-        });
-
-        if (existingAppointment) {
-          throw new BadRequestException('Slot already booked');
-        }
-
-        const patientAccount = await userRepo.findOne({
-          where: {
-            id: patient.userId,
-          },
-        });
-
-        slot.status = SlotStatus.BOOKED;
-        await slotRepo.save(slot);
-
-        const appointment = appointmentRepo.create({
-          patient: {
-            id: patient.userId,
-          } as User,
-          therapist: slot.therapist,
-          slot,
-          notes: dto.notes,
-          contactName: dto.contactName?.trim() || patientAccount?.fullName || null,
-          contactEmail: dto.contactEmail?.trim().toLowerCase() || patient.email,
-          contactPhone: dto.contactPhone?.trim() || patientAccount?.phone || null,
-          service: dto.service?.trim() || null,
-          mode: dto.mode?.trim() || null,
-        });
-
-        return appointmentRepo.save(appointment);
+    const patientAccount = await this.dataSource.getRepository(User).findOne({
+      where: {
+        id: patient.userId,
       },
-    );
+    });
 
-    await this.sendBookingNotifications(savedAppointment, patient);
+    if (!patientAccount) {
+      throw new NotFoundException('Patient account not found');
+    }
+
+    const savedAppointment = await this.createForPatient(dto, patientAccount);
+
+    await this.sendBookingNotifications(savedAppointment, patient.email);
 
     return savedAppointment;
   }
 
+  async createQuickBooking(dto: CreateAppointmentDto): Promise<{
+    appointment: Appointment;
+    accessToken: string;
+    user: Pick<User, 'id' | 'email' | 'role' | 'createdAt'>;
+    createdAccount: boolean;
+  }> {
+    const result = await this.dataSource.transaction(async (manager) => {
+      const patientResult = await this.resolveQuickBookingPatient(dto, manager);
+      const appointment = await this.createForPatient(
+        dto,
+        patientResult.patient,
+        manager,
+      );
+
+      return {
+        appointment,
+        patient: patientResult.patient,
+        createdAccount: patientResult.createdAccount,
+      };
+    });
+
+    await this.sendBookingNotifications(
+      result.appointment,
+      this.normalizeEmail(dto.contactEmail),
+    );
+
+    const accessToken = this.jwtService.sign({
+      userId: result.patient.id,
+      email: result.patient.email,
+      role: result.patient.role,
+    });
+
+    return {
+      appointment: result.appointment,
+      accessToken,
+      user: {
+        id: result.patient.id,
+        email: result.patient.email,
+        role: result.patient.role,
+        createdAt: result.patient.createdAt,
+      },
+      createdAccount: result.createdAccount,
+    };
+  }
+
+  private async createForPatient(
+    dto: CreateAppointmentDto,
+    patientAccount: User,
+    transactionManager?: EntityManager,
+  ): Promise<Appointment> {
+    if (transactionManager) {
+      return this.createForPatientInTransaction(
+        dto,
+        patientAccount,
+        transactionManager,
+      );
+    }
+
+    return this.dataSource.transaction((manager) =>
+      this.createForPatientInTransaction(dto, patientAccount, manager),
+    );
+  }
+
+  private async createForPatientInTransaction(
+    dto: CreateAppointmentDto,
+    patientAccount: User,
+    manager: EntityManager,
+  ): Promise<Appointment> {
+    const slotRepo = manager.getRepository(AvailabilitySlot);
+    const appointmentRepo = manager.getRepository(Appointment);
+
+    const slot = await slotRepo
+      .createQueryBuilder('slot')
+      .setLock('pessimistic_write', undefined, ['slot'])
+      .leftJoinAndSelect('slot.therapist', 'therapist')
+      .where('slot.id = :slotId', { slotId: dto.slotId })
+      .getOne();
+
+    if (!slot) {
+      throw new NotFoundException('Slot not found');
+    }
+
+    if (slot.status !== SlotStatus.AVAILABLE) {
+      throw new BadRequestException('Selected slot is unavailable');
+    }
+
+    const existingAppointment = await appointmentRepo.findOne({
+      where: {
+        slot: {
+          id: slot.id,
+        },
+      },
+    });
+
+    if (existingAppointment) {
+      throw new BadRequestException('Slot already booked');
+    }
+
+    slot.status = SlotStatus.BOOKED;
+    await slotRepo.save(slot);
+
+    const appointment = appointmentRepo.create({
+      patient: {
+        id: patientAccount.id,
+      } as User,
+      therapist: slot.therapist,
+      slot,
+      notes: dto.notes,
+      contactName: dto.contactName?.trim() || patientAccount?.fullName || null,
+      contactEmail: this.normalizeEmail(dto.contactEmail) || patientAccount.email,
+      contactPhone: this.normalizePhone(dto.contactPhone) || patientAccount?.phone || null,
+      service: dto.service?.trim() || null,
+      mode: dto.mode?.trim() || null,
+    });
+
+    return appointmentRepo.save(appointment);
+  }
+
+  private async resolveQuickBookingPatient(
+    dto: CreateAppointmentDto,
+    manager: EntityManager,
+  ): Promise<{ patient: User; createdAccount: boolean }> {
+    const email = this.normalizeEmail(dto.contactEmail);
+    const phone = this.normalizePhone(dto.contactPhone);
+
+    if (!email && !phone) {
+      throw new BadRequestException('Please enter an email or WhatsApp number');
+    }
+
+    const userRepo = manager.getRepository(User);
+    const query = userRepo
+      .createQueryBuilder('user')
+      .where('user.role = :role', { role: Role.PATIENT });
+
+    if (email && phone) {
+      query.andWhere(
+        "(user.email = :email OR regexp_replace(COALESCE(user.phone, ''), '\\D', '', 'g') = :phone)",
+        { email, phone },
+      );
+    } else if (email) {
+      query.andWhere('user.email = :email', { email });
+    } else {
+      query.andWhere(
+        "regexp_replace(COALESCE(user.phone, ''), '\\D', '', 'g') = :phone",
+        { phone },
+      );
+    }
+
+    const existingPatients = await query.getMany();
+    const patient =
+      existingPatients.find((user) => email && user.email === email) ??
+      existingPatients.find(
+        (user) => phone && this.normalizePhone(user.phone ?? undefined) === phone,
+      );
+
+    if (patient) {
+      patient.fullName = patient.fullName || dto.contactName?.trim() || null;
+      patient.phone = patient.phone || phone || null;
+
+      if (
+        email &&
+        patient.email.endsWith(`@${this.quickBookingEmailDomain}`)
+      ) {
+        const emailOwner = await userRepo.findOne({ where: { email } });
+        if (!emailOwner) patient.email = email;
+      }
+
+      return {
+        patient: await userRepo.save(patient),
+        createdAccount: false,
+      };
+    }
+
+    const password = await bcrypt.hash(randomBytes(24).toString('hex'), 10);
+    const patientEmail =
+      email || `${phone}@${this.quickBookingEmailDomain}`;
+    const createdPatient = userRepo.create({
+      email: patientEmail,
+      password,
+      role: Role.PATIENT,
+      fullName: dto.contactName?.trim() || null,
+      phone: phone || null,
+      age: null,
+      gender: null,
+      healthInfo: null,
+    });
+
+    return {
+      patient: await userRepo.save(createdPatient),
+      createdAccount: true,
+    };
+  }
+
+  private normalizeEmail(email?: string) {
+    const normalized = email?.trim().toLowerCase();
+    return normalized || null;
+  }
+
+  private normalizePhone(phone?: string) {
+    const digits = phone?.replace(/\D/g, '');
+    return digits || null;
+  }
+
   private async sendBookingNotifications(
     appointment: Appointment,
-    patient: JwtPayload,
+    email: string | null,
   ) {
     const slotRange = `${appointment.slot.startTime.toISOString()} - ${appointment.slot.endTime.toISOString()}`;
     const service = appointment.service ?? 'Therapy session';
 
-    await this.mailService.send({
-      to: patient.email,
-      subject: 'Your Oruma appointment request is received',
-      text: [
-        'Your Oruma appointment request has been received.',
-        `Service: ${service}`,
-        `Therapist: ${appointment.therapist.name}`,
-        `Slot: ${slotRange}`,
-        'We will keep you updated on the confirmation status.',
-      ].join('\n'),
-      html: `
-        <p>Your Oruma appointment request has been received.</p>
-        <p><strong>Service:</strong> ${service}</p>
-        <p><strong>Therapist:</strong> ${appointment.therapist.name}</p>
-        <p><strong>Slot:</strong> ${slotRange}</p>
-        <p>We will keep you updated on the confirmation status.</p>
-      `,
-    });
+    if (email) {
+      await this.mailService.send({
+        to: email,
+        subject: 'Your Oruma appointment request is received',
+        text: [
+          'Your Oruma appointment request has been received.',
+          `Service: ${service}`,
+          `Therapist: ${appointment.therapist.name}`,
+          `Slot: ${slotRange}`,
+          'We will keep you updated on the confirmation status.',
+        ].join('\n'),
+        html: `
+          <p>Your Oruma appointment request has been received.</p>
+          <p><strong>Service:</strong> ${service}</p>
+          <p><strong>Therapist:</strong> ${appointment.therapist.name}</p>
+          <p><strong>Slot:</strong> ${slotRange}</p>
+          <p>We will keep you updated on the confirmation status.</p>
+        `,
+      });
+    }
 
     const whatsAppText = [
       'Your Oruma appointment request has been received.',

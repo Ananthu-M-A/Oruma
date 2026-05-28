@@ -33,6 +33,11 @@ export class AppointmentController {
     return this.appointmentService.create(dto, req.user);
   }
 
+  @Post('quick')
+  createQuickBooking(@Body() dto: CreateAppointmentDto) {
+    return this.appointmentService.createQuickBooking(dto);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.THERAPIST)
