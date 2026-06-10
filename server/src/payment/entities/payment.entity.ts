@@ -15,7 +15,11 @@ export class Payment {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Appointment, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => Appointment, {
+    eager: true,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   appointment: Appointment | null;
 
   @ManyToOne(() => User, { eager: true, nullable: true, onDelete: 'SET NULL' })
@@ -35,6 +39,12 @@ export class Payment {
 
   @Column({ type: 'varchar', nullable: true })
   reference: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  providerOrderId: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  providerPaymentId: string | null;
 
   @Column({ type: 'text', nullable: true })
   notes: string | null;

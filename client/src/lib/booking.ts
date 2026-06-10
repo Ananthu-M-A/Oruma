@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './auth';
+import { API_BASE_URL } from "./auth";
 
 export interface BookingData {
   slotId: string;
@@ -30,7 +30,9 @@ export interface BookingResponse {
     startTime: string;
     endTime: string;
   };
-  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+  status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
+  service?: string | null;
+  mode?: string | null;
   createdAt: string;
 }
 
@@ -41,25 +43,27 @@ export interface QuickBookingResponse {
   user: {
     id: string;
     email: string;
-    role: 'PATIENT';
+    role: "PATIENT";
     createdAt: string;
   };
 }
 
 function cleanBookingData(bookingData: BookingData) {
   return Object.fromEntries(
-    Object.entries(bookingData).filter(([, value]) => value !== undefined && value !== '')
+    Object.entries(bookingData).filter(
+      ([, value]) => value !== undefined && value !== "",
+    ),
   );
 }
 
 export async function createAppointment(
   bookingData: BookingData,
-  accessToken: string
+  accessToken: string,
 ): Promise<BookingResponse> {
   const response = await fetch(`${API_BASE_URL}/appointments`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(cleanBookingData(bookingData)),
@@ -67,17 +71,17 @@ export async function createAppointment(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || 'Failed to create appointment'
-    );
+    throw new Error(errorData.message || "Failed to create appointment");
   }
 
   return response.json();
 }
 
-export async function getAppointments(accessToken: string): Promise<BookingResponse[]> {
+export async function getAppointments(
+  accessToken: string,
+): Promise<BookingResponse[]> {
   const response = await fetch(`${API_BASE_URL}/appointments`, {
-    method: 'GET',
+    method: "GET",
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -85,38 +89,36 @@ export async function getAppointments(accessToken: string): Promise<BookingRespo
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || 'Failed to fetch appointments'
-    );
+    throw new Error(errorData.message || "Failed to fetch appointments");
   }
 
   return response.json();
 }
 
 export async function createQuickAppointment(
-  bookingData: BookingData
+  bookingData: BookingData,
 ): Promise<QuickBookingResponse> {
   const response = await fetch(`${API_BASE_URL}/appointments/quick`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(cleanBookingData(bookingData)),
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || 'Failed to create appointment'
-    );
+    throw new Error(errorData.message || "Failed to create appointment");
   }
 
   return response.json();
 }
 
-export async function getMyAppointments(accessToken: string): Promise<BookingResponse[]> {
+export async function getMyAppointments(
+  accessToken: string,
+): Promise<BookingResponse[]> {
   const response = await fetch(`${API_BASE_URL}/appointments/me`, {
-    method: 'GET',
+    method: "GET",
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -124,9 +126,7 @@ export async function getMyAppointments(accessToken: string): Promise<BookingRes
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || 'Failed to fetch your appointments'
-    );
+    throw new Error(errorData.message || "Failed to fetch your appointments");
   }
 
   return response.json();
@@ -134,20 +134,21 @@ export async function getMyAppointments(accessToken: string): Promise<BookingRes
 
 export async function getAppointment(
   appointmentId: string,
-  accessToken: string
+  accessToken: string,
 ): Promise<BookingResponse> {
-  const response = await fetch(`${API_BASE_URL}/appointments/${appointmentId}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
+  const response = await fetch(
+    `${API_BASE_URL}/appointments/${appointmentId}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || 'Failed to fetch appointment'
-    );
+    throw new Error(errorData.message || "Failed to fetch appointment");
   }
 
   return response.json();
@@ -155,42 +156,44 @@ export async function getAppointment(
 
 export async function cancelAppointment(
   appointmentId: string,
-  accessToken: string
+  accessToken: string,
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/appointments/${appointmentId}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
+  const response = await fetch(
+    `${API_BASE_URL}/appointments/${appointmentId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || 'Failed to cancel appointment'
-    );
+    throw new Error(errorData.message || "Failed to cancel appointment");
   }
 }
 
 export async function updateAppointmentStatus(
   appointmentId: string,
-  status: BookingResponse['status'],
-  accessToken: string
+  status: BookingResponse["status"],
+  accessToken: string,
 ): Promise<BookingResponse> {
-  const response = await fetch(`${API_BASE_URL}/appointments/${appointmentId}/status`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+  const response = await fetch(
+    `${API_BASE_URL}/appointments/${appointmentId}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ status }),
     },
-    body: JSON.stringify({ status }),
-  });
+  );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || 'Failed to update appointment status'
-    );
+    throw new Error(errorData.message || "Failed to update appointment status");
   }
 
   return response.json();

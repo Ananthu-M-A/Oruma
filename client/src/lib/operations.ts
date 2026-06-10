@@ -3,13 +3,16 @@ import { BookingResponse } from "./booking";
 
 type ApiMessage = { message?: string | string[] };
 
-async function readResponse<T>(response: Response, fallback: string): Promise<T> {
+async function readResponse<T>(
+  response: Response,
+  fallback: string,
+): Promise<T> {
   const data = (await response.json().catch(() => ({}))) as T | ApiMessage;
 
   if (!response.ok) {
     const message = Array.isArray((data as ApiMessage).message)
-      ? ((data as { message: string[] }).message).join(" ")
-      : (data as ApiMessage).message ?? fallback;
+      ? (data as { message: string[] }).message.join(" ")
+      : ((data as ApiMessage).message ?? fallback);
     throw new Error(message);
   }
 
@@ -25,9 +28,18 @@ export type Payment = {
   status: "PENDING" | "PAID" | "REFUNDED" | "FAILED";
   provider: string;
   reference: string | null;
+  providerOrderId: string | null;
+  providerPaymentId: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type RazorpayOrder = {
+  keyId: string;
+  orderId: string;
+  amount: number;
+  currency: string;
 };
 
 export type Ticket = {
@@ -62,9 +74,21 @@ export async function getPayments(accessToken: string) {
   return readResponse<Payment[]>(response, "Unable to load payments.");
 }
 
+export async function getMyPayments(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/payments/me`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  return readResponse<Payment[]>(response, "Unable to load your payments.");
+}
+
 export async function createPayment(
   accessToken: string,
-  payload: { appointmentId: string; amount: number; reference?: string; notes?: string },
+  payload: {
+    appointmentId: string;
+    amount: number;
+    reference?: string;
+    notes?: string;
+  },
 ) {
   const response = await fetch(`${API_BASE_URL}/payments`, {
     method: "POST",
@@ -77,7 +101,11 @@ export async function createPayment(
   return readResponse<Payment>(response, "Unable to record payment.");
 }
 
-export async function refundPayment(accessToken: string, id: string, payload: { amount: number; notes?: string }) {
+export async function refundPayment(
+  accessToken: string,
+  id: string,
+  payload: { amount: number; notes?: string },
+) {
   const response = await fetch(`${API_BASE_URL}/payments/${id}/refund`, {
     method: "PATCH",
     headers: {
@@ -87,6 +115,40 @@ export async function refundPayment(accessToken: string, id: string, payload: { 
     body: JSON.stringify(payload),
   });
   return readResponse<Payment>(response, "Unable to refund payment.");
+}
+
+export async function createRazorpayOrder(
+  accessToken: string,
+  appointmentId: string,
+) {
+  const response = await fetch(`${API_BASE_URL}/payments/razorpay/order`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ appointmentId }),
+  });
+  return readResponse<RazorpayOrder>(response, "Unable to start payment.");
+}
+
+export async function verifyRazorpayPayment(
+  accessToken: string,
+  payload: {
+    razorpayOrderId: string;
+    razorpayPaymentId: string;
+    razorpaySignature: string;
+  },
+) {
+  const response = await fetch(`${API_BASE_URL}/payments/razorpay/verify`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  return readResponse<Payment>(response, "Unable to verify payment.");
 }
 
 export async function getTickets(accessToken: string) {

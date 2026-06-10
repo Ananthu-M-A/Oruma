@@ -13,6 +13,7 @@ type SendWhatsAppInput = {
   to?: string | null;
   text: string;
   templateParameters?: string[];
+  templateName?: string;
 };
 
 @Injectable()
@@ -34,6 +35,10 @@ export class WhatsAppService {
       'WHATSAPP_TEMPLATE_LANGUAGE',
       'en',
     );
+    const apiVersion = this.configService.get<string>(
+      'WHATSAPP_API_VERSION',
+      'v20.0',
+    );
 
     if (!to) {
       this.logger.warn('WhatsApp notification skipped: missing phone number.');
@@ -47,8 +52,16 @@ export class WhatsAppService {
       return false;
     }
 
-    const body = templateName
-      ? this.createTemplatePayload(to, templateName, languageCode, input)
+    const resolvedTemplateName =
+      input.templateName ??
+      (input.templateParameters?.length ? templateName : undefined);
+    const body = resolvedTemplateName
+      ? this.createTemplatePayload(
+          to,
+          resolvedTemplateName,
+          languageCode,
+          input,
+        )
       : {
           messaging_product: 'whatsapp',
           recipient_type: 'individual',
@@ -62,7 +75,7 @@ export class WhatsAppService {
 
     try {
       const response = await fetch(
-        `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
+        `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`,
         {
           method: 'POST',
           headers: {
@@ -128,11 +141,17 @@ export class WhatsAppService {
     if (!phone) return '';
 
     const trimmed = phone.trim();
-    const hasPlus = trimmed.startsWith('+');
     const digits = trimmed.replace(/\D/g, '');
+    const defaultCountryCode = this.configService
+      .get<string>('WHATSAPP_DEFAULT_COUNTRY_CODE', '91')
+      .replace(/\D/g, '');
 
     if (!digits) return '';
+    if (trimmed.startsWith('+')) return digits;
+    if (digits.length === 10 && defaultCountryCode) {
+      return `${defaultCountryCode}${digits}`;
+    }
 
-    return hasPlus ? digits : digits;
+    return digits;
   }
 }
