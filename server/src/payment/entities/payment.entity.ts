@@ -49,6 +49,9 @@ export class Payment {
   @Column({ type: 'text', nullable: true })
   notes: string | null;
 
+  @Column({ type: 'jsonb', nullable: true })
+  refundHistory: Record<string, unknown>[] | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

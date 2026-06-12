@@ -31,6 +31,7 @@ export type Payment = {
   providerOrderId: string | null;
   providerPaymentId: string | null;
   notes: string | null;
+  refundHistory: Record<string, unknown>[] | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -136,7 +137,7 @@ export async function createPayment(
 export async function refundPayment(
   accessToken: string,
   id: string,
-  payload: { amount: number; notes?: string },
+  payload: { amount: number; notes?: string; receipt?: string; speed?: "normal" | "optimum" },
 ) {
   const response = await fetch(`${API_BASE_URL}/payments/${id}/refund`, {
     method: "PATCH",
