@@ -33,6 +33,7 @@ export interface BookingResponse {
   status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
   service?: string | null;
   mode?: string | null;
+  meetingLink?: string | null;
   createdAt: string;
 }
 

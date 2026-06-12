@@ -489,7 +489,7 @@ export default function TherapistProfilePage() {
                         <p className="bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">No appointments have been booked yet.</p>
                       )}
                       {!isLoading && !error && appointments.map((appointment) => (
-                        <article key={appointment.id} className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 md:grid-cols-[1fr_1fr_auto_auto] md:items-center">
+                        <article key={appointment.id} className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 md:grid-cols-[1fr_1fr_auto_auto_auto] md:items-center">
                           <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Patient</p>
                             <p className="mt-1 font-black text-[#064F4B]">{appointment.patient?.fullName || appointment.patient?.email || "Patient"}</p>
@@ -509,6 +509,21 @@ export default function TherapistProfilePage() {
                           <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
                             {appointment.status}
                           </span>
+                          {appointment.status === "CONFIRMED" && appointment.meetingLink ? (
+                            <a
+                              href={appointment.meetingLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex w-fit items-center gap-2 rounded-full bg-[#0A7F7A] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white"
+                            >
+                              <LucideIcon name="video" size={14} />
+                              Join session
+                            </a>
+                          ) : (
+                            <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                              No Zoom link
+                            </span>
+                          )}
                           <select
                             value={appointment.status}
                             onChange={(event) => changeAppointmentStatus(appointment, event.target.value as BookingResponse["status"])}

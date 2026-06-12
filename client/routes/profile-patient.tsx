@@ -81,6 +81,9 @@ function AppointmentCard({
   isPaying: boolean;
   onPay: (appointment: BookingResponse) => void;
 }) {
+  const canJoinSession =
+    appointment.status === "CONFIRMED" && Boolean(appointment.meetingLink);
+
   return (
     <article className="rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -109,8 +112,24 @@ function AppointmentCard({
               {isPaying ? "Opening..." : "Pay now"}
             </button>
           )}
+          {canJoinSession && (
+            <a
+              href={appointment.meetingLink ?? undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-[#0A7F7A] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white"
+            >
+              <LucideIcon name="video" size={14} />
+              Join session
+            </a>
+          )}
         </div>
       </div>
+      {appointment.status === "CONFIRMED" && !appointment.meetingLink && (
+        <p className="mt-4 rounded-lg bg-[#F5F8F7] px-4 py-3 text-xs font-bold text-[#5F7F7A]">
+          Zoom link will appear here once the session link is generated.
+        </p>
+      )}
     </article>
   );
 }

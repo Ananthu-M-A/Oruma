@@ -18,9 +18,11 @@ import { SlotStatus } from '../availability/entities/slot-status.enum';
 import { Role, User } from '../user/entities/user.entity';
 import { MailService } from '../mail/mail.service';
 import { WhatsAppService } from '../whatsapp/whatsapp.service';
+import { ZoomService } from '../zoom/zoom.service';
 
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
+import { AppointmentStatus } from './entities/appointment-status.enum';
 
 @Injectable()
 export class AppointmentService {
@@ -36,6 +38,7 @@ export class AppointmentService {
     private readonly whatsAppService: WhatsAppService,
     private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
+    private readonly zoomService: ZoomService,
   ) {}
 
   async create(
@@ -397,7 +400,25 @@ export class AppointmentService {
 
     appointment.status = dto.status;
 
-    return this.appointmentRepo.save(appointment);
+    const shouldCreateMeeting =
+      dto.status === AppointmentStatus.CONFIRMED && !appointment.meetingLink;
+
+    if (shouldCreateMeeting) {
+      const meetingLink =
+        await this.zoomService.createAppointmentMeeting(appointment);
+
+      if (meetingLink) {
+        appointment.meetingLink = meetingLink;
+      }
+    }
+
+    const savedAppointment = await this.appointmentRepo.save(appointment);
+
+    if (shouldCreateMeeting && savedAppointment.meetingLink) {
+      await this.sendMeetingLinkNotifications(savedAppointment);
+    }
+
+    return savedAppointment;
   }
 
   async remove(id: string): Promise<{ message: string }> {
@@ -414,5 +435,68 @@ export class AppointmentService {
     return {
       message: 'Appointment deleted successfully',
     };
+  }
+
+  private async sendMeetingLinkNotifications(appointment: Appointment) {
+    const meetingLink = appointment.meetingLink;
+    if (!meetingLink) return;
+
+    const slotRange = `${appointment.slot.startTime.toISOString()} - ${appointment.slot.endTime.toISOString()}`;
+    const service = appointment.service ?? 'Therapy session';
+    const patientEmail = appointment.contactEmail ?? appointment.patient?.email;
+    const patientName =
+      appointment.contactName ??
+      appointment.patient?.fullName ??
+      appointment.patient?.email ??
+      'Patient';
+
+    const messageLines = [
+      'Your Oruma appointment has been confirmed.',
+      `Service: ${service}`,
+      `Therapist: ${appointment.therapist.name}`,
+      `Slot: ${slotRange}`,
+      `Join Zoom session: ${meetingLink}`,
+    ];
+
+    if (patientEmail) {
+      await this.mailService.send({
+        to: patientEmail,
+        subject: 'Your Oruma Zoom session link',
+        text: messageLines.join('\n'),
+        html: `
+          <p>Your Oruma appointment has been confirmed.</p>
+          <p><strong>Service:</strong> ${service}</p>
+          <p><strong>Therapist:</strong> ${appointment.therapist.name}</p>
+          <p><strong>Slot:</strong> ${slotRange}</p>
+          <p><a href="${meetingLink}">Join Zoom session</a></p>
+        `,
+      });
+    }
+
+    if (appointment.therapist.email) {
+      await this.mailService.send({
+        to: appointment.therapist.email,
+        subject: 'Confirmed Oruma appointment Zoom link',
+        text: [
+          'An Oruma appointment has been confirmed.',
+          `Patient: ${patientName}`,
+          `Service: ${service}`,
+          `Slot: ${slotRange}`,
+          `Join Zoom session: ${meetingLink}`,
+        ].join('\n'),
+        html: `
+          <p>An Oruma appointment has been confirmed.</p>
+          <p><strong>Patient:</strong> ${patientName}</p>
+          <p><strong>Service:</strong> ${service}</p>
+          <p><strong>Slot:</strong> ${slotRange}</p>
+          <p><a href="${meetingLink}">Join Zoom session</a></p>
+        `,
+      });
+    }
+
+    await this.whatsAppService.send({
+      to: appointment.contactPhone,
+      text: messageLines.join('\n'),
+    });
   }
 }

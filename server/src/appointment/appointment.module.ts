@@ -7,6 +7,7 @@ import { AvailabilitySlot } from '../availability/entities/availability-slot.ent
 import { MailModule } from '../mail/mail.module';
 import { User } from '../user/entities/user.entity';
 import { WhatsAppModule } from '../whatsapp/whatsapp.module';
+import { ZoomModule } from '../zoom/zoom.module';
 
 import { AppointmentController } from './appointment.controller';
 import { AppointmentService } from './appointment.service';
@@ -17,6 +18,7 @@ import { AppointmentService } from './appointment.service';
     AuthModule,
     MailModule,
     WhatsAppModule,
+    ZoomModule,
   ],
   controllers: [AppointmentController],
   providers: [AppointmentService],

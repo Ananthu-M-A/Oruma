@@ -105,6 +105,22 @@ The browser client is allowed through `CLIENT_ORIGIN`. For multiple origins, use
 CLIENT_ORIGIN=http://localhost:5173,https://your-client-domain.com
 ```
 
+## Zoom Meetings
+
+Appointment confirmation can auto-generate Zoom meeting links using a Zoom Server-to-Server OAuth app.
+
+Required Zoom environment values:
+
+```env
+ZOOM_ACCOUNT_ID=
+ZOOM_CLIENT_ID=
+ZOOM_CLIENT_SECRET=
+ZOOM_USER_ID=me
+ZOOM_TIMEZONE=Asia/Kolkata
+```
+
+Use `ZOOM_USER_ID=me` to create meetings under the app owner account, or set it to a specific Zoom user ID/email available to the account. The Zoom app needs meeting creation permission, such as `meeting:write:admin` or the equivalent meeting write scope available in the Zoom Marketplace app settings.
+
 ## Scripts
 
 ```bash

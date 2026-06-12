@@ -240,13 +240,28 @@ export default function AdminProfilePage() {
                     <p className="bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">No appointment data is available yet.</p>
                   )}
                   {appointments.slice(0, 10).map((appointment) => (
-                    <article key={appointment.id} className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-center">
+                    <article key={appointment.id} className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 lg:grid-cols-[1fr_1fr_1fr_auto_auto] lg:items-center">
                       <ActivityItem label="Patient" value={appointment.patient?.email ?? "Patient"} />
                       <ActivityItem label="Therapist" value={appointment.therapist?.name ?? "Therapist"} />
                       <ActivityItem label="Created" value={new Date(appointment.createdAt).toLocaleDateString("en-IN")} />
                       <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
                         {appointment.status}
                       </span>
+                      {appointment.status === "CONFIRMED" && appointment.meetingLink ? (
+                        <a
+                          href={appointment.meetingLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex w-fit items-center gap-2 rounded-full bg-[#0A7F7A] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white"
+                        >
+                          <LucideIcon name="video" size={14} />
+                          Join
+                        </a>
+                      ) : (
+                        <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                          No link
+                        </span>
+                      )}
                     </article>
                   ))}
                 </div>
