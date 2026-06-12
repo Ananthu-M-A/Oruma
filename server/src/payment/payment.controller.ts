@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   Headers,
   Param,
   Patch,
@@ -44,6 +45,14 @@ export class PaymentController {
   @Roles(Role.PATIENT)
   findMine(@Req() req: AuthenticatedRequest) {
     return this.paymentService.findForPatient(req.user);
+  }
+
+  @Get(':id/invoice')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.PATIENT)
+  @Header('Content-Type', 'text/html; charset=utf-8')
+  getInvoice(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.paymentService.getInvoice(id, req.user);
   }
 
   @Post()

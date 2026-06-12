@@ -81,6 +81,38 @@ export async function getMyPayments(accessToken: string) {
   return readResponse<Payment[]>(response, "Unable to load your payments.");
 }
 
+export async function openPaymentInvoice(accessToken: string, id: string) {
+  const response = await fetch(`${API_BASE_URL}/payments/${id}/invoice`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const text = await response.text();
+
+  if (!response.ok) {
+    let message = "Unable to open invoice.";
+    try {
+      const data = JSON.parse(text) as ApiMessage;
+      message = Array.isArray(data.message)
+        ? data.message.join(" ")
+        : data.message ?? message;
+    } catch {
+      message = text || message;
+    }
+    throw new Error(message);
+  }
+
+  const blob = new Blob([text], { type: "text/html" });
+  const url = window.URL.createObjectURL(blob);
+  const invoiceWindow = window.open(url, "_blank", "noopener,noreferrer");
+
+  window.setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
+
+  if (!invoiceWindow) {
+    throw new Error("Allow pop-ups to open the invoice.");
+  }
+}
+
 export async function createPayment(
   accessToken: string,
   payload: {

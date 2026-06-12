@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -65,6 +66,24 @@ export class PaymentService {
         createdAt: 'DESC',
       },
     });
+  }
+
+  async getInvoice(id: string, user: JwtPayload) {
+    const payment = await this.paymentRepo.findOne({ where: { id } });
+
+    if (!payment) throw new NotFoundException('Payment not found');
+
+    if (user.role !== 'ADMIN' && payment.patient?.id !== user.userId) {
+      throw new ForbiddenException('You cannot access this invoice');
+    }
+
+    if (![PaymentStatus.PAID, PaymentStatus.REFUNDED].includes(payment.status)) {
+      throw new BadRequestException(
+        'Invoice is available only for paid or refunded payments',
+      );
+    }
+
+    return this.renderInvoice(payment);
   }
 
   async create(dto: CreatePaymentDto) {
@@ -308,6 +327,154 @@ export class PaymentService {
     }
 
     return appointment.therapist.price;
+  }
+
+  private renderInvoice(payment: Payment) {
+    const appointment = payment.appointment;
+    const patient = payment.patient ?? appointment?.patient ?? null;
+    const therapist = appointment?.therapist ?? null;
+    const invoiceNumber = this.getInvoiceNumber(payment);
+    const businessName = this.configService.get<string>(
+      'ORUMA_LEGAL_NAME',
+      'Oruma Wellness',
+    );
+    const billingAddress = this.configService.get<string>(
+      'ORUMA_BILLING_ADDRESS',
+      'ORUMA.ME Digital Wellness Platform',
+    );
+    const gstin = this.configService.get<string>('ORUMA_GSTIN');
+    const amount = payment.amount;
+    const refunded = payment.refundedAmount;
+    const netPaid = amount - refunded;
+    const serviceName = appointment?.service ?? 'Therapy consultation';
+    const sessionDate = appointment?.slot?.startTime
+      ? this.formatDate(appointment.slot.startTime)
+      : 'To be scheduled';
+    const paymentReference =
+      payment.providerPaymentId ?? payment.reference ?? payment.providerOrderId;
+
+    return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Invoice ${this.escapeHtml(invoiceNumber)}</title>
+  <style>
+    :root { color: #123431; font-family: Arial, sans-serif; }
+    body { margin: 0; background: #f5f8f7; }
+    main { max-width: 820px; margin: 32px auto; background: #fff; padding: 40px; border: 1px solid #dde8e5; }
+    header { display: flex; justify-content: space-between; gap: 24px; border-bottom: 2px solid #064f4b; padding-bottom: 24px; }
+    h1 { margin: 0; color: #064f4b; font-size: 34px; }
+    h2 { margin: 0 0 8px; color: #064f4b; font-size: 15px; text-transform: uppercase; letter-spacing: .08em; }
+    p { margin: 4px 0; line-height: 1.5; }
+    .muted { color: #5f7f7a; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin: 28px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+    th, td { padding: 14px; border-bottom: 1px solid #dde8e5; text-align: left; }
+    th { background: #f5f8f7; color: #064f4b; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    td:last-child, th:last-child { text-align: right; }
+    .totals { margin-left: auto; margin-top: 24px; width: min(360px, 100%); }
+    .totals div { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #dde8e5; }
+    .total { color: #064f4b; font-size: 20px; font-weight: 700; }
+    .actions { display: flex; justify-content: flex-end; margin: 24px auto 0; max-width: 820px; }
+    button { border: 0; background: #064f4b; color: white; padding: 12px 20px; border-radius: 999px; font-weight: 700; cursor: pointer; }
+    @media print { body { background: #fff; } main { margin: 0; max-width: none; border: 0; } .actions { display: none; } }
+    @media (max-width: 720px) { main { margin: 0; padding: 24px; } header, .grid { grid-template-columns: 1fr; display: grid; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Invoice</h1>
+        <p class="muted">${this.escapeHtml(invoiceNumber)}</p>
+      </div>
+      <div>
+        <h2>${this.escapeHtml(businessName)}</h2>
+        <p>${this.escapeHtml(billingAddress)}</p>
+        ${gstin ? `<p>GSTIN: ${this.escapeHtml(gstin)}</p>` : ''}
+      </div>
+    </header>
+
+    <section class="grid">
+      <div>
+        <h2>Billed to</h2>
+        <p>${this.escapeHtml(patient?.fullName ?? 'Patient')}</p>
+        <p class="muted">${this.escapeHtml(patient?.email ?? payment.patient?.email ?? '')}</p>
+        ${patient?.phone ? `<p class="muted">${this.escapeHtml(patient.phone)}</p>` : ''}
+      </div>
+      <div>
+        <h2>Payment details</h2>
+        <p>Invoice date: ${this.escapeHtml(this.formatDate(payment.createdAt))}</p>
+        <p>Status: ${this.escapeHtml(payment.status)}</p>
+        <p>Provider: ${this.escapeHtml(payment.provider)}</p>
+        ${paymentReference ? `<p>Reference: ${this.escapeHtml(paymentReference)}</p>` : ''}
+      </div>
+    </section>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Session</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>${this.escapeHtml(serviceName)}</strong>
+            <p class="muted">Therapist: ${this.escapeHtml(therapist?.name ?? 'Therapist')}</p>
+          </td>
+          <td>${this.escapeHtml(sessionDate)}</td>
+          <td>${this.formatCurrency(amount)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <section class="totals">
+      <div><span>Subtotal</span><strong>${this.formatCurrency(amount)}</strong></div>
+      <div><span>Refunded</span><strong>${this.formatCurrency(refunded)}</strong></div>
+      <div class="total"><span>Net paid</span><span>${this.formatCurrency(netPaid)}</span></div>
+    </section>
+
+    <p class="muted" style="margin-top: 32px;">This invoice was generated by ORUMA.ME for a digital wellness consultation payment.</p>
+  </main>
+  <div class="actions"><button onclick="window.print()">Print or save PDF</button></div>
+</body>
+</html>`;
+  }
+
+  private getInvoiceNumber(payment: Payment) {
+    const date = payment.createdAt;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `ORU-${year}${month}-${payment.id.slice(0, 8).toUpperCase()}`;
+  }
+
+  private formatCurrency(amount: number) {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
+
+  private formatDate(date: Date) {
+    return new Intl.DateTimeFormat('en-IN', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'Asia/Kolkata',
+    }).format(date);
+  }
+
+  private escapeHtml(value: string) {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   private async createRazorpayOrderRequest(

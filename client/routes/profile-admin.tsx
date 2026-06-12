@@ -15,6 +15,7 @@ import {
   getCaseSheets,
   getPayments,
   getTickets,
+  openPaymentInvoice,
   Payment,
   refundPayment,
   Ticket,
@@ -110,6 +111,20 @@ export default function AdminProfilePage() {
       setError(err instanceof Error ? err.message : "Unable to record refund.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleOpenInvoice = async (payment: Payment) => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setError("");
+    setNotice("");
+
+    try {
+      await openPaymentInvoice(token, payment.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to open invoice.");
     }
   };
 
@@ -318,7 +333,10 @@ export default function AdminProfilePage() {
                       <ActivityItem label="Patient" value={payment.patient?.email ?? "Patient"} />
                       <ActivityItem label="Paid" value={`Rs.${payment.amount.toLocaleString("en-IN")}`} />
                       <ActivityItem label="Refunded" value={`Rs.${payment.refundedAmount.toLocaleString("en-IN")}`} />
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        {(payment.status === "PAID" || payment.status === "REFUNDED") && (
+                          <button type="button" onClick={() => handleOpenInvoice(payment)} className="rounded-full border border-[#DDE8E5] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B]">Invoice</button>
+                        )}
                         <input type="number" min="1" placeholder="Refund" value={refundForm[payment.id] ?? ""} onChange={(event) => setRefundForm({ ...refundForm, [payment.id]: event.target.value })} className="w-28 rounded-lg border border-[#DDE8E5] px-3 py-2 text-sm font-bold outline-none" />
                         <button type="button" onClick={() => handleRefund(payment)} className="rounded-full border border-[#DDE8E5] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B]">Refund</button>
                       </div>

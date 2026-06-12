@@ -105,6 +105,22 @@ The browser client is allowed through `CLIENT_ORIGIN`. For multiple origins, use
 CLIENT_ORIGIN=http://localhost:5173,https://your-client-domain.com
 ```
 
+## Invoice Generation
+
+Paid and refunded payments can be opened as printable HTML invoices from the patient and admin dashboards. The invoice endpoint is authenticated at:
+
+```text
+GET /payments/:id/invoice
+```
+
+Optional billing identity values:
+
+```env
+ORUMA_LEGAL_NAME=Oruma Wellness
+ORUMA_BILLING_ADDRESS=ORUMA.ME Digital Wellness Platform
+ORUMA_GSTIN=
+```
+
 ## Zoom Meetings
 
 Appointment confirmation can auto-generate Zoom meeting links using a Zoom Server-to-Server OAuth app.

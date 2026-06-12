@@ -17,6 +17,7 @@ import {
   createTicket,
   getMyPayments,
   getTickets,
+  openPaymentInvoice,
   Payment,
   Ticket,
   verifyRazorpayPayment,
@@ -72,17 +73,23 @@ function loadRazorpayCheckout() {
 
 function AppointmentCard({
   appointment,
+  payment,
   isPaid,
   isPaying,
   onPay,
+  onInvoice,
 }: {
   appointment: BookingResponse;
+  payment?: Payment;
   isPaid: boolean;
   isPaying: boolean;
   onPay: (appointment: BookingResponse) => void;
+  onInvoice: (payment: Payment) => void;
 }) {
   const canJoinSession =
     appointment.status === "CONFIRMED" && Boolean(appointment.meetingLink);
+  const canOpenInvoice =
+    payment?.status === "PAID" || payment?.status === "REFUNDED";
 
   return (
     <article className="rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5 shadow-sm">
@@ -110,6 +117,16 @@ function AppointmentCard({
               className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-60"
             >
               {isPaying ? "Opening..." : "Pay now"}
+            </button>
+          )}
+          {payment && canOpenInvoice && (
+            <button
+              type="button"
+              onClick={() => onInvoice(payment)}
+              className="inline-flex items-center gap-2 rounded-full border border-[#DDE8E5] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B]"
+            >
+              <LucideIcon name="receipt-text" size={14} />
+              Invoice
             </button>
           )}
           {canJoinSession && (
@@ -239,6 +256,23 @@ export default function PatientProfilePage() {
     [payments],
   );
 
+  const paymentByAppointmentId = useMemo(() => {
+    const map = new Map<string, Payment>();
+    payments
+      .filter(
+        (payment) =>
+          payment.status === "PAID" || payment.status === "REFUNDED",
+      )
+      .forEach((payment) => {
+        const appointmentId = payment.appointment?.id;
+        if (appointmentId && !map.has(appointmentId)) {
+          map.set(appointmentId, payment);
+        }
+      });
+
+    return map;
+  }, [payments]);
+
   const nextAppointment = useMemo(() => {
     return appointments
       .filter(
@@ -354,6 +388,20 @@ export default function PatientProfilePage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to start payment.");
       setPayingAppointmentId("");
+    }
+  };
+
+  const openInvoice = async (payment: Payment) => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setError("");
+    setNotice("");
+
+    try {
+      await openPaymentInvoice(token, payment.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to open invoice.");
     }
   };
 
@@ -498,9 +546,11 @@ export default function PatientProfilePage() {
                         <AppointmentCard
                           key={appointment.id}
                           appointment={appointment}
+                          payment={paymentByAppointmentId.get(appointment.id)}
                           isPaid={paidAppointmentIds.has(appointment.id)}
                           isPaying={payingAppointmentId === appointment.id}
                           onPay={payForAppointment}
+                          onInvoice={openInvoice}
                         />
                       ))}
                   </div>
