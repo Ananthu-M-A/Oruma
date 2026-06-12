@@ -5,9 +5,10 @@ import { AuthModule } from '../auth/auth.module';
 import { Payment } from './entities/payment.entity';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Payment, Appointment]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Payment, Appointment]), AuthModule, NotificationModule],
   controllers: [PaymentController],
   providers: [PaymentService],
   exports: [PaymentService],

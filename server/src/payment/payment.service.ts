@@ -16,6 +16,8 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CreateRazorpayOrderDto } from './dto/create-razorpay-order.dto';
 import { RefundPaymentDto } from './dto/refund-payment.dto';
 import { VerifyRazorpayPaymentDto } from './dto/verify-razorpay-payment.dto';
+import { NotificationType } from '../notification/entities/notification.entity';
+import { NotificationService } from '../notification/notification.service';
 
 type RazorpayOrderResponse = {
   id?: string;
@@ -49,6 +51,7 @@ export class PaymentService {
     @InjectRepository(Appointment)
     private readonly appointmentRepo: Repository<Appointment>,
     private readonly configService: ConfigService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   findAll() {
@@ -102,7 +105,10 @@ export class PaymentService {
       status: PaymentStatus.PAID,
     });
 
-    return this.paymentRepo.save(payment);
+    const savedPayment = await this.paymentRepo.save(payment);
+    await this.sendPaymentNotification(savedPayment, 'Payment recorded', 'Your appointment payment has been recorded.');
+
+    return savedPayment;
   }
 
   async createRazorpayOrder(dto: CreateRazorpayOrderDto, user: JwtPayload) {
@@ -212,7 +218,10 @@ export class PaymentService {
       .filter(Boolean)
       .join('\n');
 
-    return this.paymentRepo.save(payment);
+    const savedPayment = await this.paymentRepo.save(payment);
+    await this.sendPaymentNotification(savedPayment, 'Payment verified', 'Your appointment payment was verified successfully.');
+
+    return savedPayment;
   }
 
   async handleRazorpayWebhook(input: {
@@ -261,7 +270,8 @@ export class PaymentService {
       payment.notes = [payment.notes, 'Razorpay webhook captured payment']
         .filter(Boolean)
         .join('\n');
-      await this.paymentRepo.save(payment);
+      const savedPayment = await this.paymentRepo.save(payment);
+      await this.sendPaymentNotification(savedPayment, 'Payment captured', 'Your appointment payment was captured successfully.');
     }
 
     if (payload.event === 'payment.failed') {
@@ -271,7 +281,8 @@ export class PaymentService {
       payment.notes = [payment.notes, 'Razorpay webhook marked payment failed']
         .filter(Boolean)
         .join('\n');
-      await this.paymentRepo.save(payment);
+      const savedPayment = await this.paymentRepo.save(payment);
+      await this.sendPaymentNotification(savedPayment, 'Payment failed', 'Your appointment payment failed. Please try again or contact support.');
     }
 
     return { received: true };
@@ -298,7 +309,10 @@ export class PaymentService {
         ? PaymentStatus.REFUNDED
         : PaymentStatus.PAID;
 
-    return this.paymentRepo.save(payment);
+    const savedPayment = await this.paymentRepo.save(payment);
+    await this.sendPaymentNotification(savedPayment, 'Refund updated', `A refund of ${this.formatCurrency(dto.amount)} was recorded for your payment.`);
+
+    return savedPayment;
   }
 
   async getSummary() {
@@ -327,6 +341,39 @@ export class PaymentService {
     }
 
     return appointment.therapist.price;
+  }
+
+  private async sendPaymentNotification(
+    payment: Payment,
+    title: string,
+    body: string,
+  ) {
+    const patientId = payment.patient?.id ?? payment.appointment?.patient?.id;
+    if (!patientId) return;
+
+    await Promise.allSettled([
+      this.notificationService.create({
+        recipientId: patientId,
+        type: NotificationType.PAYMENT,
+        title,
+        body,
+        actionUrl: '/profile/patient',
+        metadata: {
+          paymentId: payment.id,
+          appointmentId: payment.appointment?.id,
+        },
+      }),
+      this.notificationService.notifyAdmins({
+        type: NotificationType.PAYMENT,
+        title,
+        body: `${payment.patient?.email ?? 'Patient'}: ${body}`,
+        actionUrl: '/profile/admin',
+        metadata: {
+          paymentId: payment.id,
+          appointmentId: payment.appointment?.id,
+        },
+      }),
+    ]);
   }
 
   private renderInvoice(payment: Payment) {

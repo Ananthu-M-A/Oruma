@@ -17,6 +17,8 @@ import { SlotStatus } from '../availability/entities/slot-status.enum';
 import { MailService } from '../mail/mail.service';
 import { Role } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
+import { NotificationType } from '../notification/entities/notification.entity';
+import { NotificationService } from '../notification/notification.service';
 import { Therapist } from './entities/therapist.entity';
 import { CreateTherapistDto } from './dto/create-therapist.dto';
 import { UpdateTherapistDto } from './dto/update-therapist.dto';
@@ -46,6 +48,7 @@ export class TherapistService {
     private readonly userService: UserService,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async create(
@@ -87,6 +90,16 @@ export class TherapistService {
       savedTherapist,
       temporaryPassword,
     );
+    if (savedTherapist.account?.id) {
+      await this.notificationService.create({
+        recipientId: savedTherapist.account.id,
+        type: NotificationType.PROFILE,
+        title: 'Therapist account created',
+        body: 'Your Oruma therapist account is ready. Complete your profile to begin onboarding.',
+        actionUrl: '/profile/therapist',
+        metadata: { therapistId: savedTherapist.id },
+      });
+    }
 
     return {
       ...savedTherapist,
@@ -183,11 +196,21 @@ export class TherapistService {
     );
     therapist.pendingProfileSubmittedAt = new Date();
 
-    return this.therapistRepo.save(therapist);
+    const savedTherapist = await this.therapistRepo.save(therapist);
+
+    await this.notificationService.notifyAdmins({
+      type: NotificationType.PROFILE,
+      title: 'Therapist profile needs review',
+      body: `${savedTherapist.name} submitted profile updates for approval.`,
+      actionUrl: '/profile/admin/therapists',
+      metadata: { therapistId: savedTherapist.id },
+    });
+
+    return savedTherapist;
   }
 
   async approveProfileChanges(id: string): Promise<Therapist> {
-    const therapist = await this.findOne(id);
+    const therapist = await this.findOneWithAccount(id);
 
     if (!therapist.pendingProfileChanges) {
       throw new BadRequestException('No pending profile changes to approve');
@@ -197,11 +220,24 @@ export class TherapistService {
     therapist.pendingProfileChanges = null;
     therapist.pendingProfileSubmittedAt = null;
 
-    return this.therapistRepo.save(therapist);
+    const savedTherapist = await this.therapistRepo.save(therapist);
+
+    if (savedTherapist.account?.id) {
+      await this.notificationService.create({
+        recipientId: savedTherapist.account.id,
+        type: NotificationType.PROFILE,
+        title: 'Profile updates approved',
+        body: 'Your latest therapist profile updates are now live.',
+        actionUrl: '/profile/therapist',
+        metadata: { therapistId: savedTherapist.id },
+      });
+    }
+
+    return savedTherapist;
   }
 
   async rejectProfileChanges(id: string): Promise<Therapist> {
-    const therapist = await this.findOne(id);
+    const therapist = await this.findOneWithAccount(id);
 
     if (!therapist.pendingProfileChanges) {
       throw new BadRequestException('No pending profile changes to reject');
@@ -210,7 +246,20 @@ export class TherapistService {
     therapist.pendingProfileChanges = null;
     therapist.pendingProfileSubmittedAt = null;
 
-    return this.therapistRepo.save(therapist);
+    const savedTherapist = await this.therapistRepo.save(therapist);
+
+    if (savedTherapist.account?.id) {
+      await this.notificationService.create({
+        recipientId: savedTherapist.account.id,
+        type: NotificationType.PROFILE,
+        title: 'Profile updates need changes',
+        body: 'Your latest therapist profile updates were not approved. Please review and submit again.',
+        actionUrl: '/profile/therapist',
+        metadata: { therapistId: savedTherapist.id },
+      });
+    }
+
+    return savedTherapist;
   }
 
   async remove(id: string): Promise<{ message: string }> {

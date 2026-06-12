@@ -4,6 +4,7 @@ import { AuthModule } from '../auth/auth.module';
 import { Appointment } from '../appointment/entities/appointment.entity';
 import { AvailabilitySlot } from '../availability/entities/availability-slot.entity';
 import { MailModule } from '../mail/mail.module';
+import { NotificationModule } from '../notification/notification.module';
 import { UserModule } from '../user/user.module';
 import { Therapist } from './entities/therapist.entity';
 import { TherapistController } from './therapist.controller';
@@ -15,6 +16,7 @@ import { TherapistService } from './therapist.service';
     AuthModule,
     UserModule,
     MailModule,
+    NotificationModule,
   ],
   controllers: [TherapistController],
   providers: [TherapistService],

@@ -14,6 +14,7 @@ import { PaymentModule } from './payment/payment.module';
 import { TicketModule } from './ticket/ticket.module';
 import { CaseSheetModule } from './case-sheet/case-sheet.module';
 import { MediaModule } from './media/media.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { MediaModule } from './media/media.module';
     TicketModule,
     CaseSheetModule,
     MediaModule,
+    NotificationModule,
     AdminModule,
   ],
   controllers: [AppController],

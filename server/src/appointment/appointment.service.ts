@@ -19,6 +19,9 @@ import { Role, User } from '../user/entities/user.entity';
 import { MailService } from '../mail/mail.service';
 import { WhatsAppService } from '../whatsapp/whatsapp.service';
 import { ZoomService } from '../zoom/zoom.service';
+import { NotificationType } from '../notification/entities/notification.entity';
+import { NotificationService } from '../notification/notification.service';
+import { Therapist } from '../therapist/entities/therapist.entity';
 
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
@@ -39,6 +42,7 @@ export class AppointmentService {
     private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
     private readonly zoomService: ZoomService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async create(
@@ -58,6 +62,7 @@ export class AppointmentService {
     const savedAppointment = await this.createForPatient(dto, patientAccount);
 
     await this.sendBookingNotifications(savedAppointment, patient.email);
+    await this.sendBookingInAppNotifications(savedAppointment);
 
     return savedAppointment;
   }
@@ -87,6 +92,7 @@ export class AppointmentService {
       result.appointment,
       this.normalizeEmail(dto.contactEmail),
     );
+    await this.sendBookingInAppNotifications(result.appointment);
 
     const accessToken = this.jwtService.sign({
       userId: result.patient.id,
@@ -308,6 +314,54 @@ export class AppointmentService {
     });
   }
 
+  private async sendBookingInAppNotifications(appointment: Appointment) {
+    const therapistAccountId = await this.getTherapistAccountId(appointment);
+    const slotRange = this.formatSlotRange(appointment);
+    const service = appointment.service ?? 'Therapy session';
+    const patientName =
+      appointment.contactName ??
+      appointment.patient?.fullName ??
+      appointment.patient?.email ??
+      'Patient';
+
+    await Promise.allSettled([
+      this.notificationService.createMany(
+        [
+          appointment.patient?.id
+            ? {
+                recipientId: appointment.patient.id,
+                type: NotificationType.APPOINTMENT,
+                title: 'Appointment request received',
+                body: `${service} with ${appointment.therapist.name} is pending confirmation for ${slotRange}.`,
+                actionUrl: '/profile/patient',
+                metadata: { appointmentId: appointment.id },
+              }
+            : null,
+          therapistAccountId
+            ? {
+                recipientId: therapistAccountId,
+                type: NotificationType.APPOINTMENT,
+                title: 'New appointment request',
+                body: `${patientName} requested ${service} for ${slotRange}.`,
+                actionUrl: '/profile/therapist',
+                metadata: { appointmentId: appointment.id },
+              }
+            : null,
+        ].filter(
+          (notification): notification is NonNullable<typeof notification> =>
+            Boolean(notification),
+        ),
+      ),
+      this.notificationService.notifyAdmins({
+        type: NotificationType.APPOINTMENT,
+        title: 'New appointment request',
+        body: `${patientName} requested ${service} with ${appointment.therapist.name}.`,
+        actionUrl: '/profile/admin',
+        metadata: { appointmentId: appointment.id },
+      }),
+    ]);
+  }
+
   async findAll(): Promise<Appointment[]> {
     return this.appointmentRepo.find({
       order: {
@@ -417,6 +471,7 @@ export class AppointmentService {
     if (shouldCreateMeeting && savedAppointment.meetingLink) {
       await this.sendMeetingLinkNotifications(savedAppointment);
     }
+    await this.sendAppointmentStatusInAppNotifications(savedAppointment, user);
 
     return savedAppointment;
   }
@@ -498,5 +553,80 @@ export class AppointmentService {
       to: appointment.contactPhone,
       text: messageLines.join('\n'),
     });
+  }
+
+  private async sendAppointmentStatusInAppNotifications(
+    appointment: Appointment,
+    actor?: JwtPayload,
+  ) {
+    const therapistAccountId = await this.getTherapistAccountId(appointment);
+    const service = appointment.service ?? 'Therapy session';
+    const slotRange = this.formatSlotRange(appointment);
+    const actionUrl =
+      appointment.status === AppointmentStatus.CONFIRMED && appointment.meetingLink
+        ? '/profile/patient'
+        : '/profile/patient';
+    const recipients = new Set<string>();
+    if (appointment.patient?.id) recipients.add(appointment.patient.id);
+    if (therapistAccountId && therapistAccountId !== actor?.userId) {
+      recipients.add(therapistAccountId);
+    }
+
+    const title =
+      appointment.status === AppointmentStatus.CONFIRMED
+        ? 'Appointment confirmed'
+        : `Appointment ${appointment.status.toLowerCase()}`;
+    const body =
+      appointment.status === AppointmentStatus.CONFIRMED && appointment.meetingLink
+        ? `${service} for ${slotRange} is confirmed. The Zoom link is ready.`
+        : `${service} for ${slotRange} is now ${appointment.status.toLowerCase()}.`;
+
+    await Promise.allSettled([
+      this.notificationService.createMany(
+        [...recipients].map((recipientId) => ({
+          recipientId,
+          type: NotificationType.APPOINTMENT,
+          title,
+          body,
+          actionUrl,
+          metadata: { appointmentId: appointment.id },
+        })),
+      ),
+      this.notificationService.notifyAdmins({
+        type: NotificationType.APPOINTMENT,
+        title,
+        body: `${appointment.therapist.name}: ${body}`,
+        actionUrl: '/profile/admin',
+        metadata: { appointmentId: appointment.id },
+      }),
+    ]);
+  }
+
+  private async getTherapistAccountId(appointment: Appointment) {
+    if (!appointment.therapist?.id) return null;
+
+    const therapist = await this.dataSource.getRepository(Therapist).findOne({
+      where: { id: appointment.therapist.id },
+      relations: ['account'],
+    });
+
+    return therapist?.account?.id ?? null;
+  }
+
+  private formatSlotRange(appointment: Appointment) {
+    if (!appointment.slot?.startTime || !appointment.slot?.endTime) {
+      return 'the selected slot';
+    }
+
+    return `${appointment.slot.startTime.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    })} - ${appointment.slot.endTime.toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })}`;
   }
 }
