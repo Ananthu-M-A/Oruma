@@ -12,6 +12,7 @@ import Consultation from "../routes/consultation";
 import Contact from "../routes/contact";
 import Login from "../routes/login";
 import OnlineCounselling from "../routes/online-counselling";
+import PrivacyPolicy, { meta as privacyPolicyMeta } from "../routes/privacy-policy";
 import Register from "../routes/register";
 import Services from "../routes/services";
 import CoupleTherapy from "../routes/services/couple-therapy";
@@ -20,6 +21,7 @@ import IndividualTherapy from "../routes/services/individual-therapy";
 import SexualWellness from "../routes/services/sexual-wellness";
 import TherapistDetail, { meta as therapistDetailMeta } from "../routes/therapist-detail";
 import Therapists from "../routes/therapists";
+import Terms, { meta as termsMeta } from "../routes/terms";
 import PatientProfile, { meta as patientProfileMeta } from "../routes/profile-patient";
 import TherapistProfile, { meta as therapistProfileMeta } from "../routes/profile-therapist";
 import AdminProfile, { meta as adminProfileMeta } from "../routes/profile-admin";
@@ -58,6 +60,7 @@ const routeMeta: Record<string, { title?: string; description?: string }> = {
   "/contact": contactMeta,
   "/login": loginMeta,
   "/online-counselling": onlineCounsellingMeta,
+  "/privacy-policy": privacyPolicyMeta,
   "/register": registerMeta,
   "/profile/patient": patientProfileMeta,
   "/profile/therapist": therapistProfileMeta,
@@ -70,6 +73,7 @@ const routeMeta: Record<string, { title?: string; description?: string }> = {
   "/services/sexual-wellness": sexualWellnessMeta,
   "/therapists/:id": therapistDetailMeta,
   "/therapists": therapistsMeta,
+  "/terms": termsMeta,
 };
 
 function MetaUpdater() {
@@ -119,6 +123,7 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/online-counselling" element={<OnlineCounselling />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route
           path="/profile/patient"
           element={
@@ -160,6 +165,7 @@ export default function App() {
         <Route path="/team" element={<Navigate to="/therapists" replace />} />
         <Route path="/therapists" element={<Therapists />} />
         <Route path="/therapists/:id" element={<TherapistDetail />} />
+        <Route path="/terms" element={<Terms />} />
       </Routes>
     </BrowserRouter>
   );

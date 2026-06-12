@@ -31,6 +31,13 @@ export default function Footer() {
         { name: 'Join Us', href: '/careers' },
         { name: 'Contact Us', href: '/contact' }
       ]
+    },
+    {
+      title: 'Legal',
+      links: [
+        { name: 'Privacy Policy', href: '/privacy-policy' },
+        { name: 'Terms and Conditions', href: '/terms' }
+      ]
     }
   ];
 
@@ -74,7 +81,7 @@ export default function Footer() {
             </div>
           </div>
           
-          <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-12">
+          <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-12">
             {sections.map((section) => (
               <div key={section.title}>
                 <h4 className="font-bold text-[#064F4B] text-xs mb-8 uppercase tracking-widest">{section.title}</h4>
