@@ -6,7 +6,7 @@ NestJS API server for Oruma.
 
 - Node.js 20+
 - npm
-- PostgreSQL 18 locally, or Docker with Docker Compose
+- Neon, PostgreSQL 18 locally, or Docker with Docker Compose
 
 ## Setup
 
@@ -27,6 +27,7 @@ Default database configuration:
 ```env
 PORT=3000
 CLIENT_ORIGIN=http://localhost:5173
+DATABASE_URL=
 DATABASE_HOST=127.0.0.1
 DATABASE_PORT=5432
 DATABASE_USER=your_database_user
@@ -37,9 +38,22 @@ DATABASE_SYNC=true
 
 `DATABASE_SYNC=true` is useful for local development because TypeORM can sync entity schema changes automatically. Disable it in production and use migrations instead.
 
-## PostgreSQL
+## Database
 
-### Option 1: Local PostgreSQL
+### Option 1: Neon
+
+Copy the connection string from **Neon > Project Dashboard > Connect** and place it in `DATABASE_URL`:
+
+```env
+DATABASE_URL=postgresql://user:password@ep-example-pooler.region.aws.neon.tech/dbname?sslmode=require&channel_binding=require
+DATABASE_SYNC=false
+```
+
+When `DATABASE_URL` is set, it takes precedence over `DATABASE_HOST`, `DATABASE_USER`, `DATABASE_PASSWORD`, and `DATABASE_NAME`. Neon still uses the PostgreSQL protocol, so the TypeORM driver remains `postgres`.
+
+If you see `password authentication failed`, copy a fresh connection string from Neon and make sure the selected branch, database, and role match the project you want to use.
+
+### Option 2: Local PostgreSQL
 
 Start the PostgreSQL Windows service:
 
@@ -72,7 +86,7 @@ $env:PGPASSWORD='Pswd4teamorum@'
 D:\TOOLS\PostgreSQL\18\bin\psql.exe -h 127.0.0.1 -U teamoruma -d oruma -c "select current_database(), current_user;"
 ```
 
-### Option 2: Docker
+### Option 3: Docker
 
 If Docker is installed, start PostgreSQL from the compose file:
 

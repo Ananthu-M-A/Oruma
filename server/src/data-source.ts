@@ -10,6 +10,7 @@ import { Payment } from './payment/entities/payment.entity';
 import { Therapist } from './therapist/entities/therapist.entity';
 import { Ticket } from './ticket/entities/ticket.entity';
 import { User } from './user/entities/user.entity';
+import { getDatabaseConnectionOptions } from './database/database-options';
 
 function loadEnvFile() {
   const envPath = resolve(process.cwd(), '.env');
@@ -33,20 +34,10 @@ function loadEnvFile() {
   }
 }
 
-function toNumber(value: string | undefined, fallback: number) {
-  const parsed = Number(value);
-  return Number.isNaN(parsed) ? fallback : parsed;
-}
-
 loadEnvFile();
 
 export default new DataSource({
-  type: 'postgres',
-  host: process.env.DATABASE_HOST ?? 'localhost',
-  port: toNumber(process.env.DATABASE_PORT, 5432),
-  username: process.env.DATABASE_USER ?? 'postgres',
-  password: process.env.DATABASE_PASSWORD ?? 'postgres',
-  database: process.env.DATABASE_NAME ?? 'oruma',
+  ...getDatabaseConnectionOptions((key) => process.env[key]),
   entities: [
     Appointment,
     LoginOtp,
@@ -60,11 +51,4 @@ export default new DataSource({
   ],
   migrations: [resolve(__dirname, 'migrations/*{.ts,.js}')],
   synchronize: false,
-  ssl:
-    process.env.DATABASE_SSL === 'true'
-      ? {
-          rejectUnauthorized:
-            process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false',
-        }
-      : undefined,
 });

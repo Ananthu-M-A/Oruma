@@ -1,36 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
-const toNumber = (value: string | undefined, fallback: number) => {
-  const parsed = Number(value);
-
-  return Number.isNaN(parsed) ? fallback : parsed;
-};
+import { getDatabaseConnectionOptions } from './database-options';
 
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DATABASE_HOST', 'localhost'),
-        port: toNumber(configService.get<string>('DATABASE_PORT'), 5432),
-        username: configService.get<string>('DATABASE_USER', 'postgres'),
-        password: configService.get<string>('DATABASE_PASSWORD', 'postgres'),
-        database: configService.get<string>('DATABASE_NAME', 'oruma'),
+        ...getDatabaseConnectionOptions((key) =>
+          configService.get<string>(key),
+        ),
         autoLoadEntities: true,
         synchronize: configService.get<string>('DATABASE_SYNC') === 'true',
-        ssl:
-          configService.get<string>('DATABASE_SSL') === 'true'
-            ? {
-                rejectUnauthorized:
-                  configService.get<string>(
-                    'DATABASE_SSL_REJECT_UNAUTHORIZED',
-                    'true',
-                  ) !== 'false',
-              }
-            : undefined,
       }),
     }),
   ],
