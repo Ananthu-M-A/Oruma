@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Appointment } from '../appointment/entities/appointment.entity';
 import { AvailabilitySlot } from '../availability/entities/availability-slot.entity';
 import { MailService } from '../mail/mail.service';
+import { NotificationService } from '../notification/notification.service';
 import { UserService } from '../user/user.service';
 import { Therapist } from './entities/therapist.entity';
 import { TherapistService } from './therapist.service';
@@ -30,6 +31,9 @@ describe('TherapistService', () => {
   };
   const configService = {
     get: jest.fn(),
+  };
+  const notificationService = {
+    create: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -59,6 +63,10 @@ describe('TherapistService', () => {
         {
           provide: ConfigService,
           useValue: configService,
+        },
+        {
+          provide: NotificationService,
+          useValue: notificationService,
         },
       ],
     }).compile();

@@ -62,10 +62,6 @@ export class TherapistService {
     }
 
     const temporaryPassword = this.generateTemporaryPassword();
-    console.log('Generated therapist credentials:', {
-      email,
-      password: temporaryPassword,
-    });
     const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
     const account = await this.userService.create({
       email,
