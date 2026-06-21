@@ -19,4 +19,18 @@ describe('AppController', () => {
       expect(appController.getHello()).toBe("Let's start with NestJS!");
     });
   });
+
+  describe('health', () => {
+    it('should return an ok health response', () => {
+      expect(appController.getHealth()).toEqual(
+        expect.objectContaining({
+          status: 'ok',
+          service: 'oruma-api',
+          environment: expect.any(String),
+          uptimeSeconds: expect.any(Number),
+          timestamp: expect.any(String),
+        }),
+      );
+    });
+  });
 });

@@ -4,6 +4,10 @@ Source code for [oruma.me](https://oruma.me), currently built as a frontend appl
 
 ---
 
+## Production Launch
+
+Use [docs/PRODUCTION_LAUNCH_RUNBOOK.md](docs/PRODUCTION_LAUNCH_RUNBOOK.md) for the step-by-step launch checklist, deployment setup, migration workflow, DNS setup, provider integrations, and scaling plan.
+
 ## 🚀 Project Overview
 
 ORUMA is a wellness platform designed to connect patients with therapists through a structured and user-friendly digital experience.

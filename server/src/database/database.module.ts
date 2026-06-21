@@ -21,6 +21,16 @@ const toNumber = (value: string | undefined, fallback: number) => {
         database: configService.get<string>('DATABASE_NAME', 'oruma'),
         autoLoadEntities: true,
         synchronize: configService.get<string>('DATABASE_SYNC') === 'true',
+        ssl:
+          configService.get<string>('DATABASE_SSL') === 'true'
+            ? {
+                rejectUnauthorized:
+                  configService.get<string>(
+                    'DATABASE_SSL_REJECT_UNAUTHORIZED',
+                    'true',
+                  ) !== 'false',
+              }
+            : undefined,
       }),
     }),
   ],
