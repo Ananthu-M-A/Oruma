@@ -12,5 +12,4 @@ This repository contains:
 
 - 🎨 Frontend (planned & under updstion)
 - ⚙️ Backend (planned & under development)
-
 ---
