@@ -2,16 +2,7 @@ import React from 'react';
 
 export default function ParentingTherapistGrid() {
   const whatsappNumber = "919846462744";
-  const therapists = [
-    { name: 'Dr. Pathmash Shahanuma', role: 'Consultant Psychologist', img: 'https://images.unsplash.com/photo-1559839734-2b71f1536783?auto=format&fit=crop&q=80&w=200' },
-    { name: 'Noor Pareeda', role: 'Consultant Psychologist', img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200' },
-    { name: 'Jils PV', role: 'Consultant Psychologist', img: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=200' },
-    { name: 'Leena Mathew', role: 'Consultant Psychologist', img: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&q=80&w=200' },
-    { name: 'Fida Sherin', role: 'Consultant Psychologist', img: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&q=80&w=200' },
-    { name: 'Arjun K', role: 'Consultant Psychologist', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200' },
-    { name: 'Sana Fatima', role: 'Consultant Psychologist', img: 'https://images.unsplash.com/photo-1548142813-c348350df52b?auto=format&fit=crop&q=80&w=200' },
-    { name: 'Rohan Mani', role: 'Consultant Psychologist', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200' }
-  ];
+  const therapists = [];
 
   return (
     <section className="py-24 bg-[#00D494]">

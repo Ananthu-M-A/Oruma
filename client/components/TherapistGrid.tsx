@@ -5,20 +5,6 @@ import BookingModal from './BookingModal';
 export const therapists = [
   // Group 2 (Premium - Consultant Psychologists)
   {
-    id: 105,
-    name: 'Rose J',
-    role: 'Onco Psychologist and Clinical Psychologist',
-    tier: 'high',
-    image: '/assets/rose-j-expert.webp',
-    tags: ['Onco Psychologist and Clinical Psychologist'],
-    hours: '950',
-    nextSlot: 'Today, 3:00 PM',
-    priceInd: '₹2,000',
-    priceCouple: '₹3,000',
-    hasPackages: true,
-    group: 2
-  },
-  {
     id: 104,
     name: 'Hamna',
     role: 'Clinical Psychologist',
@@ -41,34 +27,6 @@ export const therapists = [
     tags: ['Clinical Psychologist'],
     hours: '1500',
     nextSlot: 'Today, 10:00 AM',
-    priceInd: '₹2,000',
-    priceCouple: '₹3,000',
-    hasPackages: true,
-    group: 2
-  },
-  {
-    id: 102,
-    name: 'Dr. Amurtha Vijayan',
-    role: 'Clinical Psychologist',
-    tier: 'high',
-    image: '/assets/dr-amrutha-vijayn-psychologist-new.webp',
-    tags: ['Clinical Psychologist'],
-    hours: '1800',
-    nextSlot: 'Today, 11:30 AM',
-    priceInd: '₹2,000',
-    priceCouple: '₹3,000',
-    hasPackages: true,
-    group: 2
-  },
-  {
-    id: 103,
-    name: 'Seenai Tito',
-    role: 'Clinical Psychologist',
-    tier: 'high',
-    image: '/assets/seenai-tito-psychologist-new.webp',
-    tags: ['Clinical Psychologist'],
-    hours: '1200',
-    nextSlot: 'Today, 2:00 PM',
     priceInd: '₹2,000',
     priceCouple: '₹3,000',
     hasPackages: true,
@@ -120,20 +78,6 @@ export const therapists = [
     group: 5
   },
   {
-    id: 501,
-    name: 'Muhsina Tp',
-    role: 'Consultant Psychologist',
-    tier: 'standard',
-    image: '/assets/muhsina-tp-profile.webp',
-    tags: ['Consultant', 'Individual & Couple', 'Mental Well-being'],
-    hours: '500',
-    nextSlot: 'Today, 10:00 AM',
-    priceInd: '₹2,000',
-    priceCouple: '₹2,250',
-    hasPackages: true,
-    group: 5
-  },
-  {
     id: 502,
     name: 'Shaeza Mariyem',
     role: 'Consultant Psychologist',
@@ -161,34 +105,6 @@ export const therapists = [
     hasPackages: true,
     group: 5
   },
-  {
-    id: 504,
-    name: 'Shahna Sherin',
-    role: 'Consultant Psychologist',
-    tier: 'standard',
-    image: '/assets/therapist-shahna-sherin.webp',
-    tags: ['Consultant', 'Individual & Couple', 'Guided Support'],
-    hours: '420',
-    nextSlot: 'Today, 2:00 PM',
-    priceInd: '₹2,000',
-    priceCouple: '₹2,250',
-    hasPackages: true,
-    group: 5
-  },
-  {
-    id: 505,
-    name: 'Nihala Jabin',
-    role: 'Consultant Psychologist',
-    tier: 'standard',
-    image: '/assets/therapist-nihala-jabin.webp',
-    tags: ['Consultant', 'Individual & Couple', 'Wellness'],
-    hours: '380',
-    nextSlot: 'Today, 3:30 PM',
-    priceInd: '₹2,000',
-    priceCouple: '₹2,250',
-    hasPackages: true,
-    group: 5
-  },
   // Group 4 (Consultant Psychologists)
   {
     id: 406,
@@ -199,34 +115,6 @@ export const therapists = [
     tags: ['Consultant', 'Team No 6', 'Individual & Couple'],
     hours: '800',
     nextSlot: 'Today, 12:00 PM',
-    priceInd: '₹1,500',
-    priceCouple: '₹1,500',
-    hasPackages: true,
-    group: 4
-  },
-  {
-    id: 401,
-    name: 'Sreelekshmi',
-    role: 'Consultant Psychologist',
-    tier: 'standard',
-    image: '/assets/therapist-sreelekshmi.webp',
-    tags: ['Consultant', 'Individual & Couple', 'Expert Guidance'],
-    hours: '950',
-    nextSlot: 'Today, 10:30 AM',
-    priceInd: '₹1,500',
-    priceCouple: '₹1,500',
-    hasPackages: true,
-    group: 4
-  },
-  {
-    id: 402,
-    name: 'Saifunnisa',
-    role: 'Consultant Psychologist',
-    tier: 'standard',
-    image: '/assets/therapist-saifunnisa.webp',
-    tags: ['Consultant', 'Individual & Couple', 'Professional Support'],
-    hours: '880',
-    nextSlot: 'Today, 11:30 AM',
     priceInd: '₹1,500',
     priceCouple: '₹1,500',
     hasPackages: true,
@@ -362,51 +250,6 @@ export const therapists = [
     group: 1
   },
   {
-    id: 201,
-    name: 'Shipa',
-    malayalamName: 'ശിൽപ',
-    role: 'Consultant Psychologist',
-    tier: 'standard',
-    image: '/assets/therapist-shilpa.webp',
-    tags: ['Individual Only', 'Consultant Psychologist', 'Healing', 'Support'],
-    hours: '800',
-    nextSlot: 'Today, 3:00 PM',
-    priceInd: '₹1,000',
-    priceCouple: '-',
-    hasPackages: true,
-    group: 1
-  },
-  {
-    id: 32,
-    name: 'Anusha',
-    malayalamName: 'അനുഷ',
-    role: 'Consultant Psychologist',
-    tier: 'standard',
-    image: '/assets/anusha-profile-photo.webp',
-    tags: ['Individual Only', 'Consultant Psychologist', 'Emotional Support', 'Healing'],
-    hours: '1000',
-    nextSlot: 'Today, 1:30 PM',
-    priceInd: '₹1,000',
-    priceCouple: '-',
-    hasPackages: true,
-    group: 1
-  },
-  {
-    id: 31,
-    name: 'Reginmaria',
-    malayalamName: 'റെജിൻ മരിയ',
-    role: 'Consultant Psychologist',
-    tier: 'standard',
-    image: '/assets/raginmara-profile.webp',
-    tags: ['Individual Only', 'Consultant Psychologist', 'Psychology', 'Mindfulness'],
-    hours: '1000',
-    nextSlot: 'Today, 12:30 PM',
-    priceInd: '₹1,000',
-    priceCouple: '-',
-    hasPackages: true,
-    group: 1
-  },
-  {
     id: 30,
     name: 'Nisha',
     malayalamName: 'നിഷ',
@@ -421,21 +264,6 @@ export const therapists = [
     hasPackages: true,
     group: 1
   },
-  {
-    id: 202,
-    name: 'Rameesa K',
-    malayalamName: 'റമീസ കെ',
-    role: 'Consultant Psychologist',
-    tier: 'standard',
-    image: '/assets/therapist-rameesa.webp',
-    tags: ['Individual Only', 'Consultant Psychologist', 'Support', 'Wellness'],
-    hours: '900',
-    nextSlot: 'Today, 4:00 PM',
-    priceInd: '₹1,000',
-    priceCouple: '-',
-    hasPackages: true,
-    group: 1
-  }
 ];
 
 export default function TherapistGrid() {

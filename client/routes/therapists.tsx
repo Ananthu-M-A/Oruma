@@ -14,16 +14,6 @@ export const meta = {
 export default function TherapistListingPage() {
   const therapists = [
     {
-      name: "Rose J",
-      title: "Onco Psychologist and Clinical Psychologist",
-      hours: 950,
-      group: 2,
-      tags: ["Onco Psychologist", "Clinical Psychologist", "Expert Support"],
-      price: "Ind: ₹2,000 / Couple: ₹3,000",
-      slot: "Today, 3:00 PM",
-      img: "/assets/rose-j-expert.webp"
-    },
-    {
       name: "Hamna",
       title: "Clinical Psychologist",
       hours: 800,
@@ -42,26 +32,6 @@ export default function TherapistListingPage() {
       price: "Ind: ₹2,000 / Couple: ₹3,000",
       slot: "Today, 10:00 AM",
       img: "/assets/kallu-sajeev-psychologist-new.webp"
-    },
-    {
-      name: "Dr. Amurtha Vijayan",
-      title: "Clinical Psychologist",
-      hours: 1800,
-      group: 2,
-      tags: ["Clinical Psychologist", "Safe Space", "Expert Assessment"],
-      price: "Ind: ₹2,000 / Couple: ₹3,000",
-      slot: "Today, 11:30 AM",
-      img: "/assets/dr-amrutha-vijayn-psychologist-new.webp"
-    },
-    {
-      name: "Seenai Tito",
-      title: "Clinical Psychologist",
-      hours: 1200,
-      group: 2,
-      tags: ["Clinical Psychologist", "Relationship Expert", "Empathy"],
-      price: "Ind: ₹2,000 / Couple: ₹3,000",
-      slot: "Today, 2:00 PM",
-      img: "/assets/seenai-tito-psychologist-new.webp"
     },
     // Group 3
     {
@@ -86,16 +56,6 @@ export default function TherapistListingPage() {
       img: "/assets/shihana-profile-updated.webp"
     },
     {
-      name: "Muhsina Tp",
-      title: "Consultant Psychologist",
-      hours: 850,
-      group: 5,
-      tags: ["Consultant", "Individual & Couple", "Professional Support"],
-      price: "Ind: ₹2,000 / Couple: ₹2,250",
-      slot: "Today, 9:00 AM",
-      img: "/assets/muhsina-tp-profile.webp"
-    },
-    {
       name: "Shaeza Mariyem",
       title: "Consultant Psychologist",
       hours: 820,
@@ -115,26 +75,6 @@ export default function TherapistListingPage() {
       slot: "Today, 1:00 PM",
       img: "/assets/therapist-aleeda.webp"
     },
-    {
-      name: "Shahna Sherin",
-      title: "Consultant Psychologist",
-      hours: 750,
-      group: 5,
-      tags: ["Consultant", "Individual & Couple", "Professional Counseling"],
-      price: "Ind: ₹2,000 / Couple: ₹2,250",
-      slot: "Today, 3:30 PM",
-      img: "/assets/therapist-shahna-sherin.webp"
-    },
-    {
-      name: "Nihala Jabin",
-      title: "Consultant Psychologist",
-      hours: 720,
-      group: 5,
-      tags: ["Consultant", "Individual & Couple", "Professional Support"],
-      price: "Ind: ₹2,000 / Couple: ₹2,250",
-      slot: "Today, 5:30 PM",
-      img: "/assets/therapist-nihala-jabin.webp"
-    },
     // Group 4
     {
       name: "Rifana",
@@ -145,26 +85,6 @@ export default function TherapistListingPage() {
       price: "Ind: ₹1,500 / Couple: ₹1,500",
       slot: "Today, 12:00 PM",
       img: "/assets/rifana-new-profile-2024.webp"
-    },
-    {
-      name: "Sreelekshmi",
-      title: "Consultant Psychologist",
-      hours: 950,
-      group: 4,
-      tags: ["Consultant", "Individual & Couple", "Expert Guidance"],
-      price: "Ind: ₹1,500 / Couple: ₹1,500",
-      slot: "Today, 10:30 AM",
-      img: "/assets/therapist-sreelekshmi.webp"
-    },
-    {
-      name: "Saifunnisa",
-      title: "Consultant Psychologist",
-      hours: 880,
-      group: 4,
-      tags: ["Consultant", "Individual & Couple", "Professional Support"],
-      price: "Ind: ₹1,500 / Couple: ₹1,500",
-      slot: "Today, 11:30 AM",
-      img: "/assets/therapist-saifunnisa.webp"
     },
     {
       name: "Pavithra",
@@ -208,36 +128,6 @@ export default function TherapistListingPage() {
       img: "/assets/sreemol-profile.webp"
     },
     {
-      name: "Shipa",
-      title: "Consultant Psychologist",
-      hours: 800,
-      group: 1,
-      tags: ["Individual Only", "Consultant Psychologist", "Healing", "Wellness"],
-      price: "Individual: ₹1,000",
-      slot: "Today, 3:00 PM",
-      img: "/assets/therapist-shilpa.webp"
-    },
-    {
-      name: "Anusha",
-      title: "Consultant Psychologist",
-      hours: 1000,
-      group: 1,
-      tags: ["Individual Only", "Consultant Psychologist", "Emotional Balance", "Healing"],
-      price: "Individual: ₹1,000",
-      slot: "Today, 1:30 PM",
-      img: "/assets/anusha-profile-photo.webp"
-    },
-    {
-      name: "Reginmaria",
-      title: "Consultant Psychologist",
-      hours: 1000,
-      group: 1,
-      tags: ["Individual Only", "Consultant Psychologist", "Mindfulness", "Support"],
-      price: "Individual: ₹1,000",
-      slot: "Today, 12:30 PM",
-      img: "/assets/raginmara-profile.webp"
-    },
-    {
       name: "Nisha",
       title: "Consultant Psychologist",
       hours: 1000,
@@ -247,16 +137,6 @@ export default function TherapistListingPage() {
       slot: "Today, 11:30 AM",
       img: "/assets/nisha-profile-new.webp"
     },
-    {
-      name: "Rameesa K",
-      title: "Consultant Psychologist",
-      hours: 900,
-      group: 1,
-      tags: ["Individual Only", "Consultant Psychologist", "Support", "Wellness"],
-      price: "Individual: ₹1,000",
-      slot: "Today, 4:00 PM",
-      img: "/assets/therapist-rameesa.webp"
-    }
   ];
 
   return (

@@ -5,18 +5,6 @@ import BookingModal from './BookingModal';
 const experts = [
   // Group 2
   {
-    id: 105,
-    name: 'Rose J',
-    role: 'Onco Psychologist and Clinical Psychologist',
-    image: '/assets/rose-j-expert.webp',
-    tags: ['Onco Psychologist and Clinical Psychologist'],
-    hours: '950',
-    nextSlot: 'Today, 3:00 PM',
-    priceInd: '₹2,000',
-    priceCouple: '₹3,000',
-    group: 2
-  },
-  {
     id: 104,
     name: 'Hamna',
     role: 'Clinical Psychologist',
@@ -66,28 +54,6 @@ const experts = [
     group: 5
   },
   // Group 1 Requested Consultants
-  {
-    id: 31,
-    name: 'Reginmaria',
-    role: 'Consultant Psychologist',
-    image: '/assets/raginmara-profile.webp',
-    tags: ['Individual Only', 'Consultant', 'Mindfulness'],
-    hours: '1000',
-    nextSlot: 'Today, 12:30 PM',
-    priceInd: '₹1,000',
-    group: 1
-  },
-  {
-    id: 202,
-    name: 'Rameesa K',
-    role: 'Consultant Psychologist',
-    image: '/assets/therapist-rameesa.webp',
-    tags: ['Individual Only', 'Consultant', 'Support'],
-    hours: '900',
-    nextSlot: 'Today, 4:00 PM',
-    priceInd: '₹1,000',
-    group: 1
-  }
 ];
 
 export default function ConsultantsSection() {
@@ -117,24 +83,24 @@ export default function ConsultantsSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {experts.map((therapist) => (
             <div key={therapist.id} className="bg-[#B7C8A3] rounded-[2.5rem] p-8 flex flex-col gap-6 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all group relative overflow-hidden">
-              
+
               {/* Profile Header */}
               <div className="flex gap-5 items-center">
                 <div className="relative w-20 h-20 shrink-0">
-                   {therapist.image ? (
-                     <img 
-                       src={therapist.image} 
-                       alt={therapist.name}
-                       className="w-full h-full object-cover rounded-full border-4 border-white/50 shadow-sm group-hover:scale-105 transition-transform duration-500"
-                     />
-                   ) : (
-                     <div className="w-full h-full bg-[#064F4B]/10 rounded-full border-4 border-white/50 flex items-center justify-center text-[#064F4B]/20">
-                       <LucideIcon name="user" size={32} />
-                     </div>
-                   )}
-                   <div className="absolute bottom-1 right-1 w-4 h-4 bg-[#00D494] border-2 border-[#B7C8A3] rounded-full"></div>
+                  {therapist.image ? (
+                    <img
+                      src={therapist.image}
+                      alt={therapist.name}
+                      className="w-full h-full object-cover rounded-full border-4 border-white/50 shadow-sm group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#064F4B]/10 rounded-full border-4 border-white/50 flex items-center justify-center text-[#064F4B]/20">
+                      <LucideIcon name="user" size={32} />
+                    </div>
+                  )}
+                  <div className="absolute bottom-1 right-1 w-4 h-4 bg-[#00D494] border-2 border-[#B7C8A3] rounded-full"></div>
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <h3 className="text-xl font-black text-[#064F4B] leading-tight mb-1 truncate">{therapist.name}</h3>
                   <p className="text-[10px] font-black text-[#064F4B]/60 uppercase tracking-[0.2em]">{therapist.role}</p>
@@ -177,13 +143,13 @@ export default function ConsultantsSection() {
                 </div>
 
                 <div className="flex gap-3">
-                  <button 
+                  <button
                     onClick={() => handleBookNow(therapist)}
                     className="flex-1 bg-[#064F4B] text-white py-4 rounded-2xl font-black text-xs hover:bg-[#064F4B]/90 transition-all active:scale-95 uppercase tracking-[0.2em] shadow-lg shadow-[#064F4B]/20"
                   >
                     BOOK SESSION
                   </button>
-                  <a 
+                  <a
                     href={`https://wa.me/${whatsappNumber}?text=Hi,%20I%20want%20to%20book%20an%20appointment%20with%20${encodeURIComponent(therapist.name)}`}
                     className="w-14 bg-[#00D494] text-white rounded-2xl flex items-center justify-center hover:bg-[#00B37E] transition-all active:scale-95 shadow-md"
                     title="WhatsApp for Booking"
@@ -198,9 +164,9 @@ export default function ConsultantsSection() {
         </div>
       </div>
 
-      <BookingModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <BookingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         therapist={selectedTherapist}
       />
     </section>

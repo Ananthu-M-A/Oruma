@@ -2,44 +2,7 @@ import React from 'react';
 import TherapistCard from './TherapistCard';
 
 export default function AnxietyTherapistGrid() {
-  const therapists = [
-    {
-      name: 'Sreelekshmi',
-      role: 'Consultant Psychologist',
-      image: '/assets/therapist-sreelekshmi.webp',
-      tags: ['Consultant', 'Individual & Couple', 'Expert'],
-      hours: '950',
-      price: '₹ 1500',
-      nextSlot: 'Today, 10:30 AM'
-    },
-    {
-      name: 'Saifunnisa',
-      role: 'Consultant Psychologist',
-      image: '/assets/therapist-saifunnisa.webp',
-      tags: ['Consultant', 'Individual & Couple', 'Expert'],
-      hours: '880',
-      price: '₹ 1500',
-      nextSlot: 'Today, 11:30 AM'
-    },
-    {
-      name: 'Pavithra',
-      role: 'Consultant Psychologist',
-      image: '/assets/therapist-pavithra.webp',
-      tags: ['Consultant', 'Individual & Couple', 'Expert'],
-      hours: '820',
-      price: '₹ 1500',
-      nextSlot: 'Today, 2:30 PM'
-    },
-    {
-      name: 'Jasna',
-      role: 'Consultant Psychologist',
-      image: '/assets/therapist-jasna.webp',
-      tags: ['Consultant', 'Individual & Couple', 'Expert'],
-      hours: '790',
-      price: '₹ 1500',
-      nextSlot: 'Today, 4:30 PM'
-    }
-  ];
+  const therapists = [];
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">

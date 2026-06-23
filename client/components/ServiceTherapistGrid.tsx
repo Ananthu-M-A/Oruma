@@ -11,24 +11,10 @@ export default function ServiceTherapistGrid() {
       price: '₹2000', 
       img: '/assets/kallu-sajeev-psychologist-new.webp'
     },
-    { 
-      name: 'Dr. Amrutha Vijayn', 
-      role: 'Consultant Psychologist', 
-      price: '₹2000', 
-      img: '/assets/dr-amrutha-vijayn-psychologist-new.webp'
-    },
-    { 
-      name: 'Seenai Tito', 
-      role: 'Consultant Psychologist', 
-      price: '₹2000', 
-      img: '/assets/seenai-tito-psychologist-new.webp'
-    }
   ];
 
   // Group 4: Consultant Plus (Updated)
   const group4Therapists = [
-    { name: 'Sreelekshmi', role: 'Consultant Psychologist', price: '₹1500', img: '/assets/therapist-sreelekshmi.webp' },
-    { name: 'Saifunnisa', role: 'Consultant Psychologist', price: '₹1500', img: '/assets/therapist-saifunnisa.webp' },
     { name: 'Pavithra', role: 'Consultant Psychologist', price: '₹1500', img: '/assets/therapist-pavithra.webp' },
     { name: 'Jasna', role: 'Consultant Psychologist', price: '₹1500', img: '/assets/therapist-jasna.webp' },
   ];
@@ -36,11 +22,7 @@ export default function ServiceTherapistGrid() {
   // Group 1: Individual Only (Standard)
   const standardTherapists = [
     { name: 'Sreemol P S', role: 'Consultant Psychologist', price: '₹1000', img: '/assets/sreemol-profile.webp' },
-    { name: 'Shipa', role: 'Consultant Psychologist', price: '₹1000', img: '/assets/therapist-shilpa.webp' },
-    { name: 'Anusha', role: 'Consultant Psychologist', price: '₹1000', img: '/assets/anusha-profile-photo.webp' },
-    { name: 'Reginmaria', role: 'Consultant Psychologist', price: '₹1000', img: '/assets/raginmara-profile.webp' },
     { name: 'Nisha', role: 'Consultant Psychologist', price: '₹1000', img: '/assets/nisha-profile-new.webp' },
-    { name: 'Rameesa K', role: 'Consultant Psychologist', price: '₹1000', img: '/assets/therapist-rameesa.webp' },
   ];
 
   const therapists = [...seniorTherapists, ...group4Therapists, ...standardTherapists];
