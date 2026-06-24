@@ -68,11 +68,12 @@ Some providers use self-signed managed database certificates. If connection fail
 DATABASE_SSL_REJECT_UNAUTHORIZED=false
 ```
 
-## Phase 3: Generate And Run Migrations
+## Phase 3: Run Database Migrations
 
 Do not use `DATABASE_SYNC=true` in production.
 
-For the first production schema, point your local `server/.env` or shell environment to an empty staging/production-equivalent database and set:
+The repository includes the initial production schema migration in `server/src/migrations`.
+Point your local `server/.env` or provider job environment to an empty staging/production-equivalent database and set:
 
 ```env
 DATABASE_SYNC=false
@@ -82,21 +83,11 @@ Then run:
 
 ```powershell
 cd server
-npm.cmd run typeorm -- migration:generate src/migrations/InitialSchema
 npm.cmd run migration:run
 npm.cmd run build
 ```
 
-Commit the generated migration:
-
-```powershell
-cd ..
-git add server/src/migrations server/package.json server/.env.example server/src/data-source.ts
-git commit -m "chore: add database migrations"
-git push origin main
-```
-
-For every future schema change:
+For every future schema change, generate a new migration after editing entities:
 
 ```powershell
 cd server

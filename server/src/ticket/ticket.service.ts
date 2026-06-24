@@ -70,12 +70,17 @@ export class TicketService {
 
     const savedTicket = await this.ticketRepo.save(ticket);
 
-    if (savedTicket.createdBy?.id && dto.status) {
+    if (savedTicket.createdBy?.id && (dto.status || dto.adminNote !== undefined)) {
+      const statusText = savedTicket.status.toLowerCase().replace('_', ' ');
+      const noteText = savedTicket.adminNote
+        ? ` Admin note: ${savedTicket.adminNote}`
+        : '';
+
       await this.notificationService.create({
         recipientId: savedTicket.createdBy.id,
         type: NotificationType.SUPPORT,
         title: 'Support ticket updated',
-        body: `Your ticket "${savedTicket.subject}" is now ${savedTicket.status.toLowerCase().replace('_', ' ')}.`,
+        body: `Your ticket "${savedTicket.subject}" is now ${statusText}.${noteText}`,
         actionUrl: '/profile/patient',
         metadata: { ticketId: savedTicket.id },
       });

@@ -3,6 +3,7 @@ import React, { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
+import PasswordChangeForm from "../components/PasswordChangeForm";
 import ProfileTabs from "../components/ProfileTabs";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
@@ -44,6 +45,7 @@ export default function AdminProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [paymentForm, setPaymentForm] = useState({ appointmentId: "", amount: "", reference: "" });
   const [refundForm, setRefundForm] = useState<Record<string, string>>({});
+  const [ticketNotes, setTicketNotes] = useState<Record<string, string>>({});
 
   const loadAdminData = async () => {
     const token = getAccessToken();
@@ -65,6 +67,7 @@ export default function AdminProfilePage() {
     setSummary(summaryData);
     setPayments(paymentData);
     setTickets(ticketData);
+    setTicketNotes(Object.fromEntries(ticketData.map((ticket) => [ticket.id, ticket.adminNote ?? ""])));
     setCaseSheets(caseSheetData);
   };
 
@@ -128,12 +131,15 @@ export default function AdminProfilePage() {
     }
   };
 
-  const handleTicketStatus = async (ticket: Ticket, status: Ticket["status"]) => {
+  const handleTicketUpdate = async (
+    ticket: Ticket,
+    payload: { status?: Ticket["status"]; adminNote?: string },
+  ) => {
     const token = getAccessToken();
     if (!token) return;
 
     try {
-      await updateTicket(token, ticket.id, { status });
+      await updateTicket(token, ticket.id, payload);
       setNotice("Ticket updated.");
       await loadAdminData();
     } catch (err) {
@@ -216,6 +222,7 @@ export default function AdminProfilePage() {
               { id: "payments", label: "Payments" },
               { id: "cases", label: "Case sheets" },
               { id: "tickets", label: "Tickets" },
+              { id: "account", label: "Account" },
             ]}
             activeTab={activeTab}
             onChange={setActiveTab}
@@ -371,23 +378,51 @@ export default function AdminProfilePage() {
                 <div className="mt-6 overflow-hidden rounded-lg border border-[#E2E8E6]">
                   {tickets.length === 0 && <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">No tickets yet.</p>}
                   {tickets.map((ticket) => (
-                    <article key={ticket.id} className="grid gap-3 border-b border-[#E2E8E6] p-5 last:border-b-0 md:grid-cols-[1fr_auto] md:items-center">
+                    <article key={ticket.id} className="grid gap-4 border-b border-[#E2E8E6] p-5 last:border-b-0 lg:grid-cols-[1fr_220px] lg:items-start">
                       <div>
                         <p className="font-black text-[#064F4B]">{ticket.subject}</p>
                         <p className="mt-1 text-sm font-bold text-[#5F7F7A]">{ticket.createdBy?.email ?? "User"} · {ticket.category}</p>
                         <p className="mt-2 text-sm font-medium text-[#5F7F7A]">{ticket.message}</p>
+                        <label className="mt-4 block">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Admin note</span>
+                          <textarea
+                            value={ticketNotes[ticket.id] ?? ""}
+                            onChange={(event) => setTicketNotes({ ...ticketNotes, [ticket.id]: event.target.value })}
+                            className="mt-2 min-h-24 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 text-sm font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+                          />
+                        </label>
                       </div>
-                      <select value={ticket.status} onChange={(event) => handleTicketStatus(ticket, event.target.value as Ticket["status"])} className="rounded-full border border-[#DDE8E5] bg-white px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#064F4B] outline-none">
-                        <option value="OPEN">Open</option>
-                        <option value="IN_PROGRESS">In progress</option>
-                        <option value="RESOLVED">Resolved</option>
-                        <option value="CLOSED">Closed</option>
-                      </select>
+                      <div className="grid gap-3">
+                        <select
+                          value={ticket.status}
+                          onChange={(event) =>
+                            handleTicketUpdate(ticket, {
+                              status: event.target.value as Ticket["status"],
+                              adminNote: ticketNotes[ticket.id] ?? "",
+                            })
+                          }
+                          className="rounded-full border border-[#DDE8E5] bg-white px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#064F4B] outline-none"
+                        >
+                          <option value="OPEN">Open</option>
+                          <option value="IN_PROGRESS">In progress</option>
+                          <option value="RESOLVED">Resolved</option>
+                          <option value="CLOSED">Closed</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => handleTicketUpdate(ticket, { adminNote: ticketNotes[ticket.id] ?? "" })}
+                          className="rounded-full bg-[#064F4B] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white"
+                        >
+                          Save note
+                        </button>
+                      </div>
                     </article>
                   ))}
                 </div>
               </section>
             )}
+
+            {activeTab === "account" && <PasswordChangeForm />}
           </div>
         </div>
       </section>

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { JwtPayload } from '../auth/strategies/jwt.strategy';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -33,5 +34,18 @@ export class UserController {
       gender: body.gender?.trim() || null,
       healthInfo: body.healthInfo ?? null,
     });
+  }
+
+  @Patch('me/password')
+  @UseGuards(JwtAuthGuard)
+  changePassword(
+    @Req() req: { user: JwtPayload },
+    @Body() body: ChangePasswordDto,
+  ) {
+    return this.userService.changePassword(
+      req.user.userId,
+      body.currentPassword,
+      body.newPassword,
+    );
   }
 }

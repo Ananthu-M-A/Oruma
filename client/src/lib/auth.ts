@@ -148,6 +148,13 @@ export function updateMyAccount(payload: Partial<AuthAccount>) {
   return writeWithAuth<AuthAccount>("/user/me", payload);
 }
 
+export async function changePassword(payload: {
+  currentPassword: string;
+  newPassword: string;
+}) {
+  return writeWithAuth<{ message: string }>("/user/me/password", payload);
+}
+
 export function saveAccessToken(token: string) {
   window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
   window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));

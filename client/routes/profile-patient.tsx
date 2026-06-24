@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
+import PasswordChangeForm from "../components/PasswordChangeForm";
 import ProfileTabs from "../components/ProfileTabs";
 import { LucideIcon } from "@site-builder/icons";
 import {
@@ -490,6 +491,7 @@ export default function PatientProfilePage() {
                   { id: "personal", label: "Personal info" },
                   { id: "health", label: "Health info" },
                   { id: "tickets", label: "Tickets" },
+                  { id: "account", label: "Account" },
                 ]}
                 activeTab={activeTab}
                 onChange={setActiveTab}
@@ -784,11 +786,18 @@ export default function PatientProfilePage() {
                           <p className="mt-3 text-sm font-medium text-[#5F7F7A]">
                             {ticket.message}
                           </p>
+                          {ticket.adminNote && (
+                            <p className="mt-3 rounded-lg bg-[#F5F8F7] p-3 text-sm font-bold text-[#064F4B]">
+                              Admin note: {ticket.adminNote}
+                            </p>
+                          )}
                         </article>
                       ))}
                     </div>
                   </section>
                 )}
+
+                {activeTab === "account" && <PasswordChangeForm />}
               </div>
             </section>
           </div>

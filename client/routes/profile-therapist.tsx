@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
+import PasswordChangeForm from "../components/PasswordChangeForm";
 import ProfileTabs from "../components/ProfileTabs";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
@@ -356,6 +357,7 @@ export default function TherapistProfilePage() {
                     { id: "availability", label: "Availability" },
                     { id: "appointments", label: "Appointments" },
                     { id: "cases", label: "Case sheets" },
+                    { id: "account", label: "Account" },
                   ]}
                   activeTab={activeTab}
                   onChange={setActiveTab}
@@ -573,6 +575,8 @@ export default function TherapistProfilePage() {
                       </div>
                     </section>
                   )}
+
+                  {activeTab === "account" && <PasswordChangeForm />}
                 </div>
               </section>
             </div>
