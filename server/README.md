@@ -28,19 +28,39 @@ Default database configuration:
 PORT=3000
 CLIENT_ORIGIN=http://localhost:5173
 DATABASE_URL=
-DATABASE_HOST=127.0.0.1
-DATABASE_PORT=5432
-DATABASE_USER=your_database_user
-DATABASE_PASSWORD=your_database_password
-DATABASE_NAME=oruma
-DATABASE_SYNC=true
+DATABASE_SYNC=false
 ```
 
-`DATABASE_SYNC=true` is useful for local development because TypeORM can sync entity schema changes automatically. Disable it in production and use migrations instead.
+For a remote database, set `DATABASE_URL` to your provider connection string and keep `DATABASE_SYNC=false` while the server is running. Use migrations in remote environments instead of schema auto-sync.
 
 ## Database
 
-### Option 1: Neon
+### Option 1: Remote PostgreSQL (recommended)
+
+1. Copy the example environment file:
+
+```bash
+copy .env.example .env
+```
+
+2. Open `.env` and set a remote connection string:
+
+```env
+DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=require
+DATABASE_SYNC=false
+DATABASE_SSL=true
+DATABASE_SSL_REJECT_UNAUTHORIZED=true
+```
+
+3. Start the server:
+
+```bash
+npm run start:dev
+```
+
+4. If the server cannot connect, verify the host, port, database name, username, password, and SSL settings in the provider dashboard.
+
+### Option 2: Neon
 
 Copy the connection string from **Neon > Project Dashboard > Connect** and place it in `DATABASE_URL`:
 
@@ -53,7 +73,7 @@ When `DATABASE_URL` is set, it takes precedence over `DATABASE_HOST`, `DATABASE_
 
 If you see `password authentication failed`, copy a fresh connection string from Neon and make sure the selected branch, database, and role match the project you want to use.
 
-### Option 2: Local PostgreSQL
+### Option 3: Local PostgreSQL
 
 Start the PostgreSQL Windows service:
 
@@ -86,7 +106,7 @@ $env:PGPASSWORD='Pswd4teamorum@'
 D:\TOOLS\PostgreSQL\18\bin\psql.exe -h 127.0.0.1 -U teamoruma -d oruma -c "select current_database(), current_user;"
 ```
 
-### Option 3: Docker
+### Option 4: Docker
 
 If Docker is installed, start PostgreSQL from the compose file:
 

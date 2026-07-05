@@ -3,29 +3,93 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class InitialSchema1782320000000 implements MigrationInterface {
   name = 'InitialSchema1782320000000';
 
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
-    await queryRunner.query(
-      `CREATE TYPE "public"."user_role_enum" AS ENUM('PATIENT', 'THERAPIST', 'ADMIN')`,
-    );
-    await queryRunner.query(
-      `CREATE TYPE "public"."availability_slot_status_enum" AS ENUM('AVAILABLE', 'BOOKED', 'BLOCKED')`,
-    );
-    await queryRunner.query(
-      `CREATE TYPE "public"."appointment_status_enum" AS ENUM('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED')`,
-    );
-    await queryRunner.query(
-      `CREATE TYPE "public"."payment_status_enum" AS ENUM('PENDING', 'PAID', 'REFUNDED', 'FAILED')`,
-    );
-    await queryRunner.query(
-      `CREATE TYPE "public"."ticket_status_enum" AS ENUM('OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED')`,
-    );
-    await queryRunner.query(
-      `CREATE TYPE "public"."notification_type_enum" AS ENUM('APPOINTMENT', 'PAYMENT', 'SUPPORT', 'PROFILE', 'SYSTEM')`,
-    );
+  private async createEnumTypeIfNotExists(
+    queryRunner: QueryRunner,
+    name: string,
+    values: string[],
+  ): Promise<void> {
+    const enumValues = values
+      .map((value) => `''${value.replace(/'/g, "''")}''`)
+      .join(', ');
 
     await queryRunner.query(`
-      CREATE TABLE "user" (
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_type t
+          JOIN pg_namespace n ON n.oid = t.typnamespace
+          WHERE n.nspname = 'public' AND t.typname = '${name}'
+        ) THEN
+          EXECUTE 'CREATE TYPE "public"."${name}" AS ENUM (${enumValues})';
+        END IF;
+      END
+      $$;
+    `);
+  }
+
+  private async addForeignKeyIfNotExists(
+    queryRunner: QueryRunner,
+    tableName: string,
+    constraintName: string,
+    definitionSql: string,
+  ): Promise<void> {
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint c
+          JOIN pg_class t ON t.oid = c.conrelid
+          JOIN pg_namespace n ON n.oid = t.relnamespace
+          WHERE n.nspname = 'public' AND t.relname = '${tableName}' AND c.conname = '${constraintName}'
+        ) THEN
+          EXECUTE 'ALTER TABLE "public"."${tableName}" ADD CONSTRAINT "${constraintName}" ${definitionSql}';
+        END IF;
+      END
+      $$;
+    `);
+  }
+
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+    await this.createEnumTypeIfNotExists(queryRunner, 'user_role_enum', [
+      'PATIENT',
+      'THERAPIST',
+      'ADMIN',
+    ]);
+    await this.createEnumTypeIfNotExists(
+      queryRunner,
+      'availability_slot_status_enum',
+      ['AVAILABLE', 'BOOKED', 'BLOCKED'],
+    );
+    await this.createEnumTypeIfNotExists(
+      queryRunner,
+      'appointment_status_enum',
+      ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'],
+    );
+    await this.createEnumTypeIfNotExists(queryRunner, 'payment_status_enum', [
+      'PENDING',
+      'PAID',
+      'REFUNDED',
+      'FAILED',
+    ]);
+    await this.createEnumTypeIfNotExists(queryRunner, 'ticket_status_enum', [
+      'OPEN',
+      'IN_PROGRESS',
+      'RESOLVED',
+      'CLOSED',
+    ]);
+    await this.createEnumTypeIfNotExists(queryRunner, 'notification_type_enum', [
+      'APPOINTMENT',
+      'PAYMENT',
+      'SUPPORT',
+      'PROFILE',
+      'SYSTEM',
+    ]);
+
+    await queryRunner.query(`
+      CREATE TABLE IF NOT EXISTS "user" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "email" character varying NOT NULL,
         "password" character varying NOT NULL,
@@ -42,7 +106,7 @@ export class InitialSchema1782320000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "therapist" (
+      CREATE TABLE IF NOT EXISTS "therapist" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "name" character varying NOT NULL DEFAULT 'Therapist',
         "email" character varying,
@@ -70,7 +134,7 @@ export class InitialSchema1782320000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "availability_slot" (
+      CREATE TABLE IF NOT EXISTS "availability_slot" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "therapistId" uuid,
         "startTime" TIMESTAMP NOT NULL,
@@ -82,7 +146,7 @@ export class InitialSchema1782320000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "appointment" (
+      CREATE TABLE IF NOT EXISTS "appointment" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "patientId" uuid,
         "therapistId" uuid,
@@ -102,7 +166,7 @@ export class InitialSchema1782320000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "login_otp" (
+      CREATE TABLE IF NOT EXISTS "login_otp" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "identifier" character varying NOT NULL,
         "codeHash" character varying NOT NULL,
@@ -113,11 +177,11 @@ export class InitialSchema1782320000000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(
-      `CREATE INDEX "IDX_login_otp_identifier" ON "login_otp" ("identifier")`,
+      `CREATE INDEX IF NOT EXISTS "IDX_login_otp_identifier" ON "login_otp" ("identifier")`,
     );
 
     await queryRunner.query(`
-      CREATE TABLE "payment" (
+      CREATE TABLE IF NOT EXISTS "payment" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "appointmentId" uuid,
         "patientId" uuid,
@@ -137,7 +201,7 @@ export class InitialSchema1782320000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "ticket" (
+      CREATE TABLE IF NOT EXISTS "ticket" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "createdById" uuid,
         "subject" character varying NOT NULL,
@@ -152,7 +216,7 @@ export class InitialSchema1782320000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "case_sheet" (
+      CREATE TABLE IF NOT EXISTS "case_sheet" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "appointmentId" uuid,
         "patientId" uuid,
@@ -168,7 +232,7 @@ export class InitialSchema1782320000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "notification" (
+      CREATE TABLE IF NOT EXISTS "notification" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "recipientId" uuid,
         "type" "public"."notification_type_enum" NOT NULL DEFAULT 'SYSTEM',
@@ -182,81 +246,81 @@ export class InitialSchema1782320000000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(
-      `CREATE INDEX "IDX_notification_recipient" ON "notification" ("recipientId")`,
+      `CREATE INDEX IF NOT EXISTS "IDX_notification_recipient" ON "notification" ("recipientId")`,
     );
 
-    await queryRunner.query(`
-      ALTER TABLE "therapist"
-      ADD CONSTRAINT "FK_therapist_account"
-      FOREIGN KEY ("accountId") REFERENCES "user"("id")
-      ON DELETE SET NULL ON UPDATE NO ACTION
-    `);
-    await queryRunner.query(`
-      ALTER TABLE "availability_slot"
-      ADD CONSTRAINT "FK_availability_slot_therapist"
-      FOREIGN KEY ("therapistId") REFERENCES "therapist"("id")
-      ON DELETE CASCADE ON UPDATE NO ACTION
-    `);
-    await queryRunner.query(`
-      ALTER TABLE "appointment"
-      ADD CONSTRAINT "FK_appointment_patient"
-      FOREIGN KEY ("patientId") REFERENCES "user"("id")
-      ON DELETE NO ACTION ON UPDATE NO ACTION
-    `);
-    await queryRunner.query(`
-      ALTER TABLE "appointment"
-      ADD CONSTRAINT "FK_appointment_therapist"
-      FOREIGN KEY ("therapistId") REFERENCES "therapist"("id")
-      ON DELETE NO ACTION ON UPDATE NO ACTION
-    `);
-    await queryRunner.query(`
-      ALTER TABLE "appointment"
-      ADD CONSTRAINT "FK_appointment_slot"
-      FOREIGN KEY ("slotId") REFERENCES "availability_slot"("id")
-      ON DELETE NO ACTION ON UPDATE NO ACTION
-    `);
-    await queryRunner.query(`
-      ALTER TABLE "payment"
-      ADD CONSTRAINT "FK_payment_appointment"
-      FOREIGN KEY ("appointmentId") REFERENCES "appointment"("id")
-      ON DELETE SET NULL ON UPDATE NO ACTION
-    `);
-    await queryRunner.query(`
-      ALTER TABLE "payment"
-      ADD CONSTRAINT "FK_payment_patient"
-      FOREIGN KEY ("patientId") REFERENCES "user"("id")
-      ON DELETE SET NULL ON UPDATE NO ACTION
-    `);
-    await queryRunner.query(`
-      ALTER TABLE "ticket"
-      ADD CONSTRAINT "FK_ticket_created_by"
-      FOREIGN KEY ("createdById") REFERENCES "user"("id")
-      ON DELETE SET NULL ON UPDATE NO ACTION
-    `);
-    await queryRunner.query(`
-      ALTER TABLE "case_sheet"
-      ADD CONSTRAINT "FK_case_sheet_appointment"
-      FOREIGN KEY ("appointmentId") REFERENCES "appointment"("id")
-      ON DELETE SET NULL ON UPDATE NO ACTION
-    `);
-    await queryRunner.query(`
-      ALTER TABLE "case_sheet"
-      ADD CONSTRAINT "FK_case_sheet_patient"
-      FOREIGN KEY ("patientId") REFERENCES "user"("id")
-      ON DELETE SET NULL ON UPDATE NO ACTION
-    `);
-    await queryRunner.query(`
-      ALTER TABLE "case_sheet"
-      ADD CONSTRAINT "FK_case_sheet_therapist"
-      FOREIGN KEY ("therapistId") REFERENCES "therapist"("id")
-      ON DELETE SET NULL ON UPDATE NO ACTION
-    `);
-    await queryRunner.query(`
-      ALTER TABLE "notification"
-      ADD CONSTRAINT "FK_notification_recipient"
-      FOREIGN KEY ("recipientId") REFERENCES "user"("id")
-      ON DELETE CASCADE ON UPDATE NO ACTION
-    `);
+    await this.addForeignKeyIfNotExists(
+      queryRunner,
+      'therapist',
+      'FK_therapist_account',
+      `FOREIGN KEY ("accountId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await this.addForeignKeyIfNotExists(
+      queryRunner,
+      'availability_slot',
+      'FK_availability_slot_therapist',
+      `FOREIGN KEY ("therapistId") REFERENCES "therapist"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await this.addForeignKeyIfNotExists(
+      queryRunner,
+      'appointment',
+      'FK_appointment_patient',
+      `FOREIGN KEY ("patientId") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await this.addForeignKeyIfNotExists(
+      queryRunner,
+      'appointment',
+      'FK_appointment_therapist',
+      `FOREIGN KEY ("therapistId") REFERENCES "therapist"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await this.addForeignKeyIfNotExists(
+      queryRunner,
+      'appointment',
+      'FK_appointment_slot',
+      `FOREIGN KEY ("slotId") REFERENCES "availability_slot"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await this.addForeignKeyIfNotExists(
+      queryRunner,
+      'payment',
+      'FK_payment_appointment',
+      `FOREIGN KEY ("appointmentId") REFERENCES "appointment"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await this.addForeignKeyIfNotExists(
+      queryRunner,
+      'payment',
+      'FK_payment_patient',
+      `FOREIGN KEY ("patientId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await this.addForeignKeyIfNotExists(
+      queryRunner,
+      'ticket',
+      'FK_ticket_created_by',
+      `FOREIGN KEY ("createdById") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await this.addForeignKeyIfNotExists(
+      queryRunner,
+      'case_sheet',
+      'FK_case_sheet_appointment',
+      `FOREIGN KEY ("appointmentId") REFERENCES "appointment"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await this.addForeignKeyIfNotExists(
+      queryRunner,
+      'case_sheet',
+      'FK_case_sheet_patient',
+      `FOREIGN KEY ("patientId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await this.addForeignKeyIfNotExists(
+      queryRunner,
+      'case_sheet',
+      'FK_case_sheet_therapist',
+      `FOREIGN KEY ("therapistId") REFERENCES "therapist"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await this.addForeignKeyIfNotExists(
+      queryRunner,
+      'notification',
+      'FK_notification_recipient',
+      `FOREIGN KEY ("recipientId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

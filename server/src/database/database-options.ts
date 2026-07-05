@@ -46,7 +46,7 @@ const getDatabaseSsl = (
     return { rejectUnauthorized: false };
   }
 
-  return true;
+  return { rejectUnauthorized: true };
 };
 
 export const getDatabaseConnectionOptions = (
@@ -73,13 +73,40 @@ export const getDatabaseConnectionOptions = (
     };
   }
 
+  const host = readTrimmed(readEnv, 'DATABASE_HOST');
+  const username = readTrimmed(readEnv, 'DATABASE_USER');
+  const password = readTrimmed(readEnv, 'DATABASE_PASSWORD');
+  const database = readTrimmed(readEnv, 'DATABASE_NAME');
+  const hasExplicitConnectionSettings = Boolean(
+    host || username || password || database,
+  );
+
+  if (!hasExplicitConnectionSettings) {
+    throw new Error(
+      'Database configuration is missing. Set DATABASE_URL for a remote connection (recommended) or provide DATABASE_HOST, DATABASE_PORT, DATABASE_USER, DATABASE_PASSWORD, and DATABASE_NAME.',
+    );
+  }
+
+  const missingConfig = [
+    !host ? 'DATABASE_HOST' : null,
+    !username ? 'DATABASE_USER' : null,
+    !password ? 'DATABASE_PASSWORD' : null,
+    !database ? 'DATABASE_NAME' : null,
+  ].filter(Boolean) as string[];
+
+  if (missingConfig.length > 0) {
+    throw new Error(
+      `Incomplete database configuration. Missing: ${missingConfig.join(', ')}.`,
+    );
+  }
+
   return {
     type: 'postgres',
-    host: readTrimmed(readEnv, 'DATABASE_HOST') ?? 'localhost',
+    host,
     port: toNumber(readTrimmed(readEnv, 'DATABASE_PORT'), 5432),
-    username: readTrimmed(readEnv, 'DATABASE_USER') ?? 'postgres',
-    password: readTrimmed(readEnv, 'DATABASE_PASSWORD') ?? 'postgres',
-    database: readTrimmed(readEnv, 'DATABASE_NAME') ?? 'oruma',
+    username,
+    password,
+    database,
     ssl,
   };
 };
