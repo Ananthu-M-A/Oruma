@@ -1,4 +1,3 @@
-import { describe, it } from 'node:test';
 import { getDatabaseConnectionOptions } from './database-options';
 
 describe('getDatabaseConnectionOptions', () => {

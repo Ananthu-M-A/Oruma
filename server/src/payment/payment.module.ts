@@ -9,7 +9,12 @@ import { PaymentService } from './payment.service';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Payment, Appointment]), AuthModule, NotificationModule, AppointmentModule],
+  imports: [
+    TypeOrmModule.forFeature([Payment, Appointment]),
+    AuthModule,
+    NotificationModule,
+    AppointmentModule,
+  ],
   controllers: [PaymentController],
   providers: [PaymentService],
   exports: [PaymentService],

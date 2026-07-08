@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AppointmentService } from '../appointment/appointment.service';
@@ -27,10 +31,9 @@ export class CaseSheetService {
       });
     }
 
-    return this.caseSheetRepo.find({
-      where: { patient: { id: user.userId } },
-      order: { updatedAt: 'DESC' },
-    });
+    throw new ForbiddenException(
+      'Case sheets are available to admins and therapists only',
+    );
   }
 
   async upsert(dto: UpsertCaseSheetDto, user: JwtPayload) {
@@ -68,7 +71,6 @@ export class CaseSheetService {
     if (!caseSheet) throw new NotFoundException('Case sheet not found');
 
     if (user.role === Role.ADMIN) return caseSheet;
-    if (user.role === Role.PATIENT && caseSheet.patient?.id === user.userId) return caseSheet;
     if (
       user.role === Role.THERAPIST &&
       caseSheet.therapist?.account?.id === user.userId
@@ -84,7 +86,8 @@ export class CaseSheetService {
 
     return {
       monitored: sheets.length,
-      updated: sheets.filter((sheet) => sheet.updatedAt > sheet.createdAt).length,
+      updated: sheets.filter((sheet) => sheet.updatedAt > sheet.createdAt)
+        .length,
     };
   }
 }

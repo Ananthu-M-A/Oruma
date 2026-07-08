@@ -1,0 +1,146 @@
+import { BadRequestException } from '@nestjs/common';
+import { createHmac } from 'crypto';
+import { PaymentService } from './payment.service';
+import { PaymentStatus } from './entities/payment-status.enum';
+import { Role } from '../user/entities/user.entity';
+
+describe('PaymentService', () => {
+  const secret = 'test_razorpay_secret';
+  const patient = {
+    userId: 'patient-1',
+    email: 'patient@example.com',
+    role: Role.PATIENT,
+  };
+
+  const createService = (payment: Record<string, unknown>) => {
+    const paymentRepo = {
+      findOne: jest.fn().mockResolvedValue(payment),
+      save: jest.fn().mockImplementation(async (value) => value),
+      find: jest.fn(),
+      create: jest.fn(),
+    };
+    const appointmentRepo = {
+      findOne: jest.fn(),
+    };
+    const configService = {
+      get: jest.fn((key: string) =>
+        key === 'RAZORPAY_KEY_SECRET' ? secret : undefined,
+      ),
+    };
+    const notificationService = {
+      create: jest.fn().mockResolvedValue({}),
+      notifyAdmins: jest.fn().mockResolvedValue([]),
+    };
+    const appointmentService = {
+      notifyBookingAfterPayment: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const service = new PaymentService(
+      paymentRepo as never,
+      appointmentRepo as never,
+      configService as never,
+      notificationService as never,
+      appointmentService as never,
+    );
+
+    return {
+      service,
+      paymentRepo,
+      appointmentService,
+    };
+  };
+
+  const signatureFor = (orderId: string, paymentId: string) =>
+    createHmac('sha256', secret)
+      .update(`${orderId}|${paymentId}`)
+      .digest('hex');
+
+  it('queues booking notifications after the first successful Razorpay verification', async () => {
+    const payment = {
+      id: 'payment-1',
+      status: PaymentStatus.PENDING,
+      appointment: {
+        id: 'appointment-1',
+        contactEmail: 'patient@example.com',
+      },
+      patient: {
+        id: 'patient-1',
+        email: 'patient@example.com',
+      },
+      notes: null,
+    };
+    const { service, paymentRepo, appointmentService } = createService(payment);
+
+    const result = await service.verifyRazorpayPayment(
+      {
+        razorpayOrderId: 'order_123',
+        razorpayPaymentId: 'pay_123',
+        razorpaySignature: signatureFor('order_123', 'pay_123'),
+      },
+      patient,
+    );
+
+    expect(result.status).toBe(PaymentStatus.PAID);
+    expect(paymentRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerPaymentId: 'pay_123',
+        reference: 'pay_123',
+      }),
+    );
+    expect(appointmentService.notifyBookingAfterPayment).toHaveBeenCalledWith(
+      payment.appointment,
+      'patient@example.com',
+    );
+  });
+
+  it('does not duplicate booking notifications when payment is already paid', async () => {
+    const payment = {
+      id: 'payment-1',
+      status: PaymentStatus.PAID,
+      appointment: {
+        id: 'appointment-1',
+        contactEmail: 'patient@example.com',
+      },
+      patient: {
+        id: 'patient-1',
+        email: 'patient@example.com',
+      },
+      notes: 'Razorpay payment verified',
+    };
+    const { service, appointmentService } = createService(payment);
+
+    await service.verifyRazorpayPayment(
+      {
+        razorpayOrderId: 'order_123',
+        razorpayPaymentId: 'pay_123',
+        razorpaySignature: signatureFor('order_123', 'pay_123'),
+      },
+      patient,
+    );
+
+    expect(appointmentService.notifyBookingAfterPayment).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid Razorpay signatures', async () => {
+    const payment = {
+      id: 'payment-1',
+      status: PaymentStatus.PENDING,
+      appointment: { id: 'appointment-1' },
+      patient: { id: 'patient-1' },
+    };
+    const { service, paymentRepo } = createService(payment);
+
+    await expect(
+      service.verifyRazorpayPayment(
+        {
+          razorpayOrderId: 'order_123',
+          razorpayPaymentId: 'pay_123',
+          razorpaySignature: 'bad-signature',
+        },
+        patient,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(paymentRepo.save).not.toHaveBeenCalled();
+  });
+});
