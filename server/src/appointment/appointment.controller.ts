@@ -71,8 +71,8 @@ export class AppointmentController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  remove(@Param('id') id: string) {
-    return this.appointmentService.remove(id);
+  @Roles(Role.ADMIN, Role.PATIENT)
+  remove(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.appointmentService.remove(id, req.user);
   }
 }

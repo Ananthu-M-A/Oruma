@@ -12,17 +12,21 @@ import {
   getMyAccount,
   updateMyAccount,
 } from "../src/lib/auth";
-import { BookingResponse, getMyAppointments } from "../src/lib/booking";
+import { BookingResponse, cancelAppointment, getMyAppointments } from "../src/lib/booking";
 import {
-  createRazorpayOrder,
   createTicket,
   getMyPayments,
   getTickets,
   openPaymentInvoice,
   Payment,
   Ticket,
-  verifyRazorpayPayment,
 } from "../src/lib/operations";
+import {
+  COUNTRY_OPTIONS,
+  formatPhoneNumber,
+  isValidPhoneNumber,
+  parsePhoneInput,
+} from "../src/lib/phone";
 
 export const meta = {
   title: "Patient Profile | Oruma",
@@ -76,21 +80,22 @@ function AppointmentCard({
   appointment,
   payment,
   isPaid,
-  isPaying,
-  onPay,
+  isCancelling,
   onInvoice,
+  onCancel,
 }: {
   appointment: BookingResponse;
   payment?: Payment;
   isPaid: boolean;
-  isPaying: boolean;
-  onPay: (appointment: BookingResponse) => void;
+  isCancelling: boolean;
   onInvoice: (payment: Payment) => void;
+  onCancel: (appointment: BookingResponse) => void;
 }) {
   const canJoinSession =
     appointment.status === "CONFIRMED" && Boolean(appointment.meetingLink);
   const canOpenInvoice =
     payment?.status === "PAID" || payment?.status === "REFUNDED";
+  const canCancel = appointment.status !== "CANCELLED";
 
   return (
     <article className="rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5 shadow-sm">
@@ -107,18 +112,10 @@ function AppointmentCard({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B]">
-            {isPaid ? "Paid" : "Payment due"}
-          </span>
-          {!isPaid && (
-            <button
-              type="button"
-              onClick={() => onPay(appointment)}
-              disabled={isPaying}
-              className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-60"
-            >
-              {isPaying ? "Opening..." : "Pay now"}
-            </button>
+          {isPaid && (
+            <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B]">
+              Paid
+            </span>
           )}
           {payment && canOpenInvoice && (
             <button
@@ -140,6 +137,16 @@ function AppointmentCard({
               <LucideIcon name="video" size={14} />
               Join session
             </a>
+          )}
+          {canCancel && (
+            <button
+              type="button"
+              onClick={() => onCancel(appointment)}
+              disabled={isCancelling}
+              className="inline-flex items-center gap-2 rounded-full border border-[#F0BAB0] bg-[#FFECE8] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#A94433] disabled:opacity-60"
+            >
+              {isCancelling ? "Cancelling..." : "Cancel"}
+            </button>
           )}
         </div>
       </div>
@@ -166,6 +173,8 @@ export default function PatientProfilePage() {
     age: "",
     gender: "",
   });
+  const [phoneCountry, setPhoneCountry] = useState("+91");
+  const [phoneError, setPhoneError] = useState("");
   const [healthForm, setHealthForm] = useState({
     primaryConcern: "",
     currentSymptoms: "",
@@ -181,7 +190,7 @@ export default function PatientProfilePage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [payingAppointmentId, setPayingAppointmentId] = useState("");
+  const [cancellingAppointmentId, setCancellingAppointmentId] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [activeTab, setActiveTab] = useState("appointments");
@@ -216,9 +225,11 @@ export default function PatientProfilePage() {
         setTickets(ticketData);
         setPayments(paymentData);
         setAccount(accountData);
+        const parsedPhone = parsePhoneInput(accountData.phone);
+        setPhoneCountry(parsedPhone.dialCode);
         setPersonalForm({
           fullName: accountData.fullName ?? "",
-          phone: accountData.phone ?? "",
+          phone: parsedPhone.raw,
           age: accountData.age ? String(accountData.age) : "",
           gender: accountData.gender ?? "",
         });
@@ -257,6 +268,12 @@ export default function PatientProfilePage() {
     [payments],
   );
 
+  const visibleAppointments = useMemo(
+    () =>
+      appointments.filter((appointment) => paidAppointmentIds.has(appointment.id)),
+    [appointments, paidAppointmentIds],
+  );
+
   const paymentByAppointmentId = useMemo(() => {
     const map = new Map<string, Payment>();
     payments
@@ -275,7 +292,7 @@ export default function PatientProfilePage() {
   }, [payments]);
 
   const nextAppointment = useMemo(() => {
-    return appointments
+    return visibleAppointments
       .filter(
         (appointment) =>
           appointment.slot?.startTime &&
@@ -286,17 +303,25 @@ export default function PatientProfilePage() {
           new Date(a.slot.startTime).getTime() -
           new Date(b.slot.startTime).getTime(),
       )[0];
-  }, [appointments]);
+  }, [visibleAppointments]);
 
   const saveProfile = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsSaving(true);
     setError("");
     setNotice("");
+    setPhoneError("");
+
+    if (!isValidPhoneNumber(personalForm.phone, phoneCountry)) {
+      setPhoneError("Please enter a valid phone number for the selected country.");
+      setIsSaving(false);
+      return;
+    }
+
     try {
       const updated = await updateMyAccount({
         fullName: personalForm.fullName,
-        phone: personalForm.phone,
+        phone: formatPhoneNumber(personalForm.phone, phoneCountry),
         age: personalForm.age ? Number(personalForm.age) : null,
         gender: personalForm.gender,
         healthInfo: healthForm,
@@ -332,66 +357,6 @@ export default function PatientProfilePage() {
     }
   };
 
-  const payForAppointment = async (appointment: BookingResponse) => {
-    const token = getAccessToken();
-    if (!token) return;
-
-    setError("");
-    setNotice("");
-    setPayingAppointmentId(appointment.id);
-
-    try {
-      await loadRazorpayCheckout();
-      if (!window.Razorpay)
-        throw new Error("Razorpay checkout is unavailable.");
-
-      const order = await createRazorpayOrder(token, appointment.id);
-      const checkout = new window.Razorpay({
-        key: order.keyId,
-        amount: Math.round(order.amount * 100),
-        currency: order.currency,
-        name: "Oruma",
-        description: `${appointment.service ?? "Therapy session"} with ${appointment.therapist?.name ?? "therapist"}`,
-        order_id: order.orderId,
-        prefill: {
-          name: account?.fullName ?? appointment.patient?.fullName ?? "",
-          email: account?.email ?? appointment.patient?.email ?? "",
-          contact: account?.phone ?? appointment.patient?.phone ?? "",
-        },
-        handler: (response) => {
-          verifyRazorpayPayment(token, {
-            razorpayOrderId: response.razorpay_order_id,
-            razorpayPaymentId: response.razorpay_payment_id,
-            razorpaySignature: response.razorpay_signature,
-          })
-            .then((payment) => {
-              setPayments((current) => [
-                payment,
-                ...current.filter((item) => item.id !== payment.id),
-              ]);
-              setNotice("Payment verified successfully.");
-            })
-            .catch((err) => {
-              setError(
-                err instanceof Error
-                  ? err.message
-                  : "Unable to verify payment.",
-              );
-            })
-            .finally(() => setPayingAppointmentId(""));
-        },
-        modal: {
-          ondismiss: () => setPayingAppointmentId(""),
-        },
-      });
-
-      checkout.open();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to start payment.");
-      setPayingAppointmentId("");
-    }
-  };
-
   const openInvoice = async (payment: Payment) => {
     const token = getAccessToken();
     if (!token) return;
@@ -406,12 +371,36 @@ export default function PatientProfilePage() {
     }
   };
 
+  const cancelBooking = async (appointment: BookingResponse) => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setError("");
+    setNotice("");
+    setCancellingAppointmentId(appointment.id);
+
+    try {
+      await cancelAppointment(appointment.id, token);
+      setAppointments((current) =>
+        current.filter((item) => item.id !== appointment.id),
+      );
+      setPayments((current) =>
+        current.filter((payment) => payment.appointment?.id !== appointment.id),
+      );
+      setNotice("Appointment cancelled.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to cancel appointment.");
+    } finally {
+      setCancellingAppointmentId("");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#F8FBF8] font-body text-[#2E3E3C]">
       <DashboardNavbar />
       <section className="pt-24 pb-20 px-6">
         <div className="mx-auto max-w-7xl">
-          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="grid gap-8 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.1fr)] lg:items-start">
             <section className="rounded-[2rem] bg-[#064F4B] p-7 md:p-9 text-white shadow-xl shadow-[#064F4B]/10">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10">
                 <LucideIcon name="heart-handshake" size={32} />
@@ -430,10 +419,10 @@ export default function PatientProfilePage() {
               <div className="mt-10 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-[1.25rem] bg-white/10 p-4">
                   <p className="text-[10px] font-black uppercase tracking-widest text-white/50">
-                    Total sessions
+                    Paid sessions
                   </p>
                   <p className="mt-2 text-3xl font-black">
-                    {appointments.length}
+                    {visibleAppointments.length}
                   </p>
                 </div>
                 <div className="rounded-[1.25rem] bg-white/10 p-4">
@@ -448,7 +437,7 @@ export default function PatientProfilePage() {
                 </div>
               </div>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
                   to="/therapists"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-4 text-xs font-black uppercase tracking-widest text-[#064F4B]"
@@ -533,26 +522,26 @@ export default function PatientProfilePage() {
                         Loading appointments...
                       </p>
                     )}
-                    {!isLoading && appointments.length === 0 && (
+                    {!isLoading && visibleAppointments.length === 0 && (
                       <div className="rounded-[1.5rem] bg-[#F5F8F7] p-7 text-center">
                         <p className="font-black text-[#064F4B]">
                           No appointments yet.
                         </p>
                         <p className="mt-2 text-sm font-bold text-[#5F7F7A]">
-                          Choose a therapist and book your first session.
+                          Book a session and complete payment to see it here.
                         </p>
                       </div>
                     )}
                     {!isLoading &&
-                      appointments.map((appointment) => (
+                      visibleAppointments.map((appointment) => (
                         <AppointmentCard
                           key={appointment.id}
                           appointment={appointment}
                           payment={paymentByAppointmentId.get(appointment.id)}
                           isPaid={paidAppointmentIds.has(appointment.id)}
-                          isPaying={payingAppointmentId === appointment.id}
-                          onPay={payForAppointment}
+                          isCancelling={cancellingAppointmentId === appointment.id}
                           onInvoice={openInvoice}
+                          onCancel={cancelBooking}
                         />
                       ))}
                   </div>
@@ -567,7 +556,7 @@ export default function PatientProfilePage() {
                       <h3 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">
                         Your details
                       </h3>
-                      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                      <div className="mt-6 grid gap-4 sm:grid-cols-2 sm:items-start">
                         <Field
                           label="Full name"
                           value={personalForm.fullName}
@@ -578,13 +567,39 @@ export default function PatientProfilePage() {
                             })
                           }
                         />
-                        <Field
-                          label="Phone"
-                          value={personalForm.phone}
-                          onChange={(value) =>
-                            setPersonalForm({ ...personalForm, phone: value })
-                          }
-                        />
+                        <label>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                            Phone
+                          </span>
+                          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                            <select
+                              value={phoneCountry}
+                              onChange={(event) => setPhoneCountry(event.target.value)}
+                              className="w-full rounded-lg border border-[#DDE8E5] bg-white px-3 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A] sm:w-36"
+                            >
+                              {COUNTRY_OPTIONS.map((option) => (
+                                <option key={option.dialCode} value={option.dialCode}>
+                                  {option.label} ({option.dialCode})
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="tel"
+                              value={personalForm.phone}
+                              onChange={(event) =>
+                                setPersonalForm({
+                                  ...personalForm,
+                                  phone: event.target.value.replace(/\D/g, ""),
+                                })
+                              }
+                              className="flex-1 rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+                              inputMode="tel"
+                            />
+                          </div>
+                          {phoneError && (
+                            <p className="mt-2 text-sm font-bold text-red-600">{phoneError}</p>
+                          )}
+                        </label>
                         <Field
                           label="Age"
                           type="number"
@@ -593,13 +608,25 @@ export default function PatientProfilePage() {
                             setPersonalForm({ ...personalForm, age: value })
                           }
                         />
-                        <Field
-                          label="Gender"
-                          value={personalForm.gender}
-                          onChange={(value) =>
-                            setPersonalForm({ ...personalForm, gender: value })
-                          }
-                        />
+                        <label>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                            Gender
+                          </span>
+                          <select
+                            value={personalForm.gender}
+                            onChange={(event) =>
+                              setPersonalForm({ ...personalForm, gender: event.target.value })
+                            }
+                            className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+                          >
+                            <option value="">Select gender</option>
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                            <option value="Non-binary">Non-binary</option>
+                            <option value="Prefer not to say">Prefer not to say</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </label>
                       </div>
                     </section>
                     <button
@@ -820,7 +847,7 @@ function Field({
   type?: string;
 }) {
   return (
-    <label>
+    <label className="flex flex-col gap-2">
       <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
         {label}
       </span>
@@ -829,7 +856,7 @@ function Field({
         min={type === "number" ? 0 : undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+        className="w-full min-w-0 rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
       />
     </label>
   );

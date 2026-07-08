@@ -2,8 +2,10 @@ import React, { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import PasswordInput from "../components/PasswordInput";
 import { LucideIcon } from "@site-builder/icons";
 import { register } from "../src/lib/auth";
+import { COUNTRY_OPTIONS, formatPhoneNumber, isValidPhoneNumber } from "../src/lib/phone";
 
 export const meta = {
   title: "Register | Oruma",
@@ -15,6 +17,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState("+91");
   const [primaryConcern, setPrimaryConcern] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,6 +33,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!isValidPhoneNumber(phone, phoneCountry)) {
+      setError("Please enter a valid phone number for the selected country.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -37,7 +45,7 @@ export default function RegisterPage() {
         email,
         password,
         fullName,
-        phone,
+        phone: formatPhoneNumber(phone, phoneCountry),
         healthInfo: primaryConcern ? { primaryConcern } : null,
       });
       navigate("/login", {
@@ -80,7 +88,7 @@ export default function RegisterPage() {
             )}
 
             <form className="space-y-5" onSubmit={handleSubmit}>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <label className="block">
                   <span className="block text-xs font-black text-[#064F4B] uppercase tracking-widest mb-2">
                     Full name
@@ -97,13 +105,27 @@ export default function RegisterPage() {
                   <span className="block text-xs font-black text-[#064F4B] uppercase tracking-widest mb-2">
                     Phone
                   </span>
-                  <input
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                    className="w-full rounded-2xl border border-[#DDE8E2] bg-white px-5 py-4 outline-none transition focus:border-[#0A7F7A] focus:ring-4 focus:ring-[#0A7F7A]/10"
-                    placeholder="Contact number"
-                    autoComplete="tel"
-                  />
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                    <select
+                      value={phoneCountry}
+                      onChange={(event) => setPhoneCountry(event.target.value)}
+                      className="w-full rounded-2xl border border-[#DDE8E2] bg-white px-3 py-4 outline-none transition focus:border-[#0A7F7A] focus:ring-4 focus:ring-[#0A7F7A]/10 sm:w-36"
+                    >
+                      {COUNTRY_OPTIONS.map((option) => (
+                        <option key={option.dialCode} value={option.dialCode}>
+                          {option.label} ({option.dialCode})
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      value={phone}
+                      onChange={(event) => setPhone(event.target.value.replace(/\D/g, ""))}
+                      className="min-w-0 flex-1 rounded-2xl border border-[#DDE8E2] bg-white px-5 py-4 outline-none transition focus:border-[#0A7F7A] focus:ring-4 focus:ring-[#0A7F7A]/10"
+                      placeholder="Contact number"
+                      autoComplete="tel"
+                      inputMode="tel"
+                    />
+                  </div>
                 </label>
               </div>
 
@@ -135,37 +157,25 @@ export default function RegisterPage() {
               </label>
 
               <div className="grid md:grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="block text-xs font-black text-[#064F4B] uppercase tracking-widest mb-2">
-                    Password
-                  </span>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    className="w-full rounded-2xl border border-[#DDE8E2] bg-white px-5 py-4 outline-none transition focus:border-[#0A7F7A] focus:ring-4 focus:ring-[#0A7F7A]/10"
-                    placeholder="Minimum 8 characters"
-                    autoComplete="new-password"
-                    minLength={8}
-                    required
-                  />
-                </label>
+                <PasswordInput
+                  label="Password"
+                  value={password}
+                  onChange={setPassword}
+                  placeholder="Minimum 8 characters"
+                  autoComplete="new-password"
+                  minLength={8}
+                  required
+                />
 
-                <label className="block">
-                  <span className="block text-xs font-black text-[#064F4B] uppercase tracking-widest mb-2">
-                    Confirm
-                  </span>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    className="w-full rounded-2xl border border-[#DDE8E2] bg-white px-5 py-4 outline-none transition focus:border-[#0A7F7A] focus:ring-4 focus:ring-[#0A7F7A]/10"
-                    placeholder="Repeat password"
-                    autoComplete="new-password"
-                    minLength={8}
-                    required
-                  />
-                </label>
+                <PasswordInput
+                  label="Confirm"
+                  value={confirmPassword}
+                  onChange={setConfirmPassword}
+                  placeholder="Repeat password"
+                  autoComplete="new-password"
+                  minLength={8}
+                  required
+                />
               </div>
 
               <button

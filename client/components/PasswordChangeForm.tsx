@@ -1,5 +1,6 @@
 import React, { FormEvent, useState } from "react";
 import { LucideIcon } from "@site-builder/icons";
+import PasswordInput from "./PasswordInput";
 import { changePassword } from "../src/lib/auth";
 
 export default function PasswordChangeForm() {
@@ -50,7 +51,7 @@ export default function PasswordChangeForm() {
       {notice && <p className="mt-5 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
       {error && <p className="mt-5 rounded-lg bg-red-50 p-4 font-bold text-red-700">{error}</p>}
 
-      <div className="mt-5 grid gap-4 md:grid-cols-3">
+      <div className="mt-5 flex flex-col gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
         <PasswordField
           label="Current password"
           value={currentPassword}
@@ -74,7 +75,7 @@ export default function PasswordChangeForm() {
       <button
         type="submit"
         disabled={isSaving}
-        className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-6 py-4 text-xs font-black uppercase tracking-widest text-white disabled:opacity-60"
+        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#064F4B] px-6 py-4 text-xs font-black uppercase tracking-widest text-white disabled:opacity-60 sm:w-auto"
       >
         <LucideIcon name="save" size={16} />
         {isSaving ? "Updating..." : "Update password"}
@@ -95,17 +96,14 @@ function PasswordField({
   autoComplete: string;
 }) {
   return (
-    <label>
-      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</span>
-      <input
-        type="password"
-        required
-        minLength={8}
-        value={value}
-        autoComplete={autoComplete}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
-      />
-    </label>
+    <PasswordInput
+      label={label}
+      value={value}
+      onChange={onChange}
+      autoComplete={autoComplete}
+      required
+      minLength={8}
+      inputClassName="mt-2 rounded-lg border-[#DDE8E5] px-4 py-3 font-bold text-[#064F4B]"
+    />
   );
 }

@@ -55,9 +55,7 @@ export default function TherapistProfilePage() {
   const [form, setForm] = useState({
     name: "",
     title: "",
-    tags: "",
     experience: "0",
-    group: "1",
     price: "0",
     couplePrice: "",
     image: "",
@@ -108,9 +106,7 @@ export default function TherapistProfilePage() {
         setForm({
           name: effectiveProfile.name,
           title: effectiveProfile.title,
-          tags: effectiveProfile.tags?.join(", ") ?? "",
           experience: String(effectiveProfile.experience),
-          group: String(effectiveProfile.group),
           price: String(effectiveProfile.price),
           couplePrice: effectiveProfile.couplePrice ? String(effectiveProfile.couplePrice) : "",
           image: effectiveProfile.image ?? "",
@@ -147,9 +143,7 @@ export default function TherapistProfilePage() {
       const updatedProfile = await updateMyTherapistProfile(token, {
         name: form.name.trim(),
         title: form.title.trim(),
-        tags: form.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
         experience: Number(form.experience),
-        group: Number(form.group),
         price: Number(form.price),
         couplePrice: form.couplePrice ? Number(form.couplePrice) : null,
         image: form.image.trim(),
@@ -376,10 +370,8 @@ export default function TherapistProfilePage() {
                   {activeTab === "profile" && (
                     <form onSubmit={saveProfile} className="grid gap-4 rounded-[1.5rem] border border-[#E2E8E6] bg-[#FBFDFC] p-5 md:grid-cols-2">
                       <Field label="Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} required />
-                      <Field label="Title" value={form.title} onChange={(value) => setForm({ ...form, title: value })} required />
-                      <Field label="Tags" value={form.tags} onChange={(value) => setForm({ ...form, tags: value })} />
+                      <SelectField label="Title" value={form.title} onChange={(value) => setForm({ ...form, title: value })} options={titleOptions} required />
                       <Field label="Experience" type="number" value={form.experience} onChange={(value) => setForm({ ...form, experience: value })} required />
-                      <Field label="Group" type="number" value={form.group} onChange={(value) => setForm({ ...form, group: value })} required />
                       <Field label="Individual fee" type="number" value={form.price} onChange={(value) => setForm({ ...form, price: value })} required />
                       <Field label="Couple fee" type="number" value={form.couplePrice} onChange={(value) => setForm({ ...form, couplePrice: value })} />
                       <MediaUploadField
@@ -404,8 +396,8 @@ export default function TherapistProfilePage() {
                         onClear={() => clearProfileMedia("voiceIntro")}
                         preview="audio"
                       />
-                      <Field label="Qualifications" value={form.qualifications} onChange={(value) => setForm({ ...form, qualifications: value })} />
-                      <Field label="Specialization" value={form.specialization} onChange={(value) => setForm({ ...form, specialization: value })} />
+                      <SelectField label="Qualification" value={form.qualifications} onChange={(value) => setForm({ ...form, qualifications: value })} options={qualificationOptions} />
+                      <SelectField label="Specialization" value={form.specialization} onChange={(value) => setForm({ ...form, specialization: value })} options={specializationOptions} />
                       <label className="md:col-span-2">
                         <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Bio</span>
                         <textarea value={form.bio} onChange={(event) => setForm({ ...form, bio: event.target.value })} className="mt-2 min-h-28 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
@@ -685,6 +677,10 @@ function addOneHour(value: string) {
   return toLocalInputValue(new Date(date.getTime() + 60 * 60 * 1000).toISOString());
 }
 
+const titleOptions = ["Clinical Psychologist", "Counselling Psychologist", "Psychiatrist", "Psychotherapist", "Relationship Therapist", "Child & Adolescent Therapist"];
+const qualificationOptions = ["M.Phil. Clinical Psychology", "MA Clinical Psychology", "MSc Applied Psychology", "PhD Psychology", "PG Diploma in Counselling", "MBBS Psychiatry"];
+const specializationOptions = ["Anxiety", "Depression", "Trauma", "Relationship & Couples", "Work Stress", "Grief", "Postpartum", "Student & Youth", "LGBTQIA+", "Parenting"];
+
 function Field({
   label,
   value,
@@ -699,7 +695,7 @@ function Field({
   required?: boolean;
 }) {
   return (
-    <label>
+    <label className="flex flex-col gap-2">
       <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</span>
       <input
         type={type}
@@ -707,8 +703,41 @@ function Field({
         required={required}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+        className="w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
       />
+    </label>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  required?: boolean;
+}) {
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</span>
+      <select
+        required={required}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+      >
+        <option value="">Select {label.toLowerCase()}</option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }

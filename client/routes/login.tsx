@@ -2,6 +2,7 @@ import React, { FormEvent, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import PasswordInput from "../components/PasswordInput";
 import { LucideIcon } from "@site-builder/icons";
 import { getCurrentUser, getRedirectPathForRole, login, requestLoginOtp, saveAccessToken, verifyLoginOtp } from "../src/lib/auth";
 
@@ -119,7 +120,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <div className="mb-6 grid grid-cols-2 rounded-2xl bg-[#F5F8F7] p-1">
+            <div className="mb-6 grid grid-cols-2 gap-1 rounded-2xl bg-[#F5F8F7] p-1">
               <button
                 type="button"
                 onClick={() => setLoginMode("otp")}
@@ -218,21 +219,15 @@ export default function LoginPage() {
                 />
               </label>
 
-              <label className="block">
-                <span className="block text-xs font-black text-[#064F4B] uppercase tracking-widest mb-2">
-                  Password
-                </span>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="w-full rounded-2xl border border-[#DDE8E2] bg-white px-5 py-4 outline-none transition focus:border-[#0A7F7A] focus:ring-4 focus:ring-[#0A7F7A]/10"
-                  placeholder="Minimum 8 characters"
-                  autoComplete="current-password"
-                  minLength={8}
-                  required
-                />
-              </label>
+              <PasswordInput
+                label="Password"
+                value={password}
+                onChange={setPassword}
+                placeholder="Minimum 8 characters"
+                autoComplete="current-password"
+                minLength={8}
+                required
+              />
 
               <button
                 type="submit"

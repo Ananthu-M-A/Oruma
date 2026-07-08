@@ -61,9 +61,6 @@ export class AppointmentService {
 
     const savedAppointment = await this.createForPatient(dto, patientAccount);
 
-    await this.sendBookingNotifications(savedAppointment, patient.email);
-    await this.sendBookingInAppNotifications(savedAppointment);
-
     return savedAppointment;
   }
 
@@ -87,12 +84,6 @@ export class AppointmentService {
         createdAccount: patientResult.createdAccount,
       };
     });
-
-    await this.sendBookingNotifications(
-      result.appointment,
-      this.normalizeEmail(dto.contactEmail),
-    );
-    await this.sendBookingInAppNotifications(result.appointment);
 
     const accessToken = this.jwtService.sign({
       userId: result.patient.id,
@@ -269,6 +260,17 @@ export class AppointmentService {
   private normalizePhone(phone?: string) {
     const digits = phone?.replace(/\D/g, '');
     return digits || null;
+  }
+
+  async notifyBookingAfterPayment(
+    appointment: Appointment,
+    email?: string | null,
+  ) {
+    await this.sendBookingNotifications(
+      appointment,
+      this.normalizeEmail(email ?? appointment.contactEmail ?? appointment.patient?.email) ?? null,
+    );
+    await this.sendBookingInAppNotifications(appointment);
   }
 
   private async sendBookingNotifications(
@@ -476,8 +478,10 @@ export class AppointmentService {
     return savedAppointment;
   }
 
-  async remove(id: string): Promise<{ message: string }> {
-    const appointment = await this.findOne(id);
+  async remove(id: string, user?: JwtPayload): Promise<{ message: string }> {
+    const appointment = user
+      ? await this.findOneForUser(id, user)
+      : await this.findOne(id);
 
     if (appointment.slot) {
       appointment.slot.status = SlotStatus.AVAILABLE;

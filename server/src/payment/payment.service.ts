@@ -18,6 +18,7 @@ import { RefundPaymentDto } from './dto/refund-payment.dto';
 import { VerifyRazorpayPaymentDto } from './dto/verify-razorpay-payment.dto';
 import { NotificationType } from '../notification/entities/notification.entity';
 import { NotificationService } from '../notification/notification.service';
+import { AppointmentService } from '../appointment/appointment.service';
 
 type RazorpayOrderResponse = {
   id?: string;
@@ -75,6 +76,7 @@ export class PaymentService {
     private readonly appointmentRepo: Repository<Appointment>,
     private readonly configService: ConfigService,
     private readonly notificationService: NotificationService,
+    private readonly appointmentService: AppointmentService,
   ) {}
 
   findAll() {
@@ -234,6 +236,7 @@ export class PaymentService {
 
     if (!payment) throw new NotFoundException('Payment not found');
 
+    const shouldNotifyBooking = payment.status !== PaymentStatus.PAID;
     payment.status = PaymentStatus.PAID;
     payment.reference = dto.razorpayPaymentId;
     payment.providerPaymentId = dto.razorpayPaymentId;
@@ -243,6 +246,13 @@ export class PaymentService {
 
     const savedPayment = await this.paymentRepo.save(payment);
     await this.sendPaymentNotification(savedPayment, 'Payment verified', 'Your appointment payment was verified successfully.');
+
+    if (shouldNotifyBooking && payment.appointment) {
+      await this.appointmentService.notifyBookingAfterPayment(
+        payment.appointment,
+        payment.appointment.contactEmail ?? payment.patient?.email,
+      );
+    }
 
     return savedPayment;
   }
@@ -300,6 +310,7 @@ export class PaymentService {
     if (!payment) return { received: true };
 
     if (payload.event === 'payment.captured') {
+      const shouldNotifyBooking = payment.status !== PaymentStatus.PAID;
       payment.status = PaymentStatus.PAID;
       payment.reference = paymentEntity.id ?? payment.reference;
       payment.providerPaymentId = paymentEntity.id ?? payment.providerPaymentId;
@@ -308,6 +319,12 @@ export class PaymentService {
         .join('\n');
       const savedPayment = await this.paymentRepo.save(payment);
       await this.sendPaymentNotification(savedPayment, 'Payment captured', 'Your appointment payment was captured successfully.');
+      if (shouldNotifyBooking && payment.appointment) {
+        await this.appointmentService.notifyBookingAfterPayment(
+          payment.appointment,
+          payment.appointment.contactEmail ?? payment.patient?.email,
+        );
+      }
     }
 
     if (payload.event === 'payment.failed') {

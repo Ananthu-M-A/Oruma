@@ -7,8 +7,41 @@ import {
   getSlotDateLabel,
   getSlotTimeLabel,
 } from "../src/lib/therapists";
-import { createAppointment, createQuickAppointment } from "../src/lib/booking";
+import {
+  createAppointment,
+  createQuickAppointment,
+  cancelAppointment,
+} from "../src/lib/booking";
 import { getAccessToken, getCurrentUser, getMyAccount, saveAccessToken } from "../src/lib/auth";
+import { createRazorpayOrder, verifyRazorpayPayment } from "../src/lib/operations";
+
+function loadRazorpayCheckout() {
+  if (window.Razorpay) return Promise.resolve();
+
+  return new Promise<void>((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[src="https://checkout.razorpay.com/v1/checkout.js"]',
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(), { once: true });
+      existingScript.addEventListener(
+        "error",
+        () => reject(new Error("Unable to load Razorpay checkout.")),
+        { once: true },
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () =>
+      reject(new Error("Unable to load Razorpay checkout."));
+    document.body.appendChild(script);
+  });
+}
 
 export default function BookingModal({ isOpen, onClose, therapist, initialSlot }) {
   const navigate = useNavigate();
@@ -123,25 +156,31 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
   const prevStep = () => setStep(step - 1);
 
   async function handleBooking() {
+    let appointmentId: string | null = null;
+    let accessToken = getAccessToken();
+    const currentUser = getCurrentUser();
+    const isQuickBooking = !currentUser || !accessToken;
+    let paymentCompleted = false;
+
     try {
       setSubmitError("");
       setIsSubmitting(true);
 
-      const currentUser = getCurrentUser();
-      const accessToken = getAccessToken();
-
       if (currentUser && currentUser.role !== "PATIENT") {
         setSubmitError("Please use a patient account to book an appointment.");
+        setIsSubmitting(false);
         return;
       }
 
       if (!formData.slotId) {
         setSubmitError("Please select a time slot");
+        setIsSubmitting(false);
         return;
       }
 
       if (!formData.name || !formData.phone) {
         setSubmitError("Please fill in all required information");
+        setIsSubmitting(false);
         return;
       }
 
@@ -155,30 +194,94 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
         notes: `Service: ${formData.service}\nMode: ${formData.mode}\nName: ${formData.name}\nEmail: ${formData.email || "Not shared"}\nPhone: ${formData.phone}`,
       };
 
-      const isQuickBooking = !currentUser || !accessToken;
-
       if (!isQuickBooking) {
-        await createAppointment(bookingPayload, accessToken);
+        const appointment = await createAppointment(bookingPayload, accessToken!);
+        appointmentId = appointment.id;
       } else {
         const result = await createQuickAppointment(bookingPayload);
         saveAccessToken(result.accessToken);
+        accessToken = result.accessToken;
+        appointmentId = result.appointment.id;
       }
 
-      setSubmitSuccess(true);
-      setTimeout(() => {
-        onClose();
-        navigate("/profile/patient", {
-          state: {
-            notice: isQuickBooking
-              ? "Appointment booked successfully. Please complete your Personal info and Health info so your therapist can prepare better for the session."
-              : "Appointment booked successfully. Your session request is now in your appointments.",
-            activeTab: isQuickBooking ? "personal" : "appointments",
+      if (!appointmentId) {
+        throw new Error("Unable to create appointment.");
+      }
+
+      await loadRazorpayCheckout();
+      if (!window.Razorpay) {
+        throw new Error("Razorpay checkout is unavailable.");
+      }
+
+      const order = await createRazorpayOrder(accessToken!, appointmentId);
+      const checkout = new window.Razorpay({
+        key: order.keyId,
+        amount: Math.round(order.amount * 100),
+        currency: order.currency,
+        name: "Oruma",
+        description: `${formData.service ?? "Therapy session"} with ${therapist?.name ?? "therapist"}`,
+        order_id: order.orderId,
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        handler: async (response) => {
+          try {
+            await verifyRazorpayPayment(accessToken!, {
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+            paymentCompleted = true;
+            setSubmitSuccess(true);
+            setSubmitError("");
+            setTimeout(() => {
+              onClose();
+              navigate("/profile/patient", {
+                state: {
+                  notice: "Appointment booked and payment verified successfully.",
+                  activeTab: "appointments",
+                },
+              });
+            }, 1000);
+          } catch (err) {
+            setSubmitError(
+              err instanceof Error
+                ? err.message
+                : "Unable to verify payment.",
+            );
+            if (appointmentId) {
+              await cancelAppointment(appointmentId, accessToken!);
+            }
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+        modal: {
+          ondismiss: async () => {
+            if (!paymentCompleted && appointmentId) {
+              await cancelAppointment(appointmentId, accessToken!).catch(
+                () => undefined,
+              );
+            }
+            setIsSubmitting(false);
           },
-        });
-      }, 2000);
+        },
+      });
+
+      checkout.open();
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Failed to book appointment. Please try again.");
-    } finally {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Failed to book appointment. Please try again.",
+      );
+      if (appointmentId && accessToken) {
+        await cancelAppointment(appointmentId, accessToken).catch(
+          () => undefined,
+        );
+      }
       setIsSubmitting(false);
     }
   }
@@ -353,7 +456,7 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
                   </div>
                 </div>
               </div>
-              <p className="text-center text-xs text-gray-400">Clicking confirm will book your selected slot and send confirmation details by email.</p>
+              <p className="text-center text-xs text-gray-400">Clicking confirm will book your selected slot and start payment. Once payment succeeds, it will appear in your profile appointments.</p>
             </div>
           )}
         </div>
@@ -379,7 +482,7 @@ export default function BookingModal({ isOpen, onClose, therapist, initialSlot }
           ) : (
             <button className="w-full bg-[#00D494] text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-[#00B37E] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2" onClick={handleBooking} disabled={isSubmitting}>
               {isSubmitting && <LucideIcon name="loader" size={20} className="animate-spin" />}
-              {isSubmitting ? "Booking..." : "Confirm Booking"}
+              {isSubmitting ? "Please complete payment..." : "Pay & confirm booking"}
             </button>
           )}
         </div>
