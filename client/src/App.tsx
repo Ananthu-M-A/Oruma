@@ -13,6 +13,8 @@ import Contact from "../routes/contact";
 import Login from "../routes/login";
 import OnlineCounselling from "../routes/online-counselling";
 import PrivacyPolicy, { meta as privacyPolicyMeta } from "../routes/privacy-policy";
+import RefundPolicy, { meta as refundPolicyMeta } from "../routes/refund-policy";
+import CancellationPolicy, { meta as cancellationPolicyMeta } from "../routes/cancellation-policy";
 import Register from "../routes/register";
 import Services from "../routes/services";
 import CoupleTherapy from "../routes/services/couple-therapy";
@@ -61,6 +63,8 @@ const routeMeta: Record<string, { title?: string; description?: string }> = {
   "/login": loginMeta,
   "/online-counselling": onlineCounsellingMeta,
   "/privacy-policy": privacyPolicyMeta,
+  "/refund-policy": refundPolicyMeta,
+  "/cancellation-policy": cancellationPolicyMeta,
   "/register": registerMeta,
   "/profile/patient": patientProfileMeta,
   "/profile/therapist": therapistProfileMeta,
@@ -74,6 +78,7 @@ const routeMeta: Record<string, { title?: string; description?: string }> = {
   "/therapists/:id": therapistDetailMeta,
   "/therapists": therapistsMeta,
   "/terms": termsMeta,
+  "/terms-and-conditions": termsMeta,
 };
 
 function MetaUpdater() {
@@ -124,6 +129,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/online-counselling" element={<OnlineCounselling />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route path="/cancellation-policy" element={<CancellationPolicy />} />
         <Route
           path="/profile/patient"
           element={
@@ -166,6 +173,7 @@ export default function App() {
         <Route path="/therapists" element={<Therapists />} />
         <Route path="/therapists/:id" element={<TherapistDetail />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/terms-and-conditions" element={<Terms />} />
       </Routes>
     </BrowserRouter>
   );

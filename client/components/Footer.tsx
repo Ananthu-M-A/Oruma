@@ -36,7 +36,9 @@ export default function Footer() {
       title: 'Legal',
       links: [
         { name: 'Privacy Policy', href: '/privacy-policy' },
-        { name: 'Terms and Conditions', href: '/terms' }
+        { name: 'Terms and Conditions', href: '/terms-and-conditions' },
+        { name: 'Refund Policy', href: '/refund-policy' },
+        { name: 'Cancellation Policy', href: '/cancellation-policy' }
       ]
     }
   ];
