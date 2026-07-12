@@ -61,6 +61,21 @@ export class Appointment {
   @Column({ type: 'varchar', nullable: true })
   mode: string | null;
 
+  @Column({ default: 1 })
+  sessionCount: number;
+
+  @Column({ type: 'varchar', nullable: true })
+  packageName: string | null;
+
+  @Column({ default: 0 })
+  packageOriginalAmount: number;
+
+  @Column({ default: 0 })
+  packageOfferAmount: number;
+
+  @Column({ default: 0 })
+  packageDiscountPercent: number;
+
   @Column({ type: 'text', nullable: true })
   meetingLink: string;
 

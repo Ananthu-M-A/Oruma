@@ -308,7 +308,18 @@ export class TherapistService {
           totalAppointments === 0
             ? 0
             : Math.round((completedAppointments / totalAppointments) * 100),
-        estimatedCompletedRevenue: completedAppointments * therapist.price,
+        estimatedCompletedRevenue: therapistAppointments
+          .filter(
+            (appointment) => appointment.status === AppointmentStatus.COMPLETED,
+          )
+          .reduce(
+            (sum, appointment) =>
+              sum +
+              (appointment.packageOfferAmount > 0
+                ? appointment.packageOfferAmount
+                : therapist.price),
+            0,
+          ),
       };
     });
   }

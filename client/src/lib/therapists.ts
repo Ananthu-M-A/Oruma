@@ -12,6 +12,7 @@ export type Therapist = {
   couplePrice: number | null;
   image: string | null;
   voiceIntro: string | null;
+  zoomUserId: string | null;
   qualifications: string | null;
   specialization: string | null;
   bio: string | null;
@@ -34,6 +35,7 @@ export type TherapistPayload = {
   couplePrice?: number | null;
   image?: string;
   voiceIntro?: string;
+  zoomUserId?: string | null;
   qualifications?: string;
   specialization?: string;
   bio?: string;
@@ -64,14 +66,19 @@ export type AvailabilitySlot = {
 
 export async function getTherapists() {
   const response = await fetch(`${API_BASE_URL}/therapists`);
-  const data = (await response.json().catch(() => ({}))) as Therapist[] | {
-    message?: string | string[];
-  };
+  const data = (await response.json().catch(() => ({}))) as
+    | Therapist[]
+    | {
+        message?: string | string[];
+      };
 
   if (!response.ok) {
-    const message = Array.isArray((data as { message?: string | string[] }).message)
-      ? ((data as { message: string[] }).message).join(" ")
-      : (data as { message?: string }).message ?? "Unable to load therapists.";
+    const message = Array.isArray(
+      (data as { message?: string | string[] }).message,
+    )
+      ? (data as { message: string[] }).message.join(" ")
+      : ((data as { message?: string }).message ??
+        "Unable to load therapists.");
     throw new Error(message);
   }
 
@@ -84,14 +91,19 @@ export async function getAdminTherapists(accessToken: string) {
       Authorization: `Bearer ${accessToken}`,
     },
   });
-  const data = (await response.json().catch(() => ({}))) as Therapist[] | {
-    message?: string | string[];
-  };
+  const data = (await response.json().catch(() => ({}))) as
+    | Therapist[]
+    | {
+        message?: string | string[];
+      };
 
   if (!response.ok) {
-    const message = Array.isArray((data as { message?: string | string[] }).message)
-      ? ((data as { message: string[] }).message).join(" ")
-      : (data as { message?: string }).message ?? "Unable to load therapists.";
+    const message = Array.isArray(
+      (data as { message?: string | string[] }).message,
+    )
+      ? (data as { message: string[] }).message.join(" ")
+      : ((data as { message?: string }).message ??
+        "Unable to load therapists.");
     throw new Error(message);
   }
 
@@ -104,14 +116,19 @@ export async function getTherapistPerformance(accessToken: string) {
       Authorization: `Bearer ${accessToken}`,
     },
   });
-  const data = (await response.json().catch(() => ({}))) as TherapistPerformance[] | {
-    message?: string | string[];
-  };
+  const data = (await response.json().catch(() => ({}))) as
+    | TherapistPerformance[]
+    | {
+        message?: string | string[];
+      };
 
   if (!response.ok) {
-    const message = Array.isArray((data as { message?: string | string[] }).message)
-      ? ((data as { message: string[] }).message).join(" ")
-      : (data as { message?: string }).message ?? "Unable to load therapist performance.";
+    const message = Array.isArray(
+      (data as { message?: string | string[] }).message,
+    )
+      ? (data as { message: string[] }).message.join(" ")
+      : ((data as { message?: string }).message ??
+        "Unable to load therapist performance.");
     throw new Error(message);
   }
 
@@ -122,7 +139,7 @@ async function writeTherapist(
   path: string,
   accessToken: string,
   method: "POST" | "PATCH",
-  payload: Partial<TherapistPayload>
+  payload: Partial<TherapistPayload>,
 ) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
@@ -132,34 +149,58 @@ async function writeTherapist(
     },
     body: JSON.stringify(payload),
   });
-  const data = (await response.json().catch(() => ({}))) as Therapist | {
-    message?: string | string[];
-  };
+  const data = (await response.json().catch(() => ({}))) as
+    | Therapist
+    | {
+        message?: string | string[];
+      };
 
   if (!response.ok) {
-    const message = Array.isArray((data as { message?: string | string[] }).message)
-      ? ((data as { message: string[] }).message).join(" ")
-      : (data as { message?: string }).message ?? "Unable to save therapist.";
+    const message = Array.isArray(
+      (data as { message?: string | string[] }).message,
+    )
+      ? (data as { message: string[] }).message.join(" ")
+      : ((data as { message?: string }).message ?? "Unable to save therapist.");
     throw new Error(message);
   }
 
   return data as Therapist;
 }
 
-export function createTherapist(accessToken: string, payload: { email: string }) {
+export function createTherapist(
+  accessToken: string,
+  payload: { email: string },
+) {
   return writeTherapist("/therapists", accessToken, "POST", payload);
 }
 
-export function updateTherapist(accessToken: string, id: string, payload: Partial<TherapistPayload>) {
+export function updateTherapist(
+  accessToken: string,
+  id: string,
+  payload: Partial<TherapistPayload>,
+) {
   return writeTherapist(`/therapists/${id}`, accessToken, "PATCH", payload);
 }
 
-export function approveTherapistProfileChanges(accessToken: string, id: string) {
-  return writeTherapist(`/therapists/${id}/profile-changes/approve`, accessToken, "PATCH", {});
+export function approveTherapistProfileChanges(
+  accessToken: string,
+  id: string,
+) {
+  return writeTherapist(
+    `/therapists/${id}/profile-changes/approve`,
+    accessToken,
+    "PATCH",
+    {},
+  );
 }
 
 export function rejectTherapistProfileChanges(accessToken: string, id: string) {
-  return writeTherapist(`/therapists/${id}/profile-changes/reject`, accessToken, "PATCH", {});
+  return writeTherapist(
+    `/therapists/${id}/profile-changes/reject`,
+    accessToken,
+    "PATCH",
+    {},
+  );
 }
 
 export async function getMyTherapistProfile(accessToken: string) {
@@ -168,22 +209,35 @@ export async function getMyTherapistProfile(accessToken: string) {
       Authorization: `Bearer ${accessToken}`,
     },
   });
-  const data = (await response.json().catch(() => ({}))) as Therapist | {
-    message?: string | string[];
-  };
+  const data = (await response.json().catch(() => ({}))) as
+    | Therapist
+    | {
+        message?: string | string[];
+      };
 
   if (!response.ok) {
-    const message = Array.isArray((data as { message?: string | string[] }).message)
-      ? ((data as { message: string[] }).message).join(" ")
-      : (data as { message?: string }).message ?? "Unable to load your therapist profile.";
+    const message = Array.isArray(
+      (data as { message?: string | string[] }).message,
+    )
+      ? (data as { message: string[] }).message.join(" ")
+      : ((data as { message?: string }).message ??
+        "Unable to load your therapist profile.");
     throw new Error(message);
   }
 
   return data as Therapist;
 }
 
-export function updateMyTherapistProfile(accessToken: string, payload: Partial<TherapistPayload>) {
-  return writeTherapist("/therapists/me/profile", accessToken, "PATCH", payload);
+export function updateMyTherapistProfile(
+  accessToken: string,
+  payload: Partial<TherapistPayload>,
+) {
+  return writeTherapist(
+    "/therapists/me/profile",
+    accessToken,
+    "PATCH",
+    payload,
+  );
 }
 
 export async function deleteTherapist(accessToken: string, id: string) {
@@ -200,46 +254,59 @@ export async function deleteTherapist(accessToken: string, id: string) {
   if (!response.ok) {
     const message = Array.isArray(data.message)
       ? data.message.join(" ")
-      : data.message ?? "Unable to delete therapist.";
+      : (data.message ?? "Unable to delete therapist.");
     throw new Error(message);
   }
 }
 
 export async function getTherapist(id: string) {
   const response = await fetch(`${API_BASE_URL}/therapists/${id}`);
-  const data = (await response.json().catch(() => ({}))) as Therapist | {
-    message?: string | string[];
-  };
+  const data = (await response.json().catch(() => ({}))) as
+    | Therapist
+    | {
+        message?: string | string[];
+      };
 
   if (!response.ok) {
-    const message = Array.isArray((data as { message?: string | string[] }).message)
-      ? ((data as { message: string[] }).message).join(" ")
-      : (data as { message?: string }).message ?? "Unable to load therapist.";
+    const message = Array.isArray(
+      (data as { message?: string | string[] }).message,
+    )
+      ? (data as { message: string[] }).message.join(" ")
+      : ((data as { message?: string }).message ?? "Unable to load therapist.");
     throw new Error(message);
   }
 
   const therapist = data as Therapist;
-  if (!therapist.isActive) throw new Error("This therapist profile is currently unavailable.");
+  if (!therapist.isActive)
+    throw new Error("This therapist profile is currently unavailable.");
 
   return therapist;
 }
 
 export async function getAvailabilitySlots(therapistId: string) {
   const response = await fetch(`${API_BASE_URL}/availability/${therapistId}`);
-  const data = (await response.json().catch(() => ({}))) as AvailabilitySlot[] | {
-    message?: string | string[];
-  };
+  const data = (await response.json().catch(() => ({}))) as
+    | AvailabilitySlot[]
+    | {
+        message?: string | string[];
+      };
 
   if (!response.ok) {
-    const message = Array.isArray((data as { message?: string | string[] }).message)
-      ? ((data as { message: string[] }).message).join(" ")
-      : (data as { message?: string }).message ?? "Unable to load availability slots.";
+    const message = Array.isArray(
+      (data as { message?: string | string[] }).message,
+    )
+      ? (data as { message: string[] }).message.join(" ")
+      : ((data as { message?: string }).message ??
+        "Unable to load availability slots.");
     throw new Error(message);
   }
 
   return (data as AvailabilitySlot[])
     .filter((slot) => new Date(slot.startTime).getTime() >= Date.now())
-    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    .sort(
+      (a, b) =>
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    );
 }
 
 export async function getMyAvailabilitySlots(accessToken: string) {
@@ -248,21 +315,31 @@ export async function getMyAvailabilitySlots(accessToken: string) {
       Authorization: `Bearer ${accessToken}`,
     },
   });
-  const data = (await response.json().catch(() => ({}))) as AvailabilitySlot[] | {
-    message?: string | string[];
-  };
+  const data = (await response.json().catch(() => ({}))) as
+    | AvailabilitySlot[]
+    | {
+        message?: string | string[];
+      };
 
   if (!response.ok) {
-    const message = Array.isArray((data as { message?: string | string[] }).message)
-      ? ((data as { message: string[] }).message).join(" ")
-      : (data as { message?: string }).message ?? "Unable to load your slots.";
+    const message = Array.isArray(
+      (data as { message?: string | string[] }).message,
+    )
+      ? (data as { message: string[] }).message.join(" ")
+      : ((data as { message?: string }).message ??
+        "Unable to load your slots.");
     throw new Error(message);
   }
 
-  return (data as AvailabilitySlot[]).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  return (data as AvailabilitySlot[]).sort(
+    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+  );
 }
 
-export async function createMyAvailabilitySlot(accessToken: string, payload: { startTime: string; endTime: string }) {
+export async function createMyAvailabilitySlot(
+  accessToken: string,
+  payload: { startTime: string; endTime: string },
+) {
   const response = await fetch(`${API_BASE_URL}/availability/me`, {
     method: "POST",
     headers: {
@@ -271,21 +348,29 @@ export async function createMyAvailabilitySlot(accessToken: string, payload: { s
     },
     body: JSON.stringify(payload),
   });
-  const data = (await response.json().catch(() => ({}))) as AvailabilitySlot | {
-    message?: string | string[];
-  };
+  const data = (await response.json().catch(() => ({}))) as
+    | AvailabilitySlot
+    | {
+        message?: string | string[];
+      };
 
   if (!response.ok) {
-    const message = Array.isArray((data as { message?: string | string[] }).message)
-      ? ((data as { message: string[] }).message).join(" ")
-      : (data as { message?: string }).message ?? "Unable to create slot.";
+    const message = Array.isArray(
+      (data as { message?: string | string[] }).message,
+    )
+      ? (data as { message: string[] }).message.join(" ")
+      : ((data as { message?: string }).message ?? "Unable to create slot.");
     throw new Error(message);
   }
 
   return data as AvailabilitySlot;
 }
 
-export async function updateMyAvailabilitySlot(accessToken: string, id: string, payload: { startTime: string; endTime: string }) {
+export async function updateMyAvailabilitySlot(
+  accessToken: string,
+  id: string,
+  payload: { startTime: string; endTime: string },
+) {
   const response = await fetch(`${API_BASE_URL}/availability/${id}`, {
     method: "PATCH",
     headers: {
@@ -294,21 +379,28 @@ export async function updateMyAvailabilitySlot(accessToken: string, id: string, 
     },
     body: JSON.stringify(payload),
   });
-  const data = (await response.json().catch(() => ({}))) as AvailabilitySlot | {
-    message?: string | string[];
-  };
+  const data = (await response.json().catch(() => ({}))) as
+    | AvailabilitySlot
+    | {
+        message?: string | string[];
+      };
 
   if (!response.ok) {
-    const message = Array.isArray((data as { message?: string | string[] }).message)
-      ? ((data as { message: string[] }).message).join(" ")
-      : (data as { message?: string }).message ?? "Unable to update slot.";
+    const message = Array.isArray(
+      (data as { message?: string | string[] }).message,
+    )
+      ? (data as { message: string[] }).message.join(" ")
+      : ((data as { message?: string }).message ?? "Unable to update slot.");
     throw new Error(message);
   }
 
   return data as AvailabilitySlot;
 }
 
-export async function deleteMyAvailabilitySlot(accessToken: string, id: string) {
+export async function deleteMyAvailabilitySlot(
+  accessToken: string,
+  id: string,
+) {
   const response = await fetch(`${API_BASE_URL}/availability/${id}`, {
     method: "DELETE",
     headers: {
@@ -322,7 +414,7 @@ export async function deleteMyAvailabilitySlot(accessToken: string, id: string) 
   if (!response.ok) {
     const message = Array.isArray(data.message)
       ? data.message.join(" ")
-      : data.message ?? "Unable to delete slot.";
+      : (data.message ?? "Unable to delete slot.");
     throw new Error(message);
   }
 }
@@ -340,7 +432,8 @@ export function formatAvailabilitySlotRange(slot: AvailabilitySlot) {
   const start = new Date(slot.startTime);
   const end = new Date(slot.endTime);
 
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "Time to be confirmed";
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()))
+    return "Time to be confirmed";
 
   const date = start.toLocaleDateString("en-IN", {
     weekday: "short",
@@ -375,7 +468,8 @@ export function getSlotDateLabel(slot: AvailabilitySlot) {
 export function getSlotTimeLabel(slot: AvailabilitySlot) {
   const start = new Date(slot.startTime);
   const end = new Date(slot.endTime);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "Time";
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()))
+    return "Time";
 
   const options: Intl.DateTimeFormatOptions = {
     hour: "numeric",

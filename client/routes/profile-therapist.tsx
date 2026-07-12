@@ -5,7 +5,11 @@ import PasswordChangeForm from "../components/PasswordChangeForm";
 import ProfileTabs from "../components/ProfileTabs";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
-import { BookingResponse, getAppointments, updateAppointmentStatus } from "../src/lib/booking";
+import {
+  BookingResponse,
+  getAppointments,
+  updateAppointmentStatus,
+} from "../src/lib/booking";
 import {
   AvailabilitySlot,
   createMyAvailabilitySlot,
@@ -18,7 +22,11 @@ import {
   updateMyAvailabilitySlot,
   updateMyTherapistProfile,
 } from "../src/lib/therapists";
-import { CaseSheet, getCaseSheets, upsertCaseSheet } from "../src/lib/operations";
+import {
+  CaseSheet,
+  getCaseSheets,
+  upsertCaseSheet,
+} from "../src/lib/operations";
 import { uploadMedia } from "../src/lib/media";
 
 export const meta = {
@@ -80,7 +88,9 @@ export default function TherapistProfilePage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [uploadingField, setUploadingField] = useState<"image" | "voiceIntro" | null>(null);
+  const [uploadingField, setUploadingField] = useState<
+    "image" | "voiceIntro" | null
+  >(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [activeTab, setActiveTab] = useState("profile");
@@ -92,7 +102,12 @@ export default function TherapistProfilePage() {
       return;
     }
 
-    Promise.all([getAppointments(token), getMyTherapistProfile(token), getMyAvailabilitySlots(token), getCaseSheets(token)])
+    Promise.all([
+      getAppointments(token),
+      getMyTherapistProfile(token),
+      getMyAvailabilitySlots(token),
+      getCaseSheets(token),
+    ])
       .then(([appointmentData, profileData, slotData, caseSheetData]) => {
         setAppointments(appointmentData);
         setSlots(slotData);
@@ -108,7 +123,9 @@ export default function TherapistProfilePage() {
           title: effectiveProfile.title,
           experience: String(effectiveProfile.experience),
           price: String(effectiveProfile.price),
-          couplePrice: effectiveProfile.couplePrice ? String(effectiveProfile.couplePrice) : "",
+          couplePrice: effectiveProfile.couplePrice
+            ? String(effectiveProfile.couplePrice)
+            : "",
           image: effectiveProfile.image ?? "",
           voiceIntro: effectiveProfile.voiceIntro ?? "",
           qualifications: effectiveProfile.qualifications ?? "",
@@ -116,19 +133,31 @@ export default function TherapistProfilePage() {
           bio: effectiveProfile.bio ?? "",
         });
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "Unable to load appointment list."))
+      .catch((err) =>
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load appointment list.",
+        ),
+      )
       .finally(() => setIsLoading(false));
   }, []);
 
   useEffect(() => {
     return () => {
-      if (mediaDrafts.image?.previewUrl) URL.revokeObjectURL(mediaDrafts.image.previewUrl);
-      if (mediaDrafts.voiceIntro?.previewUrl) URL.revokeObjectURL(mediaDrafts.voiceIntro.previewUrl);
+      if (mediaDrafts.image?.previewUrl)
+        URL.revokeObjectURL(mediaDrafts.image.previewUrl);
+      if (mediaDrafts.voiceIntro?.previewUrl)
+        URL.revokeObjectURL(mediaDrafts.voiceIntro.previewUrl);
     };
   }, [mediaDrafts.image?.previewUrl, mediaDrafts.voiceIntro?.previewUrl]);
 
   const upcoming = useMemo(() => {
-    return appointments.filter((appointment) => appointment.slot?.startTime && new Date(appointment.slot.startTime).getTime() >= Date.now());
+    return appointments.filter(
+      (appointment) =>
+        appointment.slot?.startTime &&
+        new Date(appointment.slot.startTime).getTime() >= Date.now(),
+    );
   }, [appointments]);
 
   const saveProfile = async (event: React.FormEvent) => {
@@ -163,7 +192,8 @@ export default function TherapistProfilePage() {
 
   const selectProfileMedia = (file: File, field: "image" | "voiceIntro") => {
     setMediaDrafts((current) => {
-      if (current[field]?.previewUrl) URL.revokeObjectURL(current[field].previewUrl);
+      if (current[field]?.previewUrl)
+        URL.revokeObjectURL(current[field].previewUrl);
 
       return {
         ...current,
@@ -177,7 +207,8 @@ export default function TherapistProfilePage() {
 
   const clearProfileMedia = (field: "image" | "voiceIntro") => {
     setMediaDrafts((current) => {
-      if (current[field]?.previewUrl) URL.revokeObjectURL(current[field].previewUrl);
+      if (current[field]?.previewUrl)
+        URL.revokeObjectURL(current[field].previewUrl);
       return { ...current, [field]: null };
     });
     setForm((current) => ({ ...current, [field]: "" }));
@@ -195,10 +226,15 @@ export default function TherapistProfilePage() {
       const media = await uploadMedia(token, draft.file);
       setForm((current) => ({ ...current, [field]: media.url }));
       setMediaDrafts((current) => {
-        if (current[field]?.previewUrl) URL.revokeObjectURL(current[field].previewUrl);
+        if (current[field]?.previewUrl)
+          URL.revokeObjectURL(current[field].previewUrl);
         return { ...current, [field]: null };
       });
-      setNotice(field === "image" ? "Profile image uploaded. Save profile to submit it for approval." : "Voice intro uploaded. Save profile to submit it for approval.");
+      setNotice(
+        field === "image"
+          ? "Profile image uploaded. Save profile to submit it for approval."
+          : "Voice intro uploaded. Save profile to submit it for approval.",
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to upload media.");
     } finally {
@@ -215,7 +251,10 @@ export default function TherapistProfilePage() {
     setNotice("");
     try {
       const saved = await upsertCaseSheet(token, caseForm);
-      setCaseSheets((current) => [saved, ...current.filter((sheet) => sheet.id !== saved.id)]);
+      setCaseSheets((current) => [
+        saved,
+        ...current.filter((sheet) => sheet.id !== saved.id),
+      ]);
       setCaseForm({
         appointmentId: "",
         presentingConcern: "",
@@ -225,7 +264,9 @@ export default function TherapistProfilePage() {
       });
       setNotice("Case sheet saved.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to save case sheet.");
+      setError(
+        err instanceof Error ? err.message : "Unable to save case sheet.",
+      );
     }
   };
 
@@ -287,18 +328,31 @@ export default function TherapistProfilePage() {
     }
   };
 
-  const changeAppointmentStatus = async (appointment: BookingResponse, status: BookingResponse["status"]) => {
+  const changeAppointmentStatus = async (
+    appointment: BookingResponse,
+    status: BookingResponse["status"],
+  ) => {
     const token = getAccessToken();
     if (!token) return;
 
     setError("");
     setNotice("");
     try {
-      const updatedAppointment = await updateAppointmentStatus(appointment.id, status, token);
-      setAppointments((current) => current.map((item) => item.id === appointment.id ? updatedAppointment : item));
+      const updatedAppointment = await updateAppointmentStatus(
+        appointment.id,
+        status,
+        token,
+      );
+      setAppointments((current) =>
+        current.map((item) =>
+          item.id === appointment.id ? updatedAppointment : item,
+        ),
+      );
       setNotice("Appointment status updated.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to update appointment.");
+      setError(
+        err instanceof Error ? err.message : "Unable to update appointment.",
+      );
     }
   };
 
@@ -313,32 +367,57 @@ export default function TherapistProfilePage() {
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/40">
                   <LucideIcon name="stethoscope" size={32} />
                 </div>
-                <p className="mt-8 text-[11px] font-black uppercase tracking-[0.22em] text-[#064F4B]/60">Therapist profile</p>
-                <h1 className="mt-3 text-4xl font-heading font-black leading-tight">Session desk</h1>
-                <p className="mt-4 font-bold text-[#064F4B]/75">{user?.email}</p>
+                <p className="mt-8 text-[11px] font-black uppercase tracking-[0.22em] text-[#064F4B]/60">
+                  Therapist profile
+                </p>
+                <h1 className="mt-3 text-4xl font-heading font-black leading-tight">
+                  Session desk
+                </h1>
+                <p className="mt-4 font-bold text-[#064F4B]/75">
+                  {user?.email}
+                </p>
 
                 <div className="mt-8 grid gap-3">
                   <div className="rounded-[1.25rem] bg-white/40 p-4">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#064F4B]/60">Upcoming sessions</p>
-                    <p className="mt-2 text-3xl font-black">{upcoming.length}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#064F4B]/60">
+                      Upcoming sessions
+                    </p>
+                    <p className="mt-2 text-3xl font-black">
+                      {upcoming.length}
+                    </p>
                   </div>
                   <div className="rounded-[1.25rem] bg-white/40 p-4">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#064F4B]/60">All appointments</p>
-                    <p className="mt-2 text-3xl font-black">{appointments.length}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#064F4B]/60">
+                      All appointments
+                    </p>
+                    <p className="mt-2 text-3xl font-black">
+                      {appointments.length}
+                    </p>
                   </div>
                 </div>
 
-                <span className={`mt-8 inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-xs font-black uppercase tracking-widest ${profile?.isActive ? "bg-[#064F4B] text-white" : "bg-white/50 text-[#064F4B]"}`}>
-                  <LucideIcon name={profile?.isActive ? "eye" : "eye-off"} size={16} />
-                  {profile?.isActive ? "Public profile active" : "Awaiting admin activation"}
+                <span
+                  className={`mt-8 inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-xs font-black uppercase tracking-widest ${profile?.isActive ? "bg-[#064F4B] text-white" : "bg-white/50 text-[#064F4B]"}`}
+                >
+                  <LucideIcon
+                    name={profile?.isActive ? "eye" : "eye-off"}
+                    size={16}
+                  />
+                  {profile?.isActive
+                    ? "Public profile active"
+                    : "Awaiting admin activation"}
                 </span>
               </aside>
 
               <section className="rounded-[2rem] border border-[#E2E8E6] bg-white p-6 md:p-8 shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Appointments</p>
-                    <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">Assigned schedule</h2>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+                      Appointments
+                    </p>
+                    <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">
+                      Assigned schedule
+                    </h2>
                   </div>
                   <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B]">
                     Therapist access
@@ -359,21 +438,67 @@ export default function TherapistProfilePage() {
                 />
 
                 <div className="mt-8">
-                  {notice && <p className="mb-4 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">{notice}</p>}
-                  {error && <p className="mb-4 rounded-lg bg-red-50 p-4 font-bold text-red-700">{error}</p>}
-                  {activeTab === "profile" && profile?.pendingProfileChanges && (
-                    <p className="mb-4 rounded-lg bg-amber-50 p-4 text-sm font-bold text-amber-800">
-                      Your latest profile changes are waiting for admin approval. Public therapist pages show approved media until then.
+                  {notice && (
+                    <p className="mb-4 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">
+                      {notice}
                     </p>
                   )}
+                  {error && (
+                    <p className="mb-4 rounded-lg bg-red-50 p-4 font-bold text-red-700">
+                      {error}
+                    </p>
+                  )}
+                  {activeTab === "profile" &&
+                    profile?.pendingProfileChanges && (
+                      <p className="mb-4 rounded-lg bg-amber-50 p-4 text-sm font-bold text-amber-800">
+                        Your latest profile changes are waiting for admin
+                        approval. Public therapist pages show approved media
+                        until then.
+                      </p>
+                    )}
 
                   {activeTab === "profile" && (
-                    <form onSubmit={saveProfile} className="grid gap-4 rounded-[1.5rem] border border-[#E2E8E6] bg-[#FBFDFC] p-5 md:grid-cols-2">
-                      <Field label="Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} required />
-                      <SelectField label="Title" value={form.title} onChange={(value) => setForm({ ...form, title: value })} options={titleOptions} required />
-                      <Field label="Experience" type="number" value={form.experience} onChange={(value) => setForm({ ...form, experience: value })} required />
-                      <Field label="Individual fee" type="number" value={form.price} onChange={(value) => setForm({ ...form, price: value })} required />
-                      <Field label="Couple fee" type="number" value={form.couplePrice} onChange={(value) => setForm({ ...form, couplePrice: value })} />
+                    <form
+                      onSubmit={saveProfile}
+                      className="grid gap-4 rounded-[1.5rem] border border-[#E2E8E6] bg-[#FBFDFC] p-5 md:grid-cols-2"
+                    >
+                      <Field
+                        label="Name"
+                        value={form.name}
+                        onChange={(value) => setForm({ ...form, name: value })}
+                        required
+                      />
+                      <SelectField
+                        label="Title"
+                        value={form.title}
+                        onChange={(value) => setForm({ ...form, title: value })}
+                        options={titleOptions}
+                        required
+                      />
+                      <Field
+                        label="Experience"
+                        type="number"
+                        value={form.experience}
+                        onChange={(value) =>
+                          setForm({ ...form, experience: value })
+                        }
+                        required
+                      />
+                      <Field
+                        label="Individual fee"
+                        type="number"
+                        value={form.price}
+                        onChange={(value) => setForm({ ...form, price: value })}
+                        required
+                      />
+                      <Field
+                        label="Couple fee"
+                        type="number"
+                        value={form.couplePrice}
+                        onChange={(value) =>
+                          setForm({ ...form, couplePrice: value })
+                        }
+                      />
                       <MediaUploadField
                         label="Profile image"
                         accept="image/*"
@@ -389,21 +514,51 @@ export default function TherapistProfilePage() {
                         label="Voice intro"
                         accept="audio/*"
                         value={form.voiceIntro}
-                        draftPreviewUrl={mediaDrafts.voiceIntro?.previewUrl ?? ""}
+                        draftPreviewUrl={
+                          mediaDrafts.voiceIntro?.previewUrl ?? ""
+                        }
                         isUploading={uploadingField === "voiceIntro"}
-                        onSelect={(file) => selectProfileMedia(file, "voiceIntro")}
+                        onSelect={(file) =>
+                          selectProfileMedia(file, "voiceIntro")
+                        }
                         onUpload={() => uploadProfileMedia("voiceIntro")}
                         onClear={() => clearProfileMedia("voiceIntro")}
                         preview="audio"
                       />
-                      <SelectField label="Qualification" value={form.qualifications} onChange={(value) => setForm({ ...form, qualifications: value })} options={qualificationOptions} />
-                      <SelectField label="Specialization" value={form.specialization} onChange={(value) => setForm({ ...form, specialization: value })} options={specializationOptions} />
+                      <SelectField
+                        label="Qualification"
+                        value={form.qualifications}
+                        onChange={(value) =>
+                          setForm({ ...form, qualifications: value })
+                        }
+                        options={qualificationOptions}
+                      />
+                      <SelectField
+                        label="Specialization"
+                        value={form.specialization}
+                        onChange={(value) =>
+                          setForm({ ...form, specialization: value })
+                        }
+                        options={specializationOptions}
+                      />
                       <label className="md:col-span-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Bio</span>
-                        <textarea value={form.bio} onChange={(event) => setForm({ ...form, bio: event.target.value })} className="mt-2 min-h-28 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                          Bio
+                        </span>
+                        <textarea
+                          value={form.bio}
+                          onChange={(event) =>
+                            setForm({ ...form, bio: event.target.value })
+                          }
+                          className="mt-2 min-h-28 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+                        />
                       </label>
                       <div className="md:col-span-2">
-                        <button type="submit" disabled={isSaving} className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-6 py-4 text-xs font-black uppercase tracking-widest text-white disabled:opacity-60">
+                        <button
+                          type="submit"
+                          disabled={isSaving}
+                          className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-6 py-4 text-xs font-black uppercase tracking-widest text-white disabled:opacity-60"
+                        >
                           <LucideIcon name="save" size={16} />
                           {isSaving ? "Saving..." : "Save profile"}
                         </button>
@@ -415,57 +570,115 @@ export default function TherapistProfilePage() {
                     <section className="rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Availability</p>
-                          <h3 className="mt-1 text-2xl font-heading font-black text-[#064F4B]">Time slots</h3>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+                            Availability
+                          </p>
+                          <h3 className="mt-1 text-2xl font-heading font-black text-[#064F4B]">
+                            Time slots
+                          </h3>
                         </div>
                         <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B]">
                           {slots.length} slots
                         </span>
                       </div>
 
-                      <form onSubmit={saveSlot} className="mt-5 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+                      <form
+                        onSubmit={saveSlot}
+                        className="mt-5 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end"
+                      >
                         <label>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Start</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                            Start
+                          </span>
                           <input
                             type="datetime-local"
                             required
-                            min={toLocalInputValue(new Date(Date.now() + 60 * 1000).toISOString())}
+                            min={toLocalInputValue(
+                              new Date(Date.now() + 60 * 1000).toISOString(),
+                            )}
                             value={slotForm.startTime}
                             onChange={(event) => {
                               const startTime = event.target.value;
-                              setSlotForm({ startTime, endTime: addOneHour(startTime) });
+                              setSlotForm({
+                                startTime,
+                                endTime: addOneHour(startTime),
+                              });
                             }}
                             className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
                           />
                         </label>
                         <label>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">End</span>
-                          <input type="datetime-local" required readOnly value={slotForm.endTime} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#F5F8F7] px-4 py-3 font-bold text-[#064F4B] outline-none" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                            End
+                          </span>
+                          <input
+                            type="datetime-local"
+                            required
+                            readOnly
+                            value={slotForm.endTime}
+                            className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#F5F8F7] px-4 py-3 font-bold text-[#064F4B] outline-none"
+                          />
                         </label>
-                        <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#064F4B] px-5 py-4 text-xs font-black uppercase tracking-widest text-white">
-                          <LucideIcon name={editingSlotId ? "save" : "plus"} size={16} />
+                        <button
+                          type="submit"
+                          className="inline-flex items-center justify-center gap-2 rounded-full bg-[#064F4B] px-5 py-4 text-xs font-black uppercase tracking-widest text-white"
+                        >
+                          <LucideIcon
+                            name={editingSlotId ? "save" : "plus"}
+                            size={16}
+                          />
                           {editingSlotId ? "Update" : "Add"}
                         </button>
                       </form>
                       {editingSlotId && (
-                        <button type="button" onClick={() => { setEditingSlotId(null); setSlotForm({ startTime: "", endTime: "" }); }} className="mt-3 text-xs font-black uppercase tracking-widest text-[#0A7F7A]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingSlotId(null);
+                            setSlotForm({ startTime: "", endTime: "" });
+                          }}
+                          className="mt-3 text-xs font-black uppercase tracking-widest text-[#0A7F7A]"
+                        >
                           Cancel slot edit
                         </button>
                       )}
 
                       <div className="mt-5 overflow-hidden rounded-lg border border-[#E2E8E6]">
-                        {slots.length === 0 && <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">No availability slots yet.</p>}
+                        {slots.length === 0 && (
+                          <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">
+                            No availability slots yet.
+                          </p>
+                        )}
                         {slots.map((slot) => (
-                          <article key={slot.id} className="flex flex-col gap-3 border-b border-[#E2E8E6] p-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
+                          <article
+                            key={slot.id}
+                            className="flex flex-col gap-3 border-b border-[#E2E8E6] p-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"
+                          >
                             <div>
-                              <p className="font-black text-[#064F4B]">{formatAvailabilitySlotRange(slot)}</p>
-                              <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{slot.status}</p>
+                              <p className="font-black text-[#064F4B]">
+                                {formatAvailabilitySlotRange(slot)}
+                              </p>
+                              <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                                {slot.status}
+                              </p>
                             </div>
                             <div className="flex gap-2">
-                              <button type="button" disabled={slot.status === "BOOKED"} onClick={() => editSlot(slot)} className="rounded-full border border-[#DDE8E5] p-3 text-[#064F4B] disabled:opacity-40" title="Edit slot">
+                              <button
+                                type="button"
+                                disabled={slot.status === "BOOKED"}
+                                onClick={() => editSlot(slot)}
+                                className="rounded-full border border-[#DDE8E5] p-3 text-[#064F4B] disabled:opacity-40"
+                                title="Edit slot"
+                              >
                                 <LucideIcon name="pencil" size={16} />
                               </button>
-                              <button type="button" disabled={slot.status === "BOOKED"} onClick={() => removeSlot(slot)} className="rounded-full border border-red-100 p-3 text-red-600 disabled:opacity-40" title="Delete slot">
+                              <button
+                                type="button"
+                                disabled={slot.status === "BOOKED"}
+                                onClick={() => removeSlot(slot)}
+                                className="rounded-full border border-red-100 p-3 text-red-600 disabled:opacity-40"
+                                title="Delete slot"
+                              >
                                 <LucideIcon name="trash-2" size={16} />
                               </button>
                             </div>
@@ -477,91 +690,210 @@ export default function TherapistProfilePage() {
 
                   {activeTab === "appointments" && (
                     <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-[#E2E8E6]">
-                      {isLoading && <p className="bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">Loading appointments...</p>}
-                      {!isLoading && error && <p className="bg-red-50 p-5 font-bold text-red-700">{error}</p>}
-                      {!isLoading && !error && appointments.length === 0 && (
-                        <p className="bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">No appointments have been booked yet.</p>
+                      {isLoading && (
+                        <p className="bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">
+                          Loading appointments...
+                        </p>
                       )}
-                      {!isLoading && !error && appointments.map((appointment) => (
-                        <article key={appointment.id} className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 md:grid-cols-[1fr_1fr_auto_auto_auto] md:items-center">
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Patient</p>
-                            <p className="mt-1 font-black text-[#064F4B]">{appointment.patient?.fullName || appointment.patient?.email || "Patient"}</p>
-                            {appointment.patient?.healthInfo && (
-                              <p className="mt-1 text-xs font-bold text-[#5F7F7A]">
-                                {[
-                                  appointment.patient.healthInfo.primaryConcern,
-                                  appointment.patient.healthInfo.currentSymptoms,
-                                ].filter(Boolean).join(" · ") || "Health info added"}
-                              </p>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Slot</p>
-                            <p className="mt-1 font-bold text-[#064F4B]">{formatSlot(appointment.slot?.startTime)}</p>
-                          </div>
-                          <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
-                            {appointment.status}
-                          </span>
-                          {appointment.status === "CONFIRMED" && appointment.meetingLink ? (
-                            <a
-                              href={appointment.meetingLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex w-fit items-center gap-2 rounded-full bg-[#0A7F7A] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white"
-                            >
-                              <LucideIcon name="video" size={14} />
-                              Join session
-                            </a>
-                          ) : (
-                            <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
-                              No Zoom link
-                            </span>
-                          )}
-                          <select
-                            value={appointment.status}
-                            onChange={(event) => changeAppointmentStatus(appointment, event.target.value as BookingResponse["status"])}
-                            className="rounded-full border border-[#DDE8E5] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B] outline-none"
+                      {!isLoading && error && (
+                        <p className="bg-red-50 p-5 font-bold text-red-700">
+                          {error}
+                        </p>
+                      )}
+                      {!isLoading && !error && appointments.length === 0 && (
+                        <p className="bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">
+                          No appointments have been booked yet.
+                        </p>
+                      )}
+                      {!isLoading &&
+                        !error &&
+                        appointments.map((appointment) => (
+                          <article
+                            key={appointment.id}
+                            className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 md:grid-cols-[1fr_1fr_auto_auto_auto] md:items-center"
                           >
-                            <option value="PENDING">Pending</option>
-                            <option value="CONFIRMED">Confirmed</option>
-                            <option value="COMPLETED">Completed</option>
-                            <option value="CANCELLED">Cancelled</option>
-                          </select>
-                        </article>
-                      ))}
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                                Patient
+                              </p>
+                              <p className="mt-1 font-black text-[#064F4B]">
+                                {appointment.patient?.fullName ||
+                                  appointment.patient?.email ||
+                                  "Patient"}
+                              </p>
+                              {appointment.patient?.healthInfo && (
+                                <p className="mt-1 text-xs font-bold text-[#5F7F7A]">
+                                  {[
+                                    appointment.patient.healthInfo
+                                      .primaryConcern,
+                                    appointment.patient.healthInfo
+                                      .currentSymptoms,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" · ") || "Health info added"}
+                                </p>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                                Slot
+                              </p>
+                              <p className="mt-1 font-bold text-[#064F4B]">
+                                {formatSlot(appointment.slot?.startTime)}
+                              </p>
+                              {appointment.sessionCount > 1 && (
+                                <p className="mt-1 text-xs font-black uppercase tracking-widest text-[#0A7F7A]">
+                                  {appointment.packageName ??
+                                    `${appointment.sessionCount} sessions`}
+                                </p>
+                              )}
+                            </div>
+                            <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+                              {appointment.status}
+                            </span>
+                            {appointment.status === "CONFIRMED" &&
+                            appointment.meetingLink ? (
+                              <a
+                                href={appointment.meetingLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex w-fit items-center gap-2 rounded-full bg-[#0A7F7A] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white"
+                              >
+                                <LucideIcon name="video" size={14} />
+                                Join session
+                              </a>
+                            ) : (
+                              <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                                No Zoom link
+                              </span>
+                            )}
+                            <select
+                              value={appointment.status}
+                              onChange={(event) =>
+                                changeAppointmentStatus(
+                                  appointment,
+                                  event.target
+                                    .value as BookingResponse["status"],
+                                )
+                              }
+                              className="rounded-full border border-[#DDE8E5] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B] outline-none"
+                            >
+                              <option value="PENDING">Pending</option>
+                              <option value="CONFIRMED">Confirmed</option>
+                              <option value="COMPLETED">Completed</option>
+                              <option value="CANCELLED">Cancelled</option>
+                            </select>
+                          </article>
+                        ))}
                     </div>
                   )}
 
                   {activeTab === "cases" && (
                     <section className="rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Case sheet updates</p>
-                      <h3 className="mt-1 text-2xl font-heading font-black text-[#064F4B]">Session notes</h3>
-                      <form onSubmit={saveCaseSheet} className="mt-5 grid gap-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+                        Case sheet updates
+                      </p>
+                      <h3 className="mt-1 text-2xl font-heading font-black text-[#064F4B]">
+                        Session notes
+                      </h3>
+                      <form
+                        onSubmit={saveCaseSheet}
+                        className="mt-5 grid gap-4"
+                      >
                         <label>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">Appointment</span>
-                          <select required value={caseForm.appointmentId} onChange={(event) => setCaseForm({ ...caseForm, appointmentId: event.target.value })} className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                            Appointment
+                          </span>
+                          <select
+                            required
+                            value={caseForm.appointmentId}
+                            onChange={(event) =>
+                              setCaseForm({
+                                ...caseForm,
+                                appointmentId: event.target.value,
+                              })
+                            }
+                            className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+                          >
                             <option value="">Select appointment</option>
                             {appointments.map((appointment) => (
-                              <option key={appointment.id} value={appointment.id}>
-                                {(appointment.patient?.fullName || appointment.patient?.email || "Patient")} - {formatSlot(appointment.slot?.startTime)}
+                              <option
+                                key={appointment.id}
+                                value={appointment.id}
+                              >
+                                {appointment.patient?.fullName ||
+                                  appointment.patient?.email ||
+                                  "Patient"}{" "}
+                                - {formatSlot(appointment.slot?.startTime)}
                               </option>
                             ))}
                           </select>
                         </label>
-                        <TextArea label="Presenting concern" value={caseForm.presentingConcern} onChange={(value) => setCaseForm({ ...caseForm, presentingConcern: value })} />
-                        <TextArea label="Clinical notes" value={caseForm.clinicalNotes} onChange={(value) => setCaseForm({ ...caseForm, clinicalNotes: value })} />
-                        <TextArea label="Intervention plan" value={caseForm.interventionPlan} onChange={(value) => setCaseForm({ ...caseForm, interventionPlan: value })} />
-                        <TextArea label="Follow-up plan" value={caseForm.followUpPlan} onChange={(value) => setCaseForm({ ...caseForm, followUpPlan: value })} />
-                        <button className="w-fit rounded-full bg-[#064F4B] px-6 py-4 text-xs font-black uppercase tracking-widest text-white">Save case sheet</button>
+                        <TextArea
+                          label="Presenting concern"
+                          value={caseForm.presentingConcern}
+                          onChange={(value) =>
+                            setCaseForm({
+                              ...caseForm,
+                              presentingConcern: value,
+                            })
+                          }
+                        />
+                        <TextArea
+                          label="Clinical notes"
+                          value={caseForm.clinicalNotes}
+                          onChange={(value) =>
+                            setCaseForm({ ...caseForm, clinicalNotes: value })
+                          }
+                        />
+                        <TextArea
+                          label="Intervention plan"
+                          value={caseForm.interventionPlan}
+                          onChange={(value) =>
+                            setCaseForm({
+                              ...caseForm,
+                              interventionPlan: value,
+                            })
+                          }
+                        />
+                        <TextArea
+                          label="Follow-up plan"
+                          value={caseForm.followUpPlan}
+                          onChange={(value) =>
+                            setCaseForm({ ...caseForm, followUpPlan: value })
+                          }
+                        />
+                        <button className="w-fit rounded-full bg-[#064F4B] px-6 py-4 text-xs font-black uppercase tracking-widest text-white">
+                          Save case sheet
+                        </button>
                       </form>
                       <div className="mt-6 overflow-hidden rounded-lg border border-[#E2E8E6]">
-                        {caseSheets.length === 0 && <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">No case sheets yet.</p>}
+                        {caseSheets.length === 0 && (
+                          <p className="bg-[#F5F8F7] p-5 text-center font-black text-[#064F4B]">
+                            No case sheets yet.
+                          </p>
+                        )}
                         {caseSheets.map((sheet) => (
-                          <article key={sheet.id} className="border-b border-[#E2E8E6] p-5 last:border-b-0">
-                            <p className="font-black text-[#064F4B]">{sheet.patient?.fullName || sheet.patient?.email || "Patient"}</p>
-                            <p className="mt-1 text-xs font-black uppercase tracking-widest text-[#5F7F7A]">Updated {new Date(sheet.updatedAt).toLocaleString("en-IN")}</p>
-                            <p className="mt-3 text-sm font-bold text-[#5F7F7A]">{sheet.presentingConcern || sheet.clinicalNotes || "No notes entered."}</p>
+                          <article
+                            key={sheet.id}
+                            className="border-b border-[#E2E8E6] p-5 last:border-b-0"
+                          >
+                            <p className="font-black text-[#064F4B]">
+                              {sheet.patient?.fullName ||
+                                sheet.patient?.email ||
+                                "Patient"}
+                            </p>
+                            <p className="mt-1 text-xs font-black uppercase tracking-widest text-[#5F7F7A]">
+                              Updated{" "}
+                              {new Date(sheet.updatedAt).toLocaleString(
+                                "en-IN",
+                              )}
+                            </p>
+                            <p className="mt-3 text-sm font-bold text-[#5F7F7A]">
+                              {sheet.presentingConcern ||
+                                sheet.clinicalNotes ||
+                                "No notes entered."}
+                            </p>
                           </article>
                         ))}
                       </div>
@@ -580,11 +912,25 @@ export default function TherapistProfilePage() {
   );
 }
 
-function TextArea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function TextArea({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
   return (
     <label>
-      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</span>
-      <textarea value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-24 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]" />
+      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+        {label}
+      </span>
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 min-h-24 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+      />
     </label>
   );
 }
@@ -618,24 +964,43 @@ function MediaUploadField({
     <div className="rounded-lg border border-[#DDE8E5] bg-white p-4 md:col-span-2">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</p>
-          {hasDraft && <p className="mt-1 text-xs font-black text-[#0A7F7A]">Preview before upload</p>}
+          <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+            {label}
+          </p>
+          {hasDraft && (
+            <p className="mt-1 text-xs font-black text-[#0A7F7A]">
+              Preview before upload
+            </p>
+          )}
         </div>
         {(value || hasDraft) && (
-          <button type="button" onClick={onClear} className="w-fit rounded-full border border-red-100 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-600">
+          <button
+            type="button"
+            onClick={onClear}
+            className="w-fit rounded-full border border-red-100 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-600"
+          >
             Remove
           </button>
         )}
       </div>
 
       {previewValue && preview === "image" && (
-        <img src={previewValue} alt={`${label} preview`} className="mt-4 h-32 w-32 rounded-lg object-cover" />
+        <img
+          src={previewValue}
+          alt={`${label} preview`}
+          className="mt-4 h-32 w-32 rounded-lg object-cover"
+        />
       )}
-      {previewValue && preview === "audio" && <audio controls src={previewValue} className="mt-4 w-full" />}
+      {previewValue && preview === "audio" && (
+        <audio controls src={previewValue} className="mt-4 w-full" />
+      )}
 
       <div className="mt-4 flex flex-wrap gap-3">
         <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#DDE8E5] bg-white px-5 py-3 text-xs font-black uppercase tracking-widest text-[#064F4B]">
-          <LucideIcon name={preview === "image" ? "image-plus" : "mic"} size={16} />
+          <LucideIcon
+            name={preview === "image" ? "image-plus" : "mic"}
+            size={16}
+          />
           Choose {label}
           <input
             type="file"
@@ -674,12 +1039,39 @@ function addOneHour(value: string) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return toLocalInputValue(new Date(date.getTime() + 60 * 60 * 1000).toISOString());
+  return toLocalInputValue(
+    new Date(date.getTime() + 60 * 60 * 1000).toISOString(),
+  );
 }
 
-const titleOptions = ["Clinical Psychologist", "Counselling Psychologist", "Psychiatrist", "Psychotherapist", "Relationship Therapist", "Child & Adolescent Therapist"];
-const qualificationOptions = ["M.Phil. Clinical Psychology", "MA Clinical Psychology", "MSc Applied Psychology", "PhD Psychology", "PG Diploma in Counselling", "MBBS Psychiatry"];
-const specializationOptions = ["Anxiety", "Depression", "Trauma", "Relationship & Couples", "Work Stress", "Grief", "Postpartum", "Student & Youth", "LGBTQIA+", "Parenting"];
+const titleOptions = [
+  "Clinical Psychologist",
+  "Counselling Psychologist",
+  "Psychiatrist",
+  "Psychotherapist",
+  "Relationship Therapist",
+  "Child & Adolescent Therapist",
+];
+const qualificationOptions = [
+  "M.Phil. Clinical Psychology",
+  "MA Clinical Psychology",
+  "MSc Applied Psychology",
+  "PhD Psychology",
+  "PG Diploma in Counselling",
+  "MBBS Psychiatry",
+];
+const specializationOptions = [
+  "Anxiety",
+  "Depression",
+  "Trauma",
+  "Relationship & Couples",
+  "Work Stress",
+  "Grief",
+  "Postpartum",
+  "Student & Youth",
+  "LGBTQIA+",
+  "Parenting",
+];
 
 function Field({
   label,
@@ -696,7 +1088,9 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-2">
-      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</span>
+      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+        {label}
+      </span>
       <input
         type={type}
         min={type === "number" ? 0 : undefined}
@@ -724,7 +1118,9 @@ function SelectField({
 }) {
   return (
     <label className="flex flex-col gap-2">
-      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">{label}</span>
+      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+        {label}
+      </span>
       <select
         required={required}
         value={value}

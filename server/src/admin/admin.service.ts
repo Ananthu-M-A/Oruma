@@ -32,22 +32,26 @@ export class AdminService {
       paymentSummary,
       ticketSummary,
       caseSheetSummary,
-    ] =
-      await Promise.all([
-        this.userService.countByRole(Role.PATIENT),
-        this.userService.countByRole(Role.THERAPIST),
-        this.therapistRepo.find(),
-        this.appointmentRepo.find(),
-        this.paymentService.getSummary(),
-        this.ticketService.getSummary(),
-        this.caseSheetService.getSummary(),
-      ]);
+    ] = await Promise.all([
+      this.userService.countByRole(Role.PATIENT),
+      this.userService.countByRole(Role.THERAPIST),
+      this.therapistRepo.find(),
+      this.appointmentRepo.find(),
+      this.paymentService.getSummary(),
+      this.ticketService.getSummary(),
+      this.caseSheetService.getSummary(),
+    ]);
 
     const completedAppointments = appointments.filter(
       (appointment) => appointment.status === AppointmentStatus.COMPLETED,
     );
     const revenue = completedAppointments.reduce((sum, appointment) => {
-      return sum + (appointment.therapist?.price ?? 0);
+      return (
+        sum +
+        (appointment.packageOfferAmount > 0
+          ? appointment.packageOfferAmount
+          : (appointment.therapist?.price ?? 0))
+      );
     }, 0);
 
     return {

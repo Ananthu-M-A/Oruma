@@ -41,6 +41,10 @@ export type RazorpayOrder = {
   orderId: string;
   amount: number;
   currency: string;
+  sessionCount?: number;
+  packageName?: string | null;
+  originalAmount?: number;
+  discountPercent?: number;
 };
 
 export type Ticket = {
@@ -96,7 +100,7 @@ export async function openPaymentInvoice(accessToken: string, id: string) {
       const data = JSON.parse(text) as ApiMessage;
       message = Array.isArray(data.message)
         ? data.message.join(" ")
-        : data.message ?? message;
+        : (data.message ?? message);
     } catch {
       message = text || message;
     }
@@ -137,7 +141,12 @@ export async function createPayment(
 export async function refundPayment(
   accessToken: string,
   id: string,
-  payload: { amount: number; notes?: string; receipt?: string; speed?: "normal" | "optimum" },
+  payload: {
+    amount: number;
+    notes?: string;
+    receipt?: string;
+    speed?: "normal" | "optimum";
+  },
 ) {
   const response = await fetch(`${API_BASE_URL}/payments/${id}/refund`, {
     method: "PATCH",

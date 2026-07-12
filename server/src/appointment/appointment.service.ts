@@ -26,6 +26,7 @@ import { Therapist } from '../therapist/entities/therapist.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
 import { AppointmentStatus } from './entities/appointment-status.enum';
+import { calculateSessionPackagePricing } from './session-package-pricing';
 
 @Injectable()
 export class AppointmentService {
@@ -160,6 +161,7 @@ export class AppointmentService {
     slot.status = SlotStatus.BOOKED;
     await slotRepo.save(slot);
 
+    const packagePricing = this.resolvePackagePricing(dto, slot.therapist);
     const appointment = appointmentRepo.create({
       patient: {
         id: patientAccount.id,
@@ -168,13 +170,41 @@ export class AppointmentService {
       slot,
       notes: dto.notes,
       contactName: dto.contactName?.trim() || patientAccount?.fullName || null,
-      contactEmail: this.normalizeEmail(dto.contactEmail) || patientAccount.email,
-      contactPhone: this.normalizePhone(dto.contactPhone) || patientAccount?.phone || null,
+      contactEmail:
+        this.normalizeEmail(dto.contactEmail) || patientAccount.email,
+      contactPhone:
+        this.normalizePhone(dto.contactPhone) || patientAccount?.phone || null,
       service: dto.service?.trim() || null,
       mode: dto.mode?.trim() || null,
+      sessionCount: packagePricing.sessionCount,
+      packageName: packagePricing.packageName,
+      packageOriginalAmount: packagePricing.originalAmount,
+      packageOfferAmount: packagePricing.offerAmount,
+      packageDiscountPercent: packagePricing.discountPercent,
     });
 
     return appointmentRepo.save(appointment);
+  }
+
+  private resolvePackagePricing(
+    dto: CreateAppointmentDto,
+    therapist: Therapist,
+  ) {
+    const service = dto.service?.trim();
+    const baseAmount =
+      service === 'Couple Therapy' && therapist.couplePrice
+        ? therapist.couplePrice
+        : therapist.price;
+    const pricing = calculateSessionPackagePricing(
+      baseAmount,
+      dto.sessionCount ?? 1,
+    );
+
+    if (!pricing) {
+      throw new BadRequestException('Unsupported session package selected');
+    }
+
+    return pricing;
   }
 
   private async resolveQuickBookingPatient(
@@ -211,17 +241,15 @@ export class AppointmentService {
     const patient =
       existingPatients.find((user) => email && user.email === email) ??
       existingPatients.find(
-        (user) => phone && this.normalizePhone(user.phone ?? undefined) === phone,
+        (user) =>
+          phone && this.normalizePhone(user.phone ?? undefined) === phone,
       );
 
     if (patient) {
       patient.fullName = patient.fullName || dto.contactName?.trim() || null;
       patient.phone = patient.phone || phone || null;
 
-      if (
-        email &&
-        patient.email.endsWith(`@${this.quickBookingEmailDomain}`)
-      ) {
+      if (email && patient.email.endsWith(`@${this.quickBookingEmailDomain}`)) {
         const emailOwner = await userRepo.findOne({ where: { email } });
         if (!emailOwner) patient.email = email;
       }
@@ -233,8 +261,7 @@ export class AppointmentService {
     }
 
     const password = await bcrypt.hash(randomBytes(24).toString('hex'), 10);
-    const patientEmail =
-      email || `${phone}@${this.quickBookingEmailDomain}`;
+    const patientEmail = email || `${phone}@${this.quickBookingEmailDomain}`;
     const createdPatient = userRepo.create({
       email: patientEmail,
       password,
@@ -268,7 +295,9 @@ export class AppointmentService {
   ) {
     await this.sendBookingNotifications(
       appointment,
-      this.normalizeEmail(email ?? appointment.contactEmail ?? appointment.patient?.email) ?? null,
+      this.normalizeEmail(
+        email ?? appointment.contactEmail ?? appointment.patient?.email,
+      ) ?? null,
     );
     await this.sendBookingInAppNotifications(appointment);
   }
@@ -428,10 +457,7 @@ export class AppointmentService {
       return appointment;
     }
 
-    if (
-      user.role === Role.PATIENT &&
-      appointment.patient?.id === user.userId
-    ) {
+    if (user.role === Role.PATIENT && appointment.patient?.id === user.userId) {
       return appointment;
     }
 
@@ -567,7 +593,8 @@ export class AppointmentService {
     const service = appointment.service ?? 'Therapy session';
     const slotRange = this.formatSlotRange(appointment);
     const actionUrl =
-      appointment.status === AppointmentStatus.CONFIRMED && appointment.meetingLink
+      appointment.status === AppointmentStatus.CONFIRMED &&
+      appointment.meetingLink
         ? '/profile/patient'
         : '/profile/patient';
     const recipients = new Set<string>();
@@ -581,7 +608,8 @@ export class AppointmentService {
         ? 'Appointment confirmed'
         : `Appointment ${appointment.status.toLowerCase()}`;
     const body =
-      appointment.status === AppointmentStatus.CONFIRMED && appointment.meetingLink
+      appointment.status === AppointmentStatus.CONFIRMED &&
+      appointment.meetingLink
         ? `${service} for ${slotRange} is confirmed. The Zoom link is ready.`
         : `${service} for ${slotRange} is now ${appointment.status.toLowerCase()}.`;
 

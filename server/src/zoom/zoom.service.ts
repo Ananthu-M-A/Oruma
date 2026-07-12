@@ -45,7 +45,7 @@ export class ZoomService {
     const token = await this.getAccessToken();
     if (!token) return null;
 
-    const userId = this.configService.get<string>('ZOOM_USER_ID', 'me');
+    const userId = this.resolveHostUserId(appointment);
     const topic = this.buildTopic(appointment);
     const startTime = appointment.slot?.startTime;
     const endTime = appointment.slot?.endTime;
@@ -110,8 +110,8 @@ export class ZoomService {
   private isConfigured() {
     return Boolean(
       this.configService.get<string>('ZOOM_ACCOUNT_ID') &&
-        this.configService.get<string>('ZOOM_CLIENT_ID') &&
-        this.configService.get<string>('ZOOM_CLIENT_SECRET'),
+      this.configService.get<string>('ZOOM_CLIENT_ID') &&
+      this.configService.get<string>('ZOOM_CLIENT_SECRET'),
     );
   }
 
@@ -183,6 +183,13 @@ export class ZoomService {
     const service = appointment.service ?? 'Therapy Session';
 
     return `Oruma ${service} - ${patientName}`;
+  }
+
+  private resolveHostUserId(appointment: Appointment) {
+    return (
+      appointment.therapist?.zoomUserId?.trim() ||
+      this.configService.get<string>('ZOOM_USER_ID', 'me')
+    );
   }
 
   private resolveDurationMinutes(startTime?: Date, endTime?: Date) {

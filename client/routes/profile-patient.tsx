@@ -12,7 +12,11 @@ import {
   getMyAccount,
   updateMyAccount,
 } from "../src/lib/auth";
-import { BookingResponse, cancelAppointment, getMyAppointments } from "../src/lib/booking";
+import {
+  BookingResponse,
+  cancelAppointment,
+  getMyAppointments,
+} from "../src/lib/booking";
 import {
   createTicket,
   getMyPayments,
@@ -110,6 +114,12 @@ function AppointmentCard({
           <p className="mt-1 text-sm font-bold text-[#5F7F7A]">
             {formatDate(appointment.slot?.startTime)}
           </p>
+          {appointment.sessionCount > 1 && (
+            <p className="mt-2 text-xs font-black uppercase tracking-widest text-[#0A7F7A]">
+              {appointment.packageName ??
+                `${appointment.sessionCount} sessions`}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           {isPaid && (
@@ -270,7 +280,9 @@ export default function PatientProfilePage() {
 
   const visibleAppointments = useMemo(
     () =>
-      appointments.filter((appointment) => paidAppointmentIds.has(appointment.id)),
+      appointments.filter((appointment) =>
+        paidAppointmentIds.has(appointment.id),
+      ),
     [appointments, paidAppointmentIds],
   );
 
@@ -278,8 +290,7 @@ export default function PatientProfilePage() {
     const map = new Map<string, Payment>();
     payments
       .filter(
-        (payment) =>
-          payment.status === "PAID" || payment.status === "REFUNDED",
+        (payment) => payment.status === "PAID" || payment.status === "REFUNDED",
       )
       .forEach((payment) => {
         const appointmentId = payment.appointment?.id;
@@ -313,7 +324,9 @@ export default function PatientProfilePage() {
     setPhoneError("");
 
     if (!isValidPhoneNumber(personalForm.phone, phoneCountry)) {
-      setPhoneError("Please enter a valid phone number for the selected country.");
+      setPhoneError(
+        "Please enter a valid phone number for the selected country.",
+      );
       setIsSaving(false);
       return;
     }
@@ -389,7 +402,9 @@ export default function PatientProfilePage() {
       );
       setNotice("Appointment cancelled.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to cancel appointment.");
+      setError(
+        err instanceof Error ? err.message : "Unable to cancel appointment.",
+      );
     } finally {
       setCancellingAppointmentId("");
     }
@@ -539,7 +554,9 @@ export default function PatientProfilePage() {
                           appointment={appointment}
                           payment={paymentByAppointmentId.get(appointment.id)}
                           isPaid={paidAppointmentIds.has(appointment.id)}
-                          isCancelling={cancellingAppointmentId === appointment.id}
+                          isCancelling={
+                            cancellingAppointmentId === appointment.id
+                          }
                           onInvoice={openInvoice}
                           onCancel={cancelBooking}
                         />
@@ -574,11 +591,16 @@ export default function PatientProfilePage() {
                           <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                             <select
                               value={phoneCountry}
-                              onChange={(event) => setPhoneCountry(event.target.value)}
+                              onChange={(event) =>
+                                setPhoneCountry(event.target.value)
+                              }
                               className="w-full rounded-lg border border-[#DDE8E5] bg-white px-3 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A] sm:w-36"
                             >
                               {COUNTRY_OPTIONS.map((option) => (
-                                <option key={option.dialCode} value={option.dialCode}>
+                                <option
+                                  key={option.dialCode}
+                                  value={option.dialCode}
+                                >
                                   {option.label} ({option.dialCode})
                                 </option>
                               ))}
@@ -597,7 +619,9 @@ export default function PatientProfilePage() {
                             />
                           </div>
                           {phoneError && (
-                            <p className="mt-2 text-sm font-bold text-red-600">{phoneError}</p>
+                            <p className="mt-2 text-sm font-bold text-red-600">
+                              {phoneError}
+                            </p>
                           )}
                         </label>
                         <Field
@@ -615,7 +639,10 @@ export default function PatientProfilePage() {
                           <select
                             value={personalForm.gender}
                             onChange={(event) =>
-                              setPersonalForm({ ...personalForm, gender: event.target.value })
+                              setPersonalForm({
+                                ...personalForm,
+                                gender: event.target.value,
+                              })
                             }
                             className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
                           >
@@ -623,7 +650,9 @@ export default function PatientProfilePage() {
                             <option value="Female">Female</option>
                             <option value="Male">Male</option>
                             <option value="Non-binary">Non-binary</option>
-                            <option value="Prefer not to say">Prefer not to say</option>
+                            <option value="Prefer not to say">
+                              Prefer not to say
+                            </option>
                             <option value="Other">Other</option>
                           </select>
                         </label>

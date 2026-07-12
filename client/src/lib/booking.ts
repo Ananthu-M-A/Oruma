@@ -2,6 +2,7 @@ import { API_BASE_URL } from "./auth";
 
 export interface BookingData {
   slotId: string;
+  sessionCount?: number;
   contactName?: string;
   contactEmail?: string;
   contactPhone?: string;
@@ -33,6 +34,11 @@ export interface BookingResponse {
   status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
   service?: string | null;
   mode?: string | null;
+  sessionCount: number;
+  packageName?: string | null;
+  packageOriginalAmount: number;
+  packageOfferAmount: number;
+  packageDiscountPercent: number;
   meetingLink?: string | null;
   createdAt: string;
 }

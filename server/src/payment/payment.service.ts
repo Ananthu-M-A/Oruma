@@ -105,7 +105,9 @@ export class PaymentService {
       throw new ForbiddenException('You cannot access this invoice');
     }
 
-    if (![PaymentStatus.PAID, PaymentStatus.REFUNDED].includes(payment.status)) {
+    if (
+      ![PaymentStatus.PAID, PaymentStatus.REFUNDED].includes(payment.status)
+    ) {
       throw new BadRequestException(
         'Invoice is available only for paid or refunded payments',
       );
@@ -131,7 +133,11 @@ export class PaymentService {
     });
 
     const savedPayment = await this.paymentRepo.save(payment);
-    await this.sendPaymentNotification(savedPayment, 'Payment recorded', 'Your appointment payment has been recorded.');
+    await this.sendPaymentNotification(
+      savedPayment,
+      'Payment recorded',
+      'Your appointment payment has been recorded.',
+    );
 
     return savedPayment;
   }
@@ -176,6 +182,10 @@ export class PaymentService {
         orderId: existingPayment.providerOrderId,
         amount: existingPayment.amount,
         currency: 'INR',
+        sessionCount: appointment.sessionCount,
+        packageName: appointment.packageName,
+        originalAmount: appointment.packageOriginalAmount,
+        discountPercent: appointment.packageDiscountPercent,
       };
     }
 
@@ -208,6 +218,10 @@ export class PaymentService {
       orderId: order.id,
       amount,
       currency: order.currency ?? 'INR',
+      sessionCount: appointment.sessionCount,
+      packageName: appointment.packageName,
+      originalAmount: appointment.packageOriginalAmount,
+      discountPercent: appointment.packageDiscountPercent,
     };
   }
 
@@ -245,7 +259,11 @@ export class PaymentService {
       .join('\n');
 
     const savedPayment = await this.paymentRepo.save(payment);
-    await this.sendPaymentNotification(savedPayment, 'Payment verified', 'Your appointment payment was verified successfully.');
+    await this.sendPaymentNotification(
+      savedPayment,
+      'Payment verified',
+      'Your appointment payment was verified successfully.',
+    );
 
     if (shouldNotifyBooking && payment.appointment) {
       await this.appointmentService.notifyBookingAfterPayment(
@@ -318,7 +336,11 @@ export class PaymentService {
         .filter(Boolean)
         .join('\n');
       const savedPayment = await this.paymentRepo.save(payment);
-      await this.sendPaymentNotification(savedPayment, 'Payment captured', 'Your appointment payment was captured successfully.');
+      await this.sendPaymentNotification(
+        savedPayment,
+        'Payment captured',
+        'Your appointment payment was captured successfully.',
+      );
       if (shouldNotifyBooking && payment.appointment) {
         await this.appointmentService.notifyBookingAfterPayment(
           payment.appointment,
@@ -335,7 +357,11 @@ export class PaymentService {
         .filter(Boolean)
         .join('\n');
       const savedPayment = await this.paymentRepo.save(payment);
-      await this.sendPaymentNotification(savedPayment, 'Payment failed', 'Your appointment payment failed. Please try again or contact support.');
+      await this.sendPaymentNotification(
+        savedPayment,
+        'Payment failed',
+        'Your appointment payment failed. Please try again or contact support.',
+      );
     }
 
     return { received: true };
@@ -377,7 +403,11 @@ export class PaymentService {
         : PaymentStatus.PAID;
 
     const savedPayment = await this.paymentRepo.save(payment);
-    await this.sendPaymentNotification(savedPayment, 'Refund initiated', `A refund of ${this.formatCurrency(refundResult.amount)} was initiated for your payment.`);
+    await this.sendPaymentNotification(
+      savedPayment,
+      'Refund initiated',
+      `A refund of ${this.formatCurrency(refundResult.amount)} was initiated for your payment.`,
+    );
 
     return savedPayment;
   }
@@ -400,6 +430,10 @@ export class PaymentService {
   }
 
   private resolveAppointmentAmount(appointment: Appointment) {
+    if (appointment.packageOfferAmount > 0) {
+      return appointment.packageOfferAmount;
+    }
+
     if (
       appointment.service === 'Couple Therapy' &&
       appointment.therapist.couplePrice
@@ -617,6 +651,16 @@ export class PaymentService {
     const refunded = payment.refundedAmount;
     const netPaid = amount - refunded;
     const serviceName = appointment?.service ?? 'Therapy consultation';
+    const sessionCount = appointment?.sessionCount ?? 1;
+    const packageName =
+      appointment?.packageName ??
+      (sessionCount > 1 ? `${sessionCount} sessions` : 'Single session');
+    const originalAmount =
+      appointment?.packageOriginalAmount &&
+      appointment.packageOriginalAmount > 0
+        ? appointment.packageOriginalAmount
+        : amount;
+    const discountPercent = appointment?.packageDiscountPercent ?? 0;
     const sessionDate = appointment?.slot?.startTime
       ? this.formatDate(appointment.slot.startTime)
       : 'To be scheduled';
@@ -694,6 +738,7 @@ export class PaymentService {
         <tr>
           <td>
             <strong>${this.escapeHtml(serviceName)}</strong>
+            <p class="muted">${this.escapeHtml(packageName)}</p>
             <p class="muted">Therapist: ${this.escapeHtml(therapist?.name ?? 'Therapist')}</p>
           </td>
           <td>${this.escapeHtml(sessionDate)}</td>
@@ -703,7 +748,8 @@ export class PaymentService {
     </table>
 
     <section class="totals">
-      <div><span>Subtotal</span><strong>${this.formatCurrency(amount)}</strong></div>
+      <div><span>Subtotal</span><strong>${this.formatCurrency(originalAmount)}</strong></div>
+      ${discountPercent > 0 ? `<div><span>Package discount (${discountPercent}%)</span><strong>-${this.formatCurrency(originalAmount - amount)}</strong></div>` : ''}
       <div><span>Refunded</span><strong>${this.formatCurrency(refunded)}</strong></div>
       <div class="total"><span>Net paid</span><span>${this.formatCurrency(netPaid)}</span></div>
     </section>
