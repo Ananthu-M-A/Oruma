@@ -1,3 +1,4 @@
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 type EnvReader = (key: string) => string | undefined;
@@ -51,17 +52,11 @@ const getDatabaseSsl = (
 
 export const getDatabaseConnectionOptions = (
   readEnv: EnvReader,
-): Pick<
-  PostgresConnectionOptions,
-  | 'type'
-  | 'url'
-  | 'host'
-  | 'port'
-  | 'username'
-  | 'password'
-  | 'database'
-  | 'ssl'
-> => {
+): TypeOrmModuleOptions &
+  Pick<
+    PostgresConnectionOptions,
+    'type' | 'url' | 'host' | 'port' | 'username' | 'password' | 'database' | 'ssl'
+  > => {
   const databaseUrl = readTrimmed(readEnv, 'DATABASE_URL');
   const ssl = getDatabaseSsl(readEnv);
 
@@ -70,6 +65,8 @@ export const getDatabaseConnectionOptions = (
       type: 'postgres',
       url: databaseUrl,
       ssl,
+      retryAttempts: 5,
+      retryDelay: 3000,
     };
   }
 
@@ -108,5 +105,7 @@ export const getDatabaseConnectionOptions = (
     password,
     database,
     ssl,
+    retryAttempts: 5,
+    retryDelay: 3000,
   };
 };

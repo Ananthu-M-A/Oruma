@@ -11,6 +11,8 @@ describe('getDatabaseConnectionOptions', () => {
     expect(options).toMatchObject({
       type: 'postgres',
       url: 'postgresql://user:pass@remote.example.com/db?sslmode=require',
+      retryAttempts: 5,
+      retryDelay: 3000,
     });
     expect(options.ssl).toEqual({ rejectUnauthorized: true });
   });
@@ -32,6 +34,8 @@ describe('getDatabaseConnectionOptions', () => {
       username: 'app_user',
       password: 'secret',
       database: 'oruma',
+      retryAttempts: 5,
+      retryDelay: 3000,
     });
   });
 
