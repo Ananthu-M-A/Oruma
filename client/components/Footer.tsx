@@ -30,6 +30,12 @@ export default function Footer() {
         { name: 'Join Us', href: '/careers' },
         { name: 'Contact Us', href: '/contact' }
       ]
+    },
+    {
+      title: 'Legal',
+      links: [
+        { name: 'Privacy Policy', href: '/privacy-policy' }
+      ]
     }
   ];
 
@@ -44,7 +50,7 @@ export default function Footer() {
   return (
     <footer className="bg-[#B7C8A3] text-[#064F4B] py-24">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-16 border-b border-[#064F4B]/10 pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-16 border-b border-[#064F4B]/10 pb-20">
           <div className="lg:col-span-2">
             <a href="/" className="flex flex-col items-start gap-4 mb-8 group">
               <img 
@@ -73,7 +79,7 @@ export default function Footer() {
             </div>
           </div>
           
-          <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-12">
+          <div className="lg:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-12">
             {sections.map((section) => (
               <div key={section.title}>
                 <h4 className="font-bold text-[#064F4B] text-xs mb-8 uppercase tracking-widest">{section.title}</h4>
