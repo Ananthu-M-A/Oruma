@@ -42,7 +42,6 @@ type AuthResponse = {
   role?: AuthRole;
   createdAt?: string;
   message?: string;
-  devCode?: string;
 };
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "/api";

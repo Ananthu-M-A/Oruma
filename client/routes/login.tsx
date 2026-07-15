@@ -26,7 +26,6 @@ export default function LoginPage() {
   const [loginMode, setLoginMode] = useState<"otp" | "password">("otp");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(state?.message ?? "");
-  const [devCode, setDevCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -54,13 +53,11 @@ export default function LoginPage() {
     event.preventDefault();
     setError("");
     setSuccess("");
-    setDevCode("");
     setIsSubmitting(true);
 
     try {
       const result = await requestLoginOtp({ identifier: otpIdentifier });
       setSuccess(result.message ?? "Login code sent.");
-      if (result.devCode) setDevCode(result.devCode);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to send login code right now.");
     } finally {
@@ -144,7 +141,6 @@ export default function LoginPage() {
                 }`}
               >
                 {error || success}
-                {devCode && <p className="mt-2 text-xs">Dev login code: {devCode}</p>}
               </div>
             )}
 
