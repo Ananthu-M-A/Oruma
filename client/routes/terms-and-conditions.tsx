@@ -63,7 +63,10 @@ export default function TermsAndConditionsPage() {
           <li>Attending sessions in a private and appropriate environment.</li>
           <li>Following the therapist&apos;s recommended treatment plan, scheduled follow-up appointments, and lawful therapeutic instructions where applicable.</li>
         </ul>
-        <p className="mt-5">Failure to attend scheduled sessions, discontinue a planned course of therapy, or fail to follow recommended follow-up appointments or therapist instructions may affect eligibility for refunds or other remedies under ORUMA&apos;s Refund Policy.</p>
+        <p className="mt-5">
+          Failure to attend scheduled sessions, discontinue a planned course of therapy, or fail to follow recommended follow-up appointments or therapist instructions may affect eligibility for refunds or other remedies under ORUMA&apos;s{' '}
+          <a className="font-semibold text-[#0A7F7A] underline underline-offset-4 hover:text-[#064F4B]" href="/refund-policy">Refund Policy</a>.
+        </p>
       </section>
 
       <section id="payments-cancellations-and-refunds">
@@ -72,7 +75,11 @@ export default function TermsAndConditionsPage() {
         <p className="mt-4">Payments are processed through third-party payment service providers. Transaction failures, payment delays, gateway charges, chargebacks, and bank-related issues may be governed by the policies of the respective payment providers.</p>
         <p className="mt-4">Invoices or payment receipts may be generated for completed payments, refunds, or other eligible transactions.</p>
         <p className="mt-4">Cancellation requests are permitted only within the time limits specified in ORUMA&apos;s Cancellation Policy.</p>
-        <p className="mt-4">Refund eligibility is determined in accordance with ORUMA&apos;s Refund Policy and may depend on factors including appointment status, attendance, therapist availability, payment verification, treatment continuity, administrative review, and compliance with applicable policies.</p>
+        <p className="mt-4">
+          Refund eligibility is determined in accordance with ORUMA&apos;s{' '}
+          <a className="font-semibold text-[#0A7F7A] underline underline-offset-4 hover:text-[#064F4B]" href="/refund-policy">Refund Policy</a>{' '}
+          and may depend on factors including appointment status, attendance, therapist availability, payment verification, treatment continuity, administrative review, and compliance with applicable policies.
+        </p>
       </section>
 
       <section id="therapist-profiles-and-information">
@@ -169,4 +176,3 @@ export default function TermsAndConditionsPage() {
     </LegalPolicyLayout>
   );
 }
-

@@ -20,6 +20,7 @@ import Team from "../routes/team";
 import Therapists from "../routes/therapists";
 import PrivacyPolicy from "../routes/privacy-policy";
 import TermsAndConditions from "../routes/terms-and-conditions";
+import RefundPolicy from "../routes/refund-policy";
 
 // Route meta for document title
 import { meta as indexMeta } from "../routes/index";
@@ -40,6 +41,7 @@ import { meta as teamMeta } from "../routes/team";
 import { meta as therapistsMeta } from "../routes/therapists";
 import { meta as privacyPolicyMeta } from "../routes/privacy-policy";
 import { meta as termsAndConditionsMeta } from "../routes/terms-and-conditions";
+import { meta as refundPolicyMeta } from "../routes/refund-policy";
 
 declare const lucide: { createIcons: () => void } | undefined;
 
@@ -62,6 +64,7 @@ const routeMeta: Record<string, { title?: string; description?: string }> = {
   "/therapists": therapistsMeta,
   "/privacy-policy": privacyPolicyMeta,
   "/terms-and-conditions": termsAndConditionsMeta,
+  "/refund-policy": refundPolicyMeta,
 };
 
 function MetaUpdater() {
@@ -117,6 +120,7 @@ export default function App() {
         <Route path="/therapists" element={<Therapists />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
       </Routes>
     </BrowserRouter>
   );
