@@ -36,7 +36,8 @@ export default function Footer() {
       links: [
         { name: 'Privacy Policy', href: '/privacy-policy' },
         { name: 'Terms & Conditions', href: '/terms-and-conditions' },
-        { name: 'Refund Policy', href: '/refund-policy' }
+        { name: 'Refund Policy', href: '/refund-policy' },
+        { name: 'Cancellation Policy', href: '/cancellation-policy' }
       ]
     }
   ];

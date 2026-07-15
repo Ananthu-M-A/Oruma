@@ -74,7 +74,10 @@ export default function TermsAndConditionsPage() {
         <p>Service fees displayed on the platform may vary depending on the therapist, consultation type, promotional offers, currency, or administrative decisions.</p>
         <p className="mt-4">Payments are processed through third-party payment service providers. Transaction failures, payment delays, gateway charges, chargebacks, and bank-related issues may be governed by the policies of the respective payment providers.</p>
         <p className="mt-4">Invoices or payment receipts may be generated for completed payments, refunds, or other eligible transactions.</p>
-        <p className="mt-4">Cancellation requests are permitted only within the time limits specified in ORUMA&apos;s Cancellation Policy.</p>
+        <p className="mt-4">
+          Cancellation requests are permitted only within the time limits specified in ORUMA&apos;s{' '}
+          <a className="font-semibold text-[#0A7F7A] underline underline-offset-4 hover:text-[#064F4B]" href="/cancellation-policy">Cancellation Policy</a>.
+        </p>
         <p className="mt-4">
           Refund eligibility is determined in accordance with ORUMA&apos;s{' '}
           <a className="font-semibold text-[#0A7F7A] underline underline-offset-4 hover:text-[#064F4B]" href="/refund-policy">Refund Policy</a>{' '}

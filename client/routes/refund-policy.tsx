@@ -29,7 +29,10 @@ export default function RefundPolicyPage() {
         <ul className={listClassName}>
           <li>ORUMA or the assigned therapist is unable to provide a confirmed and paid consultation.</li>
           <li>A duplicate payment, accidental overpayment, payment gateway error, or failed booking results in a successful debit without a confirmed appointment.</li>
-          <li>A cancellation is approved in accordance with the ORUMA Cancellation Policy.</li>
+          <li>
+            A cancellation is approved in accordance with the ORUMA{' '}
+            <a className={linkClassName} href="/cancellation-policy">Cancellation Policy</a>.
+          </li>
           <li>ORUMA determines that a refund is appropriate following administrative review of the circumstances.</li>
         </ul>
         <p className="mt-5">If the inability to conduct scheduled sessions or continue the planned course of therapy is due to ORUMA or the assigned therapist, ORUMA may offer a full refund, partial refund, therapist reassignment, or rescheduling, depending on the circumstances.</p>
@@ -135,4 +138,3 @@ export default function RefundPolicyPage() {
     </LegalPolicyLayout>
   );
 }
-
