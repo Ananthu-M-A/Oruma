@@ -19,6 +19,7 @@ import {
   saveAccessToken,
 } from "../src/lib/auth";
 import {
+  completeDevelopmentPayment,
   createRazorpayOrder,
   verifyRazorpayPayment,
 } from "../src/lib/operations";
@@ -27,6 +28,10 @@ import {
   formatINR,
   SESSION_PACKAGE_OPTIONS,
 } from "../src/lib/sessionPackages";
+
+const isPaymentBypassEnabled =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_PAYMENT_BYPASS_ENABLED === "true";
 
 function loadRazorpayCheckout() {
   if (window.Razorpay) return Promise.resolve();
@@ -244,6 +249,25 @@ export default function BookingModal({
 
       if (!appointmentId) {
         throw new Error("Unable to create appointment.");
+      }
+
+      if (isPaymentBypassEnabled) {
+        await completeDevelopmentPayment(accessToken!, appointmentId);
+        paymentCompleted = true;
+        setSubmitSuccess(true);
+        setSubmitError("");
+        setIsSubmitting(false);
+        setTimeout(() => {
+          onClose();
+          navigate("/profile/patient", {
+            state: {
+              notice:
+                "Test booking completed with the development payment bypass.",
+              activeTab: "appointments",
+            },
+          });
+        }, 1000);
+        return;
       }
 
       await loadRazorpayCheckout();
@@ -647,9 +671,9 @@ export default function BookingModal({
                 </div>
               </div>
               <p className="text-center text-xs text-gray-400">
-                Clicking confirm will book your selected slot and start payment.
-                Once payment succeeds, it will appear in your profile
-                appointments.
+                {isPaymentBypassEnabled
+                  ? "Development testing is enabled. No money will be collected; the booking will continue through the post-payment flow."
+                  : "Clicking confirm will book your selected slot and start payment. Once payment succeeds, it will appear in your profile appointments."}
               </p>
             </div>
           )}
@@ -692,8 +716,12 @@ export default function BookingModal({
                 <LucideIcon name="loader" size={20} className="animate-spin" />
               )}
               {isSubmitting
-                ? "Please complete payment..."
-                : "Pay & confirm booking"}
+                ? isPaymentBypassEnabled
+                  ? "Completing test booking..."
+                  : "Please complete payment..."
+                : isPaymentBypassEnabled
+                  ? "Confirm test booking"
+                  : "Pay & confirm booking"}
             </button>
           )}
         </div>

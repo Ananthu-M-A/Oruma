@@ -72,6 +72,16 @@ export class PaymentController {
     return this.paymentService.createRazorpayOrder(dto, req.user);
   }
 
+  @Post('development/complete')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PATIENT)
+  completeDevelopmentPayment(
+    @Body() dto: CreateRazorpayOrderDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.paymentService.completeDevelopmentPayment(dto, req.user);
+  }
+
   @Post('razorpay/verify')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.PATIENT)

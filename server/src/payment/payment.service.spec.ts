@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { createHmac } from 'crypto';
 import { PaymentService } from './payment.service';
 import { PaymentStatus } from './entities/payment-status.enum';
@@ -142,5 +142,92 @@ describe('PaymentService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(paymentRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('completes the post-payment flow when the development bypass is enabled', async () => {
+    const appointment = {
+      id: 'appointment-1',
+      patient: { id: 'patient-1', email: 'patient@example.com' },
+      therapist: { price: 1200, couplePrice: 1800 },
+      service: 'Individual Therapy',
+      packageOfferAmount: 0,
+      contactEmail: 'patient@example.com',
+    };
+    const paymentRepo = {
+      findOne: jest.fn().mockResolvedValue(null),
+      create: jest
+        .fn()
+        .mockImplementation((value) => ({ id: 'test-payment-1', ...value })),
+      save: jest.fn().mockImplementation(async (value) => value),
+    };
+    const appointmentRepo = {
+      findOne: jest.fn().mockResolvedValue(appointment),
+    };
+    const configService = {
+      get: jest.fn((key: string) => {
+        if (key === 'NODE_ENV') return 'development';
+        if (key === 'PAYMENT_BYPASS_ENABLED') return 'true';
+        return undefined;
+      }),
+    };
+    const notificationService = {
+      create: jest.fn().mockResolvedValue({}),
+      notifyAdmins: jest.fn().mockResolvedValue([]),
+    };
+    const appointmentService = {
+      notifyBookingAfterPayment: jest.fn().mockResolvedValue(undefined),
+    };
+    const service = new PaymentService(
+      paymentRepo as never,
+      appointmentRepo as never,
+      configService as never,
+      notificationService as never,
+      appointmentService as never,
+    );
+
+    const result = await service.completeDevelopmentPayment(
+      { appointmentId: appointment.id },
+      patient,
+    );
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        amount: 1200,
+        status: PaymentStatus.PAID,
+        provider: 'development-bypass',
+      }),
+    );
+    expect(appointmentRepo.findOne).toHaveBeenCalledWith({
+      where: {
+        id: appointment.id,
+        patient: { id: patient.userId },
+      },
+    });
+    expect(appointmentService.notifyBookingAfterPayment).toHaveBeenCalledWith(
+      appointment,
+      'patient@example.com',
+    );
+  });
+
+  it('never permits the development bypass in production', async () => {
+    const configService = {
+      get: jest.fn((key: string) =>
+        key === 'NODE_ENV' ? 'production' : 'true',
+      ),
+    };
+    const service = new PaymentService(
+      {} as never,
+      {} as never,
+      configService as never,
+      {} as never,
+      {} as never,
+    );
+
+    await expect(
+      service.completeDevelopmentPayment(
+        { appointmentId: 'appointment-1' },
+        patient,
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 });

@@ -174,6 +174,24 @@ export async function createRazorpayOrder(
   return readResponse<RazorpayOrder>(response, "Unable to start payment.");
 }
 
+export async function completeDevelopmentPayment(
+  accessToken: string,
+  appointmentId: string,
+) {
+  const response = await fetch(`${API_BASE_URL}/payments/development/complete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ appointmentId }),
+  });
+  return readResponse<Payment>(
+    response,
+    "Unable to complete the test payment.",
+  );
+}
+
 export async function verifyRazorpayPayment(
   accessToken: string,
   payload: {

@@ -225,6 +225,75 @@ export class PaymentService {
     };
   }
 
+  async completeDevelopmentPayment(
+    dto: CreateRazorpayOrderDto,
+    user: JwtPayload,
+  ) {
+    const isEnabled =
+      this.configService.get<string>('NODE_ENV') !== 'production' &&
+      this.configService.get<string>('PAYMENT_BYPASS_ENABLED') === 'true';
+
+    if (!isEnabled) {
+      throw new ForbiddenException('Development payment bypass is disabled');
+    }
+
+    const appointment = await this.appointmentRepo.findOne({
+      where: {
+        id: dto.appointmentId,
+        patient: {
+          id: user.userId,
+        },
+      },
+    });
+
+    if (!appointment) throw new NotFoundException('Appointment not found');
+
+    const existingPayment = await this.paymentRepo.findOne({
+      where: [
+        {
+          appointment: { id: appointment.id },
+          status: PaymentStatus.PAID,
+        },
+        {
+          appointment: { id: appointment.id },
+          status: PaymentStatus.REFUNDED,
+        },
+      ],
+    });
+
+    if (existingPayment) return existingPayment;
+
+    const amount = this.resolveAppointmentAmount(appointment);
+    if (amount <= 0) {
+      throw new BadRequestException('Appointment amount is not configured');
+    }
+
+    const payment = this.paymentRepo.create({
+      appointment,
+      patient: appointment.patient,
+      amount,
+      status: PaymentStatus.PAID,
+      provider: 'development-bypass',
+      reference: `TEST-${appointment.id}`,
+      providerOrderId: null,
+      providerPaymentId: null,
+      notes: 'Development-only payment bypass; no funds were collected.',
+    });
+
+    const savedPayment = await this.paymentRepo.save(payment);
+    await this.sendPaymentNotification(
+      savedPayment,
+      'Test payment completed',
+      'Your appointment was marked paid using the development test bypass.',
+    );
+    await this.appointmentService.notifyBookingAfterPayment(
+      appointment,
+      appointment.contactEmail ?? appointment.patient?.email,
+    );
+
+    return savedPayment;
+  }
+
   async verifyRazorpayPayment(dto: VerifyRazorpayPaymentDto, user: JwtPayload) {
     const keySecret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
     if (!keySecret) {
