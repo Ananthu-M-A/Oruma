@@ -66,11 +66,15 @@ export class TicketService {
     if (!ticket) throw new NotFoundException('Ticket not found');
 
     if (dto.status) ticket.status = dto.status;
-    if (dto.adminNote !== undefined) ticket.adminNote = dto.adminNote.trim() || null;
+    if (dto.adminNote !== undefined)
+      ticket.adminNote = dto.adminNote.trim() || null;
 
     const savedTicket = await this.ticketRepo.save(ticket);
 
-    if (savedTicket.createdBy?.id && (dto.status || dto.adminNote !== undefined)) {
+    if (
+      savedTicket.createdBy?.id &&
+      (dto.status || dto.adminNote !== undefined)
+    ) {
       const statusText = savedTicket.status.toLowerCase().replace('_', ' ');
       const noteText = savedTicket.adminNote
         ? ` Admin note: ${savedTicket.adminNote}`

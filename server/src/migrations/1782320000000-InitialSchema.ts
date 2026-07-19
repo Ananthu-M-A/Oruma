@@ -80,13 +80,11 @@ export class InitialSchema1782320000000 implements MigrationInterface {
       'RESOLVED',
       'CLOSED',
     ]);
-    await this.createEnumTypeIfNotExists(queryRunner, 'notification_type_enum', [
-      'APPOINTMENT',
-      'PAYMENT',
-      'SUPPORT',
-      'PROFILE',
-      'SYSTEM',
-    ]);
+    await this.createEnumTypeIfNotExists(
+      queryRunner,
+      'notification_type_enum',
+      ['APPOINTMENT', 'PAYMENT', 'SUPPORT', 'PROFILE', 'SYSTEM'],
+    );
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "user" (

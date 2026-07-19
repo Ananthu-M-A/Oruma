@@ -33,7 +33,7 @@ export class CaseSheetController {
   }
 
   @Patch()
-  @Roles(Role.ADMIN, Role.THERAPIST)
+  @Roles(Role.THERAPIST)
   upsert(@Body() dto: UpsertCaseSheetDto, @Req() req: { user: JwtPayload }) {
     return this.caseSheetService.upsert(dto, req.user);
   }

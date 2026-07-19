@@ -25,9 +25,12 @@ export default function EducationalCards() {
           ))}
         </div>
 
-        <button className="bg-[#1A1A1A] text-white px-10 py-4 rounded-full font-bold shadow-xl shadow-black/10">
+        <a
+          href="/therapists"
+          className="inline-block bg-[#1A1A1A] text-white px-10 py-4 rounded-full font-bold shadow-xl shadow-black/10"
+        >
           Book consultation
-        </button>
+        </a>
       </div>
     </section>
   );

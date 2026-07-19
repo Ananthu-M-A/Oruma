@@ -171,12 +171,26 @@ ZOOM_TIMEZONE=Asia/Kolkata
 
 Use `ZOOM_USER_ID=me` to create meetings under the app owner account, or set it to a specific Zoom user ID/email available to the account. The Zoom app needs meeting creation permission, such as `meeting:write:admin` or the equivalent meeting write scope available in the Zoom Marketplace app settings.
 
+## WhatsApp OTP
+
+WhatsApp delivery uses the Cloud API. Configure the provider credentials and an approved authentication template whose first body parameter is the OTP code:
+
+```env
+WHATSAPP_ACCESS_TOKEN=
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_OTP_TEMPLATE_NAME=
+WHATSAPP_TEMPLATE_LANGUAGE=en_US
+```
+
+When `WHATSAPP_OTP_TEMPLATE_NAME` is unset, the service falls back to a free-form message, which is suitable only where the recipient's messaging window and provider policy allow it.
+
 ## Scripts
 
 ```bash
 npm run build
 npm run format
 npm run lint
+npm run lint:check
 npm test
 npm run test:e2e
 ```

@@ -7,7 +7,11 @@ import { CaseSheetService } from './case-sheet.service';
 import { CaseSheet } from './entities/case-sheet.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CaseSheet]), AuthModule, AppointmentModule],
+  imports: [
+    TypeOrmModule.forFeature([CaseSheet]),
+    AuthModule,
+    AppointmentModule,
+  ],
   controllers: [CaseSheetController],
   providers: [CaseSheetService],
   exports: [CaseSheetService],

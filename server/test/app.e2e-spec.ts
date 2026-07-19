@@ -4,6 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppController } from './../src/app.controller';
 import { AppService } from './../src/app.service';
+import type { HealthStatus } from './../src/app.service';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -29,7 +30,9 @@ describe('AppController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/health')
       .expect(200)
-      .expect(({ body }) => {
+      .expect((response) => {
+        const body = response.body as unknown as HealthStatus;
+
         expect(body.status).toBe('ok');
         expect(body.service).toBe('oruma-api');
         expect(body.timestamp).toBeDefined();

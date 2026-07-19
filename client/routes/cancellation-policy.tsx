@@ -19,7 +19,7 @@ const sections = [
   {
     title: '2. User Cancellation',
     body: [
-      'A user may cancel a booked appointment through the dashboard only during the first one (1) hour after the booking is confirmed and only before the scheduled appointment has started. The one-hour period is measured from the booking creation time recorded by ORUMA.',
+      'A user may cancel a booked appointment through the dashboard only during the first one (1) hour after the booking request is created and only before the scheduled appointment has started. The one-hour period is measured from the booking creation time recorded by ORUMA.',
       'After this one-hour window expires, online cancellation is unavailable. The user may submit an exceptional request through a support ticket, the contact page, or Oruma987@gmail.com, but approval and refund are not guaranteed.',
       'A cancellation request should include the registered name, contact details, appointment date and time, therapist name where available, and reason for cancellation.',
       'All appointment, booking-window, cancellation, and availability times displayed by ORUMA are in Indian Standard Time (IST, Asia/Kolkata).',

@@ -25,7 +25,7 @@ const sections = [
       'To create and manage patient, therapist, and administrator accounts.',
       'To schedule appointments, prevent double booking, generate meeting links, maintain case sheets, and coordinate therapy sessions.',
       'To process payments, refunds, invoices, receipts, and transaction support.',
-      'To send booking confirmations, OTP/login messages, appointment updates, Zoom/session links, reminders, and support responses.',
+      'To send booking confirmations, OTP/login messages, appointment updates, Zoom/session links, and support responses.',
       'To improve platform security, prevent misuse, troubleshoot errors, comply with applicable law, and maintain operational records.',
     ],
   },

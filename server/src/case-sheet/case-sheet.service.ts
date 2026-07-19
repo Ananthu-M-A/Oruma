@@ -37,6 +37,12 @@ export class CaseSheetService {
   }
 
   async upsert(dto: UpsertCaseSheetDto, user: JwtPayload) {
+    if (user.role !== Role.THERAPIST) {
+      throw new ForbiddenException(
+        'Only the assigned therapist can update a case sheet',
+      );
+    }
+
     const appointment = await this.appointmentService.findOneForUser(
       dto.appointmentId,
       user,

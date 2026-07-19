@@ -8,7 +8,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -56,7 +55,6 @@ export class MediaController {
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: memoryStorage(),
       limits: {
         fileSize: 10 * 1024 * 1024,
       },
@@ -91,7 +89,9 @@ export class MediaController {
       method: 'POST',
       body: form,
     });
-    const data = (await response.json().catch(() => ({}))) as CloudinaryResponse;
+    const data = (await response
+      .json()
+      .catch(() => ({}))) as CloudinaryResponse;
 
     if (!response.ok || !data.secure_url) {
       throw new BadRequestException(

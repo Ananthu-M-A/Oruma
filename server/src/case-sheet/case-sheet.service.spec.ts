@@ -20,6 +20,7 @@ describe('CaseSheetService', () => {
         appointmentService as never,
       ),
       caseSheetRepo,
+      appointmentService,
     };
   };
 
@@ -67,5 +68,21 @@ describe('CaseSheetService', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
 
     expect(caseSheetRepo.find).not.toHaveBeenCalled();
+  });
+
+  it('keeps case-sheet editing therapist-only while admins retain read access', async () => {
+    const { service, appointmentService } = createService();
+
+    await expect(
+      service.upsert(
+        { appointmentId: 'appointment-1', clinicalNotes: 'Private notes' },
+        {
+          userId: 'admin-1',
+          email: 'admin@example.com',
+          role: Role.ADMIN,
+        },
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(appointmentService.findOneForUser).not.toHaveBeenCalled();
   });
 });

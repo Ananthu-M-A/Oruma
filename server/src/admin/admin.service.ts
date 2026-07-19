@@ -45,14 +45,7 @@ export class AdminService {
     const completedAppointments = appointments.filter(
       (appointment) => appointment.status === AppointmentStatus.COMPLETED,
     );
-    const revenue = completedAppointments.reduce((sum, appointment) => {
-      return (
-        sum +
-        (appointment.packageOfferAmount > 0
-          ? appointment.packageOfferAmount
-          : (appointment.therapist?.price ?? 0))
-      );
-    }, 0);
+    const revenue = paymentSummary.collected - paymentSummary.refunds;
 
     return {
       patients: patientCount,

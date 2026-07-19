@@ -10,7 +10,7 @@ describe('WhatsAppService', () => {
     jest.resetAllMocks();
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-    }) as jest.Mock;
+    });
   });
 
   it('sends template messages through the configured Graph API version', async () => {
@@ -38,11 +38,12 @@ describe('WhatsAppService', () => {
 
     expect(global.fetch).toHaveBeenCalledWith(
       'https://graph.facebook.com/v21.0/12345/messages',
-      expect.objectContaining({
+      {
         method: 'POST',
-        headers: expect.objectContaining({
+        headers: {
           Authorization: 'Bearer token',
-        }),
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           messaging_product: 'whatsapp',
           to: '918157039987',
@@ -64,7 +65,7 @@ describe('WhatsAppService', () => {
             ],
           },
         }),
-      }),
+      },
     );
   });
 
@@ -87,7 +88,12 @@ describe('WhatsAppService', () => {
 
     expect(global.fetch).toHaveBeenCalledWith(
       'https://graph.facebook.com/v20.0/12345/messages',
-      expect.objectContaining({
+      {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer token',
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           messaging_product: 'whatsapp',
           recipient_type: 'individual',
@@ -98,7 +104,7 @@ describe('WhatsAppService', () => {
             body: 'Your login code is 123456',
           },
         }),
-      }),
+      },
     );
   });
 });

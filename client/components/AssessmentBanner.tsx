@@ -13,9 +13,12 @@ export default function AssessmentBanner() {
             <p className="text-[#5F7F7A] font-medium">Takes just 60 seconds and connects you with your personal advisor.</p>
           </div>
         </div>
-        <button className="whitespace-nowrap bg-[#1A1A1A] text-white px-8 py-3.5 rounded-full font-bold hover:bg-black transition-all shadow-lg">
-          Info assessment ›
-        </button>
+        <a
+          href="https://wa.me/918157039987?text=Hi,%20I'd%20like%20to%20take%20the%20mental%20health%20assessment."
+          className="whitespace-nowrap bg-[#1A1A1A] text-white px-8 py-3.5 rounded-full font-bold hover:bg-black transition-all shadow-lg"
+        >
+          Start assessment ›
+        </a>
       </div>
     </div>
   );

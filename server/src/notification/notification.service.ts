@@ -121,5 +121,4 @@ export class NotificationService {
 
     return { updated: unread.length };
   }
-
 }

@@ -22,15 +22,13 @@ describe('AppController', () => {
 
   describe('health', () => {
     it('should return an ok health response', () => {
-      expect(appController.getHealth()).toEqual(
-        expect.objectContaining({
-          status: 'ok',
-          service: 'oruma-api',
-          environment: expect.any(String),
-          uptimeSeconds: expect.any(Number),
-          timestamp: expect.any(String),
-        }),
-      );
+      const health = appController.getHealth();
+
+      expect(health.status).toBe('ok');
+      expect(health.service).toBe('oruma-api');
+      expect(typeof health.environment).toBe('string');
+      expect(typeof health.uptimeSeconds).toBe('number');
+      expect(typeof health.timestamp).toBe('string');
     });
   });
 });

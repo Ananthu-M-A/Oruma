@@ -15,13 +15,21 @@ export class CaseSheet {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Appointment, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => Appointment, {
+    eager: true,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   appointment: Appointment | null;
 
   @ManyToOne(() => User, { eager: true, nullable: true, onDelete: 'SET NULL' })
   patient: User | null;
 
-  @ManyToOne(() => Therapist, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => Therapist, {
+    eager: true,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   therapist: Therapist | null;
 
   @Column({ type: 'text', nullable: true })

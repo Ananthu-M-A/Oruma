@@ -1,24 +1,33 @@
-# ORUMA Wellness - Full Stack Project
+# ORUMA Wellness
 
-Source code for [oruma.me](https://oruma.me), currently built as a frontend application and being upgraded into a full-stack platform.
+ORUMA is a full-stack digital wellness platform for patients, therapists, and administrators. The repository contains a React/Vite client and a NestJS/PostgreSQL API with authentication, scheduling, Razorpay payments, Zoom meeting creation, case sheets, notifications, therapist administration, and support tickets.
 
----
+## Repository
 
-## Production Launch
+- `client/` — React 18, React Router, Vite, and TypeScript frontend.
+- `server/` — NestJS, TypeORM, and PostgreSQL API.
+- `.github/workflows/ci.yml` — client type-check/build plus server lint/build/test workflow.
+- [`docs/PROJECT_AUDIT.md`](docs/PROJECT_AUDIT.md) — proposal-to-code completion audit and pending coding/outside-coding work.
+- [`docs/PRODUCTION_LAUNCH.md`](docs/PRODUCTION_LAUNCH.md) — production deployment and provider setup checklist.
 
-Use [docs/PRODUCTION_LAUNCH_RUNBOOK.md](docs/PRODUCTION_LAUNCH_RUNBOOK.md) for the step-by-step launch checklist, deployment setup, migration workflow, DNS setup, provider integrations, and scaling plan.
+## Local verification
 
-Use [docs/PROJECT_COMPLETION_STATUS.md](docs/PROJECT_COMPLETION_STATUS.md) for the proposal milestone status and the remaining non-code launch milestones.
+```powershell
+cd client
+npm.cmd ci
+npm.cmd run typecheck
+npm.cmd run build
 
-Use [docs/OUTSIDE_VSCODE_SETUP.md](docs/OUTSIDE_VSCODE_SETUP.md) for provider dashboard, DNS, hosting, payment, email, WhatsApp, Zoom, and Cloudinary setup steps that must be completed outside the code editor.
+cd ..\server
+npm.cmd ci
+npm.cmd run lint:check
+npm.cmd test -- --runInBand
+npm.cmd run build
+npm.cmd run test:e2e
+```
 
-## 🚀 Project Overview
+Copy each `.env.example` to `.env` before running the applications. The server requires PostgreSQL connection settings; production must use migrations with `DATABASE_SYNC=false`.
 
-ORUMA is a wellness platform designed to connect patients with therapists through a structured and user-friendly digital experience.
+## Current status
 
-This repository contains:
-
-- 🎨 Frontend (planned & under updstion)
-- ⚙️ Backend (planned & under development)
-
----
+The core proposal features are implemented in code and the local build/test baseline passes. The project is not yet verified as production-complete: real provider credentials, production infrastructure, migrations, operational data, and live end-to-end smoke testing are still required. See the project audit for the exact boundary.

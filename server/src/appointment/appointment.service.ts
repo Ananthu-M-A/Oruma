@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
   BadRequestException,
@@ -27,7 +28,10 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
 import { AppointmentStatus } from './entities/appointment-status.enum';
 import { calculateSessionPackagePricing } from './session-package-pricing';
-import { canPatientCancelAppointment } from './appointment-policy';
+import {
+  canPatientCancelAppointment,
+  canTransitionAppointmentStatus,
+} from './appointment-policy';
 import { formatIstSlotRange } from '../common/ist-date-time';
 import { isStartTimeBookable } from './booking-lead-time';
 
@@ -254,18 +258,9 @@ export class AppointmentService {
       );
 
     if (patient) {
-      patient.fullName = patient.fullName || dto.contactName?.trim() || null;
-      patient.phone = patient.phone || phone || null;
-
-      if (email && patient.email.endsWith(`@${this.quickBookingEmailDomain}`)) {
-        const emailOwner = await userRepo.findOne({ where: { email } });
-        if (!emailOwner) patient.email = email;
-      }
-
-      return {
-        patient: await userRepo.save(patient),
-        createdAccount: false,
-      };
+      throw new ConflictException(
+        'A patient account already uses this email or phone. Sign in before booking.',
+      );
     }
 
     const password = await bcrypt.hash(randomBytes(24).toString('hex'), 10);
@@ -496,25 +491,23 @@ export class AppointmentService {
       ? await this.findOneForUser(id, user)
       : await this.findOne(id);
 
+    const shouldRetryMeetingCreation =
+      appointment.status === AppointmentStatus.CONFIRMED &&
+      dto.status === AppointmentStatus.CONFIRMED &&
+      !appointment.meetingLink;
+
     if (
-      appointment.status === AppointmentStatus.CANCELLED &&
-      dto.status !== AppointmentStatus.CANCELLED
+      !shouldRetryMeetingCreation &&
+      !canTransitionAppointmentStatus(appointment.status, dto.status)
     ) {
       throw new BadRequestException(
-        'A cancelled appointment cannot be reopened. Book the available slot again instead.',
+        `Appointment status cannot change from ${appointment.status} to ${dto.status}`,
       );
     }
 
-    if (
-      dto.status === AppointmentStatus.CANCELLED &&
-      appointment.status === AppointmentStatus.COMPLETED
-    ) {
-      throw new BadRequestException(
-        'A completed appointment cannot be cancelled',
-      );
+    if (appointment.status === dto.status && !shouldRetryMeetingCreation) {
+      return appointment;
     }
-
-    if (appointment.status === dto.status) return appointment;
 
     if (dto.status === AppointmentStatus.CANCELLED) {
       const savedAppointment = await this.persistCancellation(appointment);

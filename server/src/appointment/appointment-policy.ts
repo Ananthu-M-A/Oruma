@@ -1,4 +1,30 @@
+import { AppointmentStatus } from './entities/appointment-status.enum';
+
 export const PATIENT_CANCELLATION_WINDOW_MS = 60 * 60 * 1000;
+
+const allowedStatusTransitions: Record<AppointmentStatus, AppointmentStatus[]> =
+  {
+    [AppointmentStatus.PENDING]: [
+      AppointmentStatus.CONFIRMED,
+      AppointmentStatus.CANCELLED,
+    ],
+    [AppointmentStatus.CONFIRMED]: [
+      AppointmentStatus.COMPLETED,
+      AppointmentStatus.CANCELLED,
+    ],
+    [AppointmentStatus.COMPLETED]: [],
+    [AppointmentStatus.CANCELLED]: [],
+  };
+
+export function canTransitionAppointmentStatus(
+  currentStatus: AppointmentStatus,
+  nextStatus: AppointmentStatus,
+) {
+  return (
+    currentStatus === nextStatus ||
+    allowedStatusTransitions[currentStatus].includes(nextStatus)
+  );
+}
 
 export function canPatientCancelAppointment(
   createdAt: Date,

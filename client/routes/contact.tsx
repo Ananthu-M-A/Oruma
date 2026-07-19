@@ -49,12 +49,17 @@ export default function ContactPage() {
               </div>
             </div>
             
-            <div className="w-full md:w-1/2 aspect-video bg-[#0A7F7A]/10 rounded-[2rem] flex items-center justify-center border-2 border-dashed border-[#0A7F7A]/20">
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=Thiruvananthapuram%2C+Kerala%2C+India"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full md:w-1/2 aspect-video bg-[#0A7F7A]/10 rounded-[2rem] flex items-center justify-center border-2 border-[#0A7F7A]/20 transition-colors hover:bg-[#0A7F7A]/15"
+            >
                <div className="text-center">
                   <LucideIcon name="map" size={48} className="text-[#0A7F7A] mx-auto mb-4 opacity-50" />
-                  <p className="text-[#064F4B] font-bold">Map integration coming soon</p>
+                  <p className="text-[#064F4B] font-bold">View Trivandrum on Google Maps</p>
                </div>
-            </div>
+            </a>
           </div>
         </div>
       </section>

@@ -25,7 +25,11 @@ export class Notification {
   @Index()
   recipient: User;
 
-  @Column({ type: 'enum', enum: NotificationType, default: NotificationType.SYSTEM })
+  @Column({
+    type: 'enum',
+    enum: NotificationType,
+    default: NotificationType.SYSTEM,
+  })
   type: NotificationType;
 
   @Column({ type: 'varchar' })

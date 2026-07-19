@@ -16,9 +16,12 @@ export default function ServiceHero({ title, subtitle, ...rest }: any) {
             {subtitle}
           </p>
           <div className="flex justify-center">
-            <button className="bg-[#0A7F7A] text-white px-12 py-5 rounded-full font-black text-xs uppercase tracking-widest hover:bg-[#064F4B] transition-all shadow-2xl shadow-[#0A7F7A]/20 active:scale-95">
+            <a
+              href="/therapists"
+              className="bg-[#0A7F7A] text-white px-12 py-5 rounded-full font-black text-xs uppercase tracking-widest hover:bg-[#064F4B] transition-all shadow-2xl shadow-[#0A7F7A]/20 active:scale-95"
+            >
               Begin Your Journey
-            </button>
+            </a>
           </div>
         </div>
       </div>

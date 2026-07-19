@@ -15,7 +15,9 @@ describe('PaymentService', () => {
   const createService = (payment: Record<string, unknown>) => {
     const paymentRepo = {
       findOne: jest.fn().mockResolvedValue(payment),
-      save: jest.fn().mockImplementation(async (value) => value),
+      save: jest
+        .fn()
+        .mockImplementation((value: unknown) => Promise.resolve(value)),
       find: jest.fn(),
       create: jest.fn(),
     };
@@ -157,8 +159,13 @@ describe('PaymentService', () => {
       findOne: jest.fn().mockResolvedValue(null),
       create: jest
         .fn()
-        .mockImplementation((value) => ({ id: 'test-payment-1', ...value })),
-      save: jest.fn().mockImplementation(async (value) => value),
+        .mockImplementation((value: Record<string, unknown>) => ({
+          id: 'test-payment-1',
+          ...value,
+        })),
+      save: jest
+        .fn()
+        .mockImplementation((value: unknown) => Promise.resolve(value)),
     };
     const appointmentRepo = {
       findOne: jest.fn().mockResolvedValue(appointment),
@@ -229,5 +236,21 @@ describe('PaymentService', () => {
         patient,
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('does not count pending or failed payments as collected revenue', async () => {
+    const { service, paymentRepo } = createService({});
+    paymentRepo.find.mockResolvedValue([
+      { amount: 1000, refundedAmount: 0, status: PaymentStatus.PAID },
+      { amount: 800, refundedAmount: 200, status: PaymentStatus.REFUNDED },
+      { amount: 1200, refundedAmount: 0, status: PaymentStatus.PENDING },
+      { amount: 500, refundedAmount: 0, status: PaymentStatus.FAILED },
+    ]);
+
+    await expect(service.getSummary()).resolves.toEqual({
+      collected: 1800,
+      refunds: 200,
+      pending: 1200,
+    });
   });
 });

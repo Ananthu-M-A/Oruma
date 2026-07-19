@@ -13,6 +13,7 @@ describe('TherapistService', () => {
   let service: TherapistService;
   const therapistRepository = {
     find: jest.fn(),
+    findOne: jest.fn(),
   };
   const appointmentRepository = {
     find: jest.fn(),
@@ -100,5 +101,46 @@ describe('TherapistService', () => {
       new Date('2026-07-21T04:30:00Z'),
     );
     expect(slotRepository.find).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns only active public profile fields with current availability', async () => {
+    therapistRepository.findOne.mockResolvedValue({
+      id: 'therapist-1',
+      name: 'Therapist One',
+      email: 'private@example.com',
+      title: 'Psychologist',
+      tags: ['Anxiety'],
+      experience: 120,
+      group: 1,
+      price: 1000,
+      couplePrice: null,
+      image: null,
+      voiceIntro: null,
+      zoomUserId: 'private-zoom-host',
+      qualifications: 'MSc Psychology',
+      specialization: 'Anxiety',
+      bio: 'Profile',
+      pendingProfileChanges: { bio: 'Unpublished profile' },
+      pendingProfileSubmittedAt: new Date(),
+      nextAvailableSlot: null,
+      isActive: true,
+      createdAt: new Date('2026-07-19T00:00:00Z'),
+    });
+    slotRepository.find.mockResolvedValue([
+      {
+        therapist: { id: 'therapist-1' },
+        startTime: new Date('2026-07-22T04:30:00Z'),
+      },
+    ]);
+
+    const result = await service.findOne('therapist-1');
+
+    expect(therapistRepository.findOne).toHaveBeenCalledWith({
+      where: { id: 'therapist-1', isActive: true },
+    });
+    expect(result.nextAvailableSlot).toEqual(new Date('2026-07-22T04:30:00Z'));
+    expect(result).not.toHaveProperty('email');
+    expect(result).not.toHaveProperty('zoomUserId');
+    expect(result).not.toHaveProperty('pendingProfileChanges');
   });
 });

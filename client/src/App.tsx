@@ -174,6 +174,7 @@ export default function App() {
         <Route path="/therapists/:id" element={<TherapistDetail />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/terms-and-conditions" element={<Terms />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

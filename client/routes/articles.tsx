@@ -70,9 +70,8 @@ export default function ArticlesPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-12">
             {articles.map((article, idx) => (
-              <a 
+              <article
                 key={idx} 
-                href="#" 
                 className="group flex flex-col md:flex-row gap-8 bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 hover:border-[#0A7F7A] transition-all hover:shadow-2xl hover:shadow-[#0A7F7A]/5 p-6"
               >
                 <div className="w-full md:w-2/5 aspect-[4/3] rounded-[1.5rem] overflow-hidden shrink-0">
@@ -106,15 +105,14 @@ export default function ArticlesPage() {
                     </div>
                   </div>
                 </div>
-              </a>
+              </article>
             ))}
           </div>
 
-          {/* Load More Button */}
           <div className="mt-20 text-center">
-             <button className="px-12 py-5 bg-[#064F4B] text-white rounded-full font-black text-lg hover:scale-105 transition-all shadow-xl shadow-[#064F4B]/20 active:scale-95 uppercase tracking-widest">
-               Load More Articles
-             </button>
+            <p className="text-sm font-black uppercase tracking-widest text-[#5F7F7A]">
+              More expert articles are currently in editorial review.
+            </p>
           </div>
         </div>
       </section>
@@ -132,16 +130,12 @@ export default function ArticlesPage() {
                 <p className="text-xl text-white/80 font-medium mb-12 leading-relaxed">
                   Join our gentle community to receive mental wellness tips, expert advice, and gentle reminders directly in your inbox.
                 </p>
-                <div className="flex flex-col md:flex-row gap-4 items-stretch justify-center">
-                   <input 
-                    type="email" 
-                    placeholder="Enter your email" 
-                    className="flex-1 bg-white border-0 rounded-full px-8 py-5 text-[#064F4B] font-bold placeholder:text-[#5F7F7A] focus:ring-4 focus:ring-[#B7C8A3]/50 transition-all outline-none"
-                   />
-                   <button className="bg-[#B7C8A3] text-[#064F4B] px-10 py-5 rounded-full font-black text-lg hover:bg-white transition-all active:scale-95 uppercase tracking-widest">
-                     Subscribe
-                   </button>
-                </div>
+                <a
+                  href="mailto:join@oruma.me?subject=Subscribe%20me%20to%20ORUMA%20wellness%20updates"
+                  className="inline-block bg-[#B7C8A3] text-[#064F4B] px-10 py-5 rounded-full font-black text-lg hover:bg-white transition-all active:scale-95 uppercase tracking-widest"
+                >
+                  Request email updates
+                </a>
              </div>
           </div>
         </div>

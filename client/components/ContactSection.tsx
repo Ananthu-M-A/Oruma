@@ -34,7 +34,12 @@ export default function ContactSection() {
                   </div>
                   <div>
                     <p className="text-xs font-black uppercase tracking-widest text-[#B7C8A3] mb-1">Call/WhatsApp</p>
-                    <p className="text-xl font-bold">+91 81369 19987</p>
+                    <a
+                      href={`tel:+${phoneNumber}`}
+                      className="text-xl font-bold hover:text-[#B7C8A3] transition-colors"
+                    >
+                      +91 81570 39987
+                    </a>
                   </div>
                 </div>
 

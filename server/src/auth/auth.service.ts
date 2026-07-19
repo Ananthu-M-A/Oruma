@@ -123,9 +123,19 @@ export class AuthService {
         html: `<p>${message}</p>`,
       });
     } else {
+      const otpTemplateName = this.configService.get<string>(
+        'WHATSAPP_OTP_TEMPLATE_NAME',
+      );
+
       await this.whatsAppService.send({
         to: normalized,
         text: message,
+        ...(otpTemplateName
+          ? {
+              templateName: otpTemplateName,
+              templateParameters: [code],
+            }
+          : {}),
       });
     }
 

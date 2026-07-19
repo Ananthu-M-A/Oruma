@@ -10,7 +10,7 @@ import {
 export type Therapist = {
   id: string;
   name: string;
-  email: string | null;
+  email?: string | null;
   title: string;
   tags: string[] | null;
   experience: number;
@@ -19,12 +19,12 @@ export type Therapist = {
   couplePrice: number | null;
   image: string | null;
   voiceIntro: string | null;
-  zoomUserId: string | null;
+  zoomUserId?: string | null;
   qualifications: string | null;
   specialization: string | null;
   bio: string | null;
-  pendingProfileChanges: Partial<TherapistPayload> | null;
-  pendingProfileSubmittedAt: string | null;
+  pendingProfileChanges?: Partial<TherapistPayload> | null;
+  pendingProfileSubmittedAt?: string | null;
   nextAvailableSlot: string | null;
   isActive: boolean;
   createdAt: string;

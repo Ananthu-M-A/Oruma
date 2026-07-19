@@ -6,10 +6,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { Repository } from 'typeorm';
 import { JwtPayload } from '../auth/strategies/jwt.strategy';
 import { Appointment } from '../appointment/entities/appointment.entity';
+import { AppointmentStatus } from '../appointment/entities/appointment-status.enum';
 import { Payment } from './entities/payment.entity';
 import { PaymentStatus } from './entities/payment-status.enum';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -156,6 +157,16 @@ export class PaymentService {
 
     if (!appointment) throw new NotFoundException('Appointment not found');
 
+    if (
+      [AppointmentStatus.CANCELLED, AppointmentStatus.COMPLETED].includes(
+        appointment.status,
+      )
+    ) {
+      throw new BadRequestException(
+        'Payment cannot be started for this appointment status',
+      );
+    }
+
     const keyId = this.configService.get<string>('RAZORPAY_KEY_ID');
     const keySecret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
 
@@ -166,6 +177,25 @@ export class PaymentService {
     const amount = this.resolveAppointmentAmount(appointment);
     if (amount <= 0) {
       throw new BadRequestException('Appointment amount is not configured');
+    }
+
+    const completedPayment = await this.paymentRepo.findOne({
+      where: [
+        {
+          appointment: { id: appointment.id },
+          status: PaymentStatus.PAID,
+        },
+        {
+          appointment: { id: appointment.id },
+          status: PaymentStatus.REFUNDED,
+        },
+      ],
+    });
+
+    if (completedPayment) {
+      throw new BadRequestException(
+        'This appointment already has a completed payment',
+      );
     }
 
     const existingPayment = await this.paymentRepo.findOne({
@@ -306,7 +336,7 @@ export class PaymentService {
       .update(`${dto.razorpayOrderId}|${dto.razorpayPaymentId}`)
       .digest('hex');
 
-    if (expectedSignature !== dto.razorpaySignature) {
+    if (!this.isSignatureValid(expectedSignature, dto.razorpaySignature)) {
       throw new BadRequestException('Payment verification failed');
     }
 
@@ -320,6 +350,10 @@ export class PaymentService {
     });
 
     if (!payment) throw new NotFoundException('Payment not found');
+
+    if (payment.status === PaymentStatus.REFUNDED) {
+      throw new BadRequestException('A refunded payment cannot be re-verified');
+    }
 
     const shouldNotifyBooking = payment.status !== PaymentStatus.PAID;
     payment.status = PaymentStatus.PAID;
@@ -367,7 +401,7 @@ export class PaymentService {
       .update(input.rawBody)
       .digest('hex');
 
-    if (expectedSignature !== input.signature) {
+    if (!this.isSignatureValid(expectedSignature, input.signature)) {
       throw new BadRequestException('Invalid Razorpay webhook signature');
     }
 
@@ -485,11 +519,15 @@ export class PaymentService {
 
   async getSummary() {
     const payments = await this.paymentRepo.find();
+    const settledPayments = payments.filter((payment) =>
+      [PaymentStatus.PAID, PaymentStatus.REFUNDED].includes(payment.status),
+    );
 
     return {
-      collected: payments
-        .filter((payment) => payment.status !== PaymentStatus.FAILED)
-        .reduce((sum, payment) => sum + payment.amount, 0),
+      collected: settledPayments.reduce(
+        (sum, payment) => sum + payment.amount,
+        0,
+      ),
       refunds: payments.reduce(
         (sum, payment) => sum + payment.refundedAmount,
         0,
@@ -513,6 +551,16 @@ export class PaymentService {
     }
 
     return appointment.therapist.price;
+  }
+
+  private isSignatureValid(expected: string, received: string) {
+    const expectedBuffer = Buffer.from(expected, 'utf8');
+    const receivedBuffer = Buffer.from(received, 'utf8');
+
+    return (
+      expectedBuffer.length === receivedBuffer.length &&
+      timingSafeEqual(expectedBuffer, receivedBuffer)
+    );
   }
 
   private async sendPaymentNotification(

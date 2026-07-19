@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
@@ -49,7 +53,9 @@ export class UserService {
 
   create(
     user: Pick<User, 'email' | 'password' | 'role'> &
-      Partial<Pick<User, 'fullName' | 'phone' | 'age' | 'gender' | 'healthInfo'>>,
+      Partial<
+        Pick<User, 'fullName' | 'phone' | 'age' | 'gender' | 'healthInfo'>
+      >,
   ): Promise<User> {
     const createdUser = this.userRepository.create(user);
 

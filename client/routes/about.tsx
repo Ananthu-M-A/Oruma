@@ -69,9 +69,12 @@ export default function AboutPage() {
             Join our mission to normalize mental health conversations across the globe.
           </p>
           
-          <button className="bg-[#1A1A1A] text-white px-12 py-4 rounded-full font-bold text-lg hover:bg-black transition-all shadow-xl shadow-black/10 mb-16">
+          <a
+            href="/careers"
+            className="inline-block bg-[#1A1A1A] text-white px-12 py-4 rounded-full font-bold text-lg hover:bg-black transition-all shadow-xl shadow-black/10 mb-16"
+          >
             Join Us
-          </button>
+          </a>
 
           {/* YouTube Video Section */}
           <div className="relative aspect-video w-full max-w-4xl mx-auto overflow-hidden rounded-[2.5rem] md:rounded-[3rem] shadow-2xl shadow-[#0A7F7A]/10 border-8 border-white">

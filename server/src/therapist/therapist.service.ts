@@ -37,6 +37,26 @@ type TherapistPerformance = {
   estimatedCompletedRevenue: number;
 };
 
+type PublicTherapist = Pick<
+  Therapist,
+  | 'id'
+  | 'name'
+  | 'title'
+  | 'tags'
+  | 'experience'
+  | 'group'
+  | 'price'
+  | 'couplePrice'
+  | 'image'
+  | 'voiceIntro'
+  | 'qualifications'
+  | 'specialization'
+  | 'bio'
+  | 'nextAvailableSlot'
+  | 'isActive'
+  | 'createdAt'
+>;
+
 @Injectable()
 export class TherapistService {
   constructor(
@@ -104,7 +124,7 @@ export class TherapistService {
     };
   }
 
-  async findAll(): Promise<Therapist[]> {
+  async findAll(): Promise<PublicTherapist[]> {
     const therapists = await this.therapistRepo.find({
       where: {
         isActive: true,
@@ -117,9 +137,9 @@ export class TherapistService {
     const therapistsWithAvailability =
       await this.attachNextAvailableSlots(therapists);
 
-    return therapistsWithAvailability.filter(
-      (therapist) => therapist.nextAvailableSlot !== null,
-    );
+    return therapistsWithAvailability
+      .filter((therapist) => therapist.nextAvailableSlot !== null)
+      .map((therapist) => this.toPublicTherapist(therapist));
   }
 
   findAllForAdmin(): Promise<Therapist[]> {
@@ -130,16 +150,20 @@ export class TherapistService {
     });
   }
 
-  async findOne(id: string): Promise<Therapist> {
+  async findOne(id: string): Promise<PublicTherapist> {
     const therapist = await this.therapistRepo.findOne({
-      where: { id },
+      where: { id, isActive: true },
     });
 
     if (!therapist) {
       throw new NotFoundException('Therapist not found');
     }
 
-    return therapist;
+    const [therapistWithAvailability] = await this.attachNextAvailableSlots([
+      therapist,
+    ]);
+
+    return this.toPublicTherapist(therapistWithAvailability);
   }
 
   async update(id: string, dto: UpdateTherapistDto): Promise<Therapist> {
@@ -362,6 +386,27 @@ export class TherapistService {
 
   private generateTemporaryPassword() {
     return `Oruma-${randomBytes(6).toString('base64url')}`;
+  }
+
+  private toPublicTherapist(therapist: Therapist): PublicTherapist {
+    return {
+      id: therapist.id,
+      name: therapist.name,
+      title: therapist.title,
+      tags: therapist.tags,
+      experience: therapist.experience,
+      group: therapist.group,
+      price: therapist.price,
+      couplePrice: therapist.couplePrice,
+      image: therapist.image,
+      voiceIntro: therapist.voiceIntro,
+      qualifications: therapist.qualifications,
+      specialization: therapist.specialization,
+      bio: therapist.bio,
+      nextAvailableSlot: therapist.nextAvailableSlot,
+      isActive: therapist.isActive,
+      createdAt: therapist.createdAt,
+    };
   }
 
   private removeEmptyProfileChanges(changes: Record<string, unknown>) {

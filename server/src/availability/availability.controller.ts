@@ -33,14 +33,14 @@ export class AvailabilityController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.THERAPIST)
+  @Roles(Role.ADMIN)
   create(@Body() dto: CreateAvailabilitySlotDto) {
     return this.availabilityService.create(dto);
   }
 
   @Post('bulk')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.THERAPIST)
+  @Roles(Role.ADMIN)
   bulkCreate(@Body() dto: BulkCreateAvailabilityDto) {
     return this.availabilityService.bulkCreate(dto);
   }
