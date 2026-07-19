@@ -2,8 +2,8 @@ import React from 'react';
 import LegalPolicyLayout from '../components/LegalPolicyLayout';
 
 export const meta = {
-  title: 'Cancellation Policy | ORUMA',
-  description: 'Learn how ORUMA handles appointment cancellations, rescheduling, late arrivals, no-shows, and therapist-initiated changes.'
+  title: 'Cancellation and Refund Policy | ORUMA',
+  description: 'Read ORUMA’s appointment cancellation window, rescheduling rules, refund eligibility, and payment processing timelines.'
 };
 
 const listClassName = 'mt-4 space-y-3 list-disc pl-6 marker:text-[#0A7F7A]';
@@ -13,134 +13,122 @@ const linkClassName = 'font-semibold text-[#0A7F7A] underline underline-offset-4
 export default function CancellationPolicyPage() {
   return (
     <LegalPolicyLayout
-      title="Cancellation Policy"
-      effectiveDate="April 14, 2026"
-      introduction="This Cancellation Policy explains how ORUMA.ME handles appointment cancellations, rescheduling, late arrivals, no-show situations, therapist-initiated changes, and related booking matters."
+      title="Cancellation and Refund Policy"
+      effectiveDate="July 19, 2026"
+      introduction="This policy explains how ORUMA Wellness, operating ORUMA.ME, handles appointment cancellations, rescheduling, late arrivals, no-shows, provider-initiated changes, and refunds for counselling and digital wellness services."
     >
+      <section id="policy-summary">
+        <h2 className={sectionHeadingClassName}>1. Policy Summary</h2>
+        <div className="rounded-2xl border border-[#0A7F7A]/20 bg-[#0A7F7A]/5 p-6 md:p-8">
+          <ul className="space-y-3 list-disc pl-6 marker:text-[#0A7F7A]">
+            <li>Cancel within one (1) hour of successful booking confirmation and before the consultation begins to qualify for a full refund.</li>
+            <li>After the one-hour window, the booking is generally non-cancellable and non-refundable, although rescheduling or another remedy may be offered.</li>
+            <li>Eligible refunds are initiated within two (2) working days after approval and normally reach the original payment source within five to seven (5–7) working days after initiation.</li>
+            <li>UPI and QR refunds are returned to the original UPI-linked account and cannot be redirected to a different account.</li>
+          </ul>
+        </div>
+      </section>
+
       <section id="scope">
-        <h2 className={sectionHeadingClassName}>1. Scope</h2>
-        <p>This Cancellation Policy applies to counselling sessions, therapy consultations, wellness appointments, and related services booked through ORUMA.ME.</p>
-        <p className="mt-4">All appointments are subject to therapist availability, successful booking confirmation, applicable payment requirements, and ORUMA&apos;s scheduling policies.</p>
+        <h2 className={sectionHeadingClassName}>2. Scope</h2>
+        <p>This policy applies to counselling sessions, therapy consultations, wellness appointments, session packages, and related digital services booked through ORUMA.ME.</p>
+        <p className="mt-4">It applies to payments made through Razorpay, UPI, QR code, cards, net banking, wallets, or other methods offered at checkout.</p>
       </section>
 
       <section id="user-cancellation">
-        <h2 className={sectionHeadingClassName}>2. User Cancellation</h2>
-        <div className="rounded-2xl border border-[#0A7F7A]/20 bg-[#0A7F7A]/5 p-6 md:p-8">
-          <p className="font-semibold text-[#064F4B]">Users may cancel a booked appointment only within one (1) hour of successfully confirming the booking.</p>
-        </div>
-        <p className="mt-6">After the one-hour cancellation window has expired:</p>
+        <h2 className={sectionHeadingClassName}>3. User Cancellation Window</h2>
+        <p>A user may cancel a booked appointment within one (1) hour of successfully confirming the booking, provided the consultation has not already started. A valid cancellation received within this window is eligible for a full refund of the amount paid for the cancelled appointment.</p>
+        <p className="mt-4">The cancellation request timestamp recorded by the ORUMA dashboard, support ticket, contact form, WhatsApp, or email will be used to determine whether the request was made within the permitted window.</p>
+        <p className="mt-4">After the one-hour window expires, the cancellation option may no longer be available and the booking will generally be non-refundable. ORUMA may still offer rescheduling, therapist reassignment, account credit, or another remedy after reviewing exceptional circumstances.</p>
+        <p className="mt-6">Submit a cancellation request using the dashboard, support-ticket system, official <a className={linkClassName} href="/contact">contact page</a>, or email <a className={linkClassName} href="mailto:cancellation-policy@oruma.me">cancellation-policy@oruma.me</a>.</p>
+        <p className="mt-6">Include:</p>
         <ul className={listClassName}>
-          <li>The cancellation option will no longer be available through the ORUMA platform.</li>
-          <li>
-            Cancellation requests submitted after this period may not be accepted and will be handled in accordance with ORUMA&apos;s{' '}
-            <a className={linkClassName} href="/refund-policy">Refund Policy</a>{' '}
-            and applicable operational guidelines.
-          </li>
-        </ul>
-        <p className="mt-6">
-          To request cancellation within the permitted period, users may use the dashboard, submit a support ticket, contact ORUMA through the official{' '}
-          <a className={linkClassName} href="/contact">contact page</a>, or email{' '}
-          <a className={linkClassName} href="mailto:Oruma987@gmail.com">Oruma987@gmail.com</a>.
-        </p>
-        <p className="mt-6">Cancellation requests should include:</p>
-        <ul className={listClassName}>
-          <li>Registered name</li>
-          <li>Registered email address or phone number</li>
-          <li>Appointment date and time</li>
-          <li>Therapist name (where available)</li>
+          <li>Registered name, email address, and phone number</li>
+          <li>Appointment date, time, service, and therapist name</li>
+          <li>Payment amount and payment date</li>
+          <li>Razorpay Payment ID, transaction ID, or UPI UTR/RRN</li>
           <li>Reason for cancellation</li>
         </ul>
       </section>
 
       <section id="rescheduling">
-        <h2 className={sectionHeadingClassName}>3. Rescheduling</h2>
-        <p>Where appropriate, ORUMA may offer rescheduling instead of cancellation, subject to therapist availability.</p>
-        <p className="mt-4">Rescheduling requests should be made before the scheduled appointment time and may be approved at ORUMA&apos;s discretion based on therapist availability and operational requirements.</p>
-        <p className="mt-4">Repeated rescheduling requests, frequent last-minute changes, or misuse of the scheduling system may result in the request being declined.</p>
+        <h2 className={sectionHeadingClassName}>4. Rescheduling</h2>
+        <p>ORUMA may offer rescheduling instead of cancellation, subject to therapist availability. A rescheduling request should be submitted before the scheduled appointment time.</p>
+        <p className="mt-4">If the user accepts a rescheduled appointment, therapist reassignment, or account credit, a separate refund will not be issued for the same booking unless ORUMA is subsequently unable to provide the accepted alternative.</p>
+        <p className="mt-4">Repeated rescheduling requests, frequent last-minute changes, or misuse of the scheduling system may be declined.</p>
       </section>
 
       <section id="late-arrival-and-no-show">
-        <h2 className={sectionHeadingClassName}>4. Late Arrival and No-Show</h2>
+        <h2 className={sectionHeadingClassName}>5. Late Arrival and No-Show</h2>
         <p>Users are expected to join online sessions at the scheduled time using the session link or instructions provided by ORUMA.</p>
-        <p className="mt-6">If a user joins late:</p>
         <ul className={listClassName}>
-          <li>The consultation may still end at the originally scheduled time to avoid affecting subsequent appointments.</li>
-          <li>Lost consultation time caused by late arrival may not be compensated.</li>
+          <li>If a user joins late, the consultation may still end at the original scheduled time, and lost consultation time may not be compensated.</li>
+          <li>If a user does not attend without an approved cancellation or rescheduling request, the appointment will be treated as a no-show and the consultation fee will be non-refundable.</li>
+          <li>Incorrect contact details, user unavailability, or failure to use the supplied session instructions does not qualify for a refund.</li>
         </ul>
-        <p className="mt-5">
-          If a user fails to attend a confirmed appointment without prior approval, the appointment may be treated as a no-show, and the applicable consultation fee may be non-refundable in accordance with the{' '}
-          <a className={linkClassName} href="/refund-policy">Refund Policy</a>.
-        </p>
       </section>
 
-      <section id="therapist-or-oruma-cancellation">
-        <h2 className={sectionHeadingClassName}>5. Therapist or ORUMA Cancellation</h2>
-        <p>If ORUMA or the assigned therapist must cancel or reschedule a confirmed appointment due to unforeseen circumstances, ORUMA will make reasonable efforts to notify the user as soon as practicable.</p>
-        <p className="mt-6">Depending on the circumstances, ORUMA may offer one or more of the following:</p>
-        <ul className={listClassName}>
-          <li>Appointment rescheduling</li>
-          <li>Therapist reassignment</li>
-          <li>Account credit (where applicable)</li>
-          <li>
-            Partial or full refund in accordance with the{' '}
-            <a className={linkClassName} href="/refund-policy">Refund Policy</a>
-          </li>
-        </ul>
+      <section id="provider-cancellation">
+        <h2 className={sectionHeadingClassName}>6. Therapist or ORUMA Cancellation</h2>
+        <p>If ORUMA or the assigned therapist must cancel a confirmed appointment, ORUMA will notify the user as soon as reasonably possible.</p>
+        <p className="mt-4">The user may choose an available rescheduled appointment or therapist reassignment. If the user does not accept the available alternative, or if no reasonable alternative can be provided, ORUMA will approve a full refund of the amount paid for the affected appointment.</p>
+        <p className="mt-4">For a partially delivered session package, any refund will be limited to the eligible unused portion after deducting completed or commenced sessions.</p>
       </section>
 
       <section id="technical-issues">
-        <h2 className={sectionHeadingClassName}>6. Technical Issues</h2>
-        <p>Users are responsible for ensuring they have:</p>
+        <h2 className={sectionHeadingClassName}>7. Technical Issues</h2>
+        <p>Users are responsible for a stable internet connection, a compatible device, access to the session link, and a suitable private environment.</p>
+        <p className="mt-4">If an ORUMA-system or therapist-side technical failure prevents the consultation, ORUMA will offer rescheduling. If rescheduling is not accepted or reasonably possible, the affected appointment will be eligible for a full refund.</p>
+        <p className="mt-4">Technical problems caused by the user&apos;s device, internet connection, software, or failure to follow the supplied instructions generally do not qualify for cancellation, rescheduling, or refund.</p>
+      </section>
+
+      <section id="refund-process-and-timeline">
+        <h2 className={sectionHeadingClassName}>8. Refund Process and Timeline</h2>
+        <p>An eligible refund request should be submitted within seven (7) calendar days of the applicable payment, debit, cancellation, or scheduled appointment.</p>
         <ul className={listClassName}>
-          <li>A stable internet connection</li>
-          <li>A compatible device</li>
-          <li>Access to the session link</li>
-          <li>A private and suitable environment for the consultation</li>
+          <li>ORUMA will acknowledge a complete request within two (2) working days.</li>
+          <li>ORUMA will normally communicate approval or rejection within five (5) working days after all required information is received.</li>
+          <li>An approved refund will be initiated within two (2) working days of approval.</li>
+          <li>The refund will be sent only to the original payment source.</li>
+          <li>Normal refunds generally reach the original bank, card, wallet, or UPI account within five to seven (5–7) working days after initiation, subject to Razorpay, the bank, UPI provider, or payment network.</li>
         </ul>
-        <p className="mt-5">Where technical issues arise due to ORUMA systems or therapist-side connectivity problems, ORUMA may review the matter and, where appropriate, offer rescheduling or a refund.</p>
-        <p className="mt-4">Technical issues caused by the user&apos;s device, internet connection, software, or failure to access the session using the provided instructions may not qualify for cancellation, rescheduling, or refund.</p>
+        <p className="mt-5">If the refund is not visible after seven (7) working days from initiation, contact ORUMA with the payment and refund references.</p>
+        <p className="mt-4">
+          For complete eligibility, duplicate-payment, partial-refund, and dispute details, read the ORUMA{' '}
+          <a className={linkClassName} href="/refund-policy">Cancellation and Refund Policy</a>.
+        </p>
+      </section>
+
+      <section id="upi-qr-payments">
+        <h2 className={sectionHeadingClassName}>9. UPI, QR, and Duplicate Payments</h2>
+        <p>If a bank or UPI account is debited but no successful payment or confirmed appointment appears, contact ORUMA with the UTR/RRN, Razorpay Payment ID, amount, and date. Do not make repeated payments until the status is checked.</p>
+        <p className="mt-4">A verified duplicate or captured failed-booking payment will be refunded to the original payment source. UPI and QR refunds are returned to the originating UPI-linked account and cannot be paid in cash or redirected to another account.</p>
       </section>
 
       <section id="emergency-disclaimer">
-        <h2 className={sectionHeadingClassName}>7. Emergency Disclaimer</h2>
+        <h2 className={sectionHeadingClassName}>10. Emergency Disclaimer</h2>
         <div className="rounded-2xl border border-[#0A7F7A]/20 bg-[#0A7F7A]/5 p-6 md:p-8">
           <p className="font-semibold text-[#064F4B]">ORUMA does not provide emergency medical or crisis intervention services.</p>
         </div>
-        <p className="mt-6">If a user is experiencing:</p>
-        <ul className={listClassName}>
-          <li>A medical emergency</li>
-          <li>A mental health crisis</li>
-          <li>Risk of self-harm</li>
-          <li>Risk of harm to others</li>
-          <li>Any immediate safety concern</li>
-        </ul>
-        <p className="mt-5">They should immediately contact their local emergency services, a nearby hospital, or an appropriate crisis support service.</p>
-        <p className="mt-4">The cancellation and rescheduling provisions of this policy do not apply to emergency response situations because ORUMA is not an emergency care provider.</p>
+        <p className="mt-6">Anyone experiencing a medical emergency, mental health crisis, risk of self-harm, risk of harm to others, or another immediate safety concern should contact local emergency services, a nearby hospital, or an appropriate crisis-support service immediately.</p>
+        <p className="mt-4">The cancellation and rescheduling provisions of this policy do not apply to emergency-response situations because ORUMA is not an emergency-care provider.</p>
       </section>
 
-      <section id="changes-to-cancellation-policy">
-        <h2 className={sectionHeadingClassName}>8. Changes to this Cancellation Policy</h2>
-        <p>ORUMA may update this Cancellation Policy from time to time to reflect operational, legal, or business changes.</p>
-        <p className="mt-4">The latest version will be published on this page together with the updated Effective Date.</p>
-        <p className="mt-4">Continued use of the platform after such updates constitutes acceptance of the revised Cancellation Policy.</p>
+      <section id="policy-changes">
+        <h2 className={sectionHeadingClassName}>11. Changes to this Policy</h2>
+        <p>ORUMA may update this policy to reflect operational, legal, payment-network, or business changes. The latest version will be published on this page with its updated Effective Date.</p>
+        <p className="mt-4">A change will not reduce or remove a refund already approved before the revised policy takes effect.</p>
       </section>
 
       <section id="contact">
-        <h2 className={sectionHeadingClassName}>9. Contact</h2>
-        <p>For cancellation or rescheduling requests, or if you have questions regarding this Cancellation Policy, please contact:</p>
+        <h2 className={sectionHeadingClassName}>12. Contact</h2>
+        <p>For cancellation, rescheduling, payment, or refund assistance, contact:</p>
         <div className="mt-6 rounded-2xl bg-[#F5F8F7] border border-[#064F4B]/10 p-6 md:p-8">
-          <p className="font-bold text-[#064F4B] text-lg">ORUMA</p>
-          <p className="mt-2">
-            Email:{' '}
-            <a className={linkClassName} href="mailto:cancellation-policy@oruma.me">
-              cancellation-policy@oruma.me
-            </a>
-          </p>
-          <p className="mt-2">
-            Or through the official{' '}
-            <a className={linkClassName} href="/contact">contact page</a>{' '}
-            available on ORUMA.ME.
-          </p>
+          <p className="font-bold text-[#064F4B] text-lg">ORUMA Wellness / ORUMA.ME</p>
+          <p className="mt-2">Email: <a className={linkClassName} href="mailto:cancellation-policy@oruma.me">cancellation-policy@oruma.me</a></p>
+          <p className="mt-2">Phone/WhatsApp: <a className={linkClassName} href="https://wa.me/918136919987">+91 81369 19987</a></p>
+          <p className="mt-2">Location: Trivandrum, Kerala, India</p>
+          <p className="mt-2">Support: <a className={linkClassName} href="/contact">Official contact page</a></p>
         </div>
       </section>
     </LegalPolicyLayout>
