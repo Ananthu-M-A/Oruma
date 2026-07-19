@@ -36,6 +36,11 @@ import {
   fromIstDateTimeInputValue,
   toIstDateTimeInputValue,
 } from "../src/lib/dateTime";
+import {
+  therapistQualificationOptions as qualificationOptions,
+  therapistSpecializationOptions as specializationOptions,
+  therapistTitleOptions as titleOptions,
+} from "../src/lib/therapistProfileOptions";
 
 export const meta = {
   title: "Therapist Profile | Oruma",
@@ -1191,35 +1196,6 @@ function MediaUploadField({
   );
 }
 
-const titleOptions = [
-  "Clinical Psychologist",
-  "Counselling Psychologist",
-  "Psychiatrist",
-  "Psychotherapist",
-  "Relationship Therapist",
-  "Child & Adolescent Therapist",
-];
-const qualificationOptions = [
-  "M.Phil. Clinical Psychology",
-  "MA Clinical Psychology",
-  "MSc Applied Psychology",
-  "PhD Psychology",
-  "PG Diploma in Counselling",
-  "MBBS Psychiatry",
-];
-const specializationOptions = [
-  "Anxiety",
-  "Depression",
-  "Trauma",
-  "Relationship & Couples",
-  "Work Stress",
-  "Grief",
-  "Postpartum",
-  "Student & Youth",
-  "LGBTQIA+",
-  "Parenting",
-];
-
 function Field({
   label,
   value,
@@ -1260,9 +1236,12 @@ function SelectField({
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: string[];
+  options: readonly string[];
   required?: boolean;
 }) {
+  const hasLegacyValue =
+    Boolean(value) && !options.some((option) => option === value);
+
   return (
     <label className="flex flex-col gap-2">
       <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
@@ -1275,6 +1254,7 @@ function SelectField({
         className="w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
       >
         <option value="">Select {label.toLowerCase()}</option>
+        {hasLegacyValue && <option value={value}>{value}</option>}
         {options.map((option) => (
           <option key={option} value={option}>
             {option}

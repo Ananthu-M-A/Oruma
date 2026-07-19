@@ -14,6 +14,11 @@ import {
   updateTherapist,
 } from "../src/lib/therapists";
 import { formatIstDateTime } from "../src/lib/dateTime";
+import {
+  therapistQualificationOptions,
+  therapistSpecializationOptions,
+  therapistTitleOptions,
+} from "../src/lib/therapistProfileOptions";
 
 export const meta = {
   title: "Manage Therapists | Oruma",
@@ -461,25 +466,28 @@ export default function AdminTherapistsPage() {
                 onChange={(value) => setEditForm({ ...editForm, name: value })}
                 required
               />
-              <EditField
+              <EditSelectField
                 label="Title"
                 value={editForm.title}
                 onChange={(value) => setEditForm({ ...editForm, title: value })}
+                options={therapistTitleOptions}
                 required
               />
-              <EditField
+              <EditSelectField
+                label="Qualification"
+                value={editForm.qualifications}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, qualifications: value })
+                }
+                options={therapistQualificationOptions}
+              />
+              <EditSelectField
                 label="Specialization"
                 value={editForm.specialization}
                 onChange={(value) =>
                   setEditForm({ ...editForm, specialization: value })
                 }
-              />
-              <EditField
-                label="Qualifications"
-                value={editForm.qualifications}
-                onChange={(value) =>
-                  setEditForm({ ...editForm, qualifications: value })
-                }
+                options={therapistSpecializationOptions}
               />
               <EditField
                 label="Individual fee"
@@ -559,6 +567,45 @@ function EditField({
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
       />
+    </label>
+  );
+}
+
+function EditSelectField({
+  label,
+  value,
+  onChange,
+  options,
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: readonly string[];
+  required?: boolean;
+}) {
+  const hasLegacyValue =
+    Boolean(value) && !options.some((option) => option === value);
+
+  return (
+    <label>
+      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+        {label}
+      </span>
+      <select
+        required={required}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+      >
+        <option value="">Select {label.toLowerCase()}</option>
+        {hasLegacyValue && <option value={value}>{value}</option>}
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
