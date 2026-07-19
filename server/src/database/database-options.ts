@@ -15,6 +15,11 @@ export const toNumber = (value: string | undefined, fallback: number) => {
   return Number.isNaN(parsed) ? fallback : parsed;
 };
 
+const toPositiveInteger = (value: string | undefined, fallback: number) => {
+  const parsed = Math.floor(toNumber(value, fallback));
+  return parsed > 0 ? parsed : fallback;
+};
+
 const getSslModeFromUrl = (databaseUrl: string | undefined) => {
   if (!databaseUrl) return undefined;
 
@@ -67,7 +72,18 @@ export const getDatabaseConnectionOptions = (
   > => {
   const databaseUrl = readTrimmed(readEnv, 'DATABASE_URL');
   const ssl = getDatabaseSsl(readEnv);
-  const extra = { options: `-c timezone=${IST_TIME_ZONE}` };
+  const extra = {
+    options: `-c timezone=${IST_TIME_ZONE}`,
+    max: toPositiveInteger(readTrimmed(readEnv, 'DATABASE_POOL_MAX'), 5),
+    idleTimeoutMillis: toPositiveInteger(
+      readTrimmed(readEnv, 'DATABASE_POOL_IDLE_TIMEOUT_MS'),
+      30_000,
+    ),
+    connectionTimeoutMillis: toPositiveInteger(
+      readTrimmed(readEnv, 'DATABASE_CONNECTION_TIMEOUT_MS'),
+      10_000,
+    ),
+  };
 
   if (databaseUrl) {
     return {

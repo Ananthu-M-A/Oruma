@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThanOrEqual, Repository } from 'typeorm';
+import { In, MoreThanOrEqual, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { ConfigService } from '@nestjs/config';
@@ -330,27 +330,34 @@ export class TherapistService {
   }
 
   private async attachNextAvailableSlots(therapists: Therapist[]) {
+    if (therapists.length === 0) return therapists;
+
     const earliestBookableStartTime = getEarliestBookableStartTime();
+    const slots = await this.slotRepo.find({
+      where: {
+        therapist: {
+          id: In(therapists.map((therapist) => therapist.id)),
+        },
+        status: SlotStatus.AVAILABLE,
+        startTime: MoreThanOrEqual(earliestBookableStartTime),
+      },
+      order: {
+        startTime: 'ASC',
+      },
+    });
+    const nextSlotByTherapistId = new Map<string, Date>();
 
-    return Promise.all(
-      therapists.map(async (therapist) => {
-        const slot = await this.slotRepo.findOne({
-          where: {
-            therapist: {
-              id: therapist.id,
-            },
-            status: SlotStatus.AVAILABLE,
-            startTime: MoreThanOrEqual(earliestBookableStartTime),
-          },
-          order: {
-            startTime: 'ASC',
-          },
-        });
+    for (const slot of slots) {
+      if (!nextSlotByTherapistId.has(slot.therapist.id)) {
+        nextSlotByTherapistId.set(slot.therapist.id, slot.startTime);
+      }
+    }
 
-        therapist.nextAvailableSlot = slot?.startTime ?? null;
-        return therapist;
-      }),
-    );
+    return therapists.map((therapist) => {
+      therapist.nextAvailableSlot =
+        nextSlotByTherapistId.get(therapist.id) ?? null;
+      return therapist;
+    });
   }
 
   private generateTemporaryPassword() {

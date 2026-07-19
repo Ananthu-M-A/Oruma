@@ -18,7 +18,7 @@ describe('TherapistService', () => {
     find: jest.fn(),
   };
   const slotRepository = {
-    findOne: jest.fn(),
+    find: jest.fn(),
   };
   const userService = {
     findByEmail: jest.fn(),
@@ -85,9 +85,12 @@ describe('TherapistService', () => {
       { id: 'therapist-without-slot', isActive: true, nextAvailableSlot: null },
     ];
     therapistRepository.find.mockResolvedValue(therapists);
-    slotRepository.findOne
-      .mockResolvedValueOnce({ startTime: new Date('2026-07-21T04:30:00Z') })
-      .mockResolvedValueOnce(null);
+    slotRepository.find.mockResolvedValue([
+      {
+        therapist: { id: 'therapist-with-slot' },
+        startTime: new Date('2026-07-21T04:30:00Z'),
+      },
+    ]);
 
     const result = await service.findAll();
 
@@ -96,5 +99,6 @@ describe('TherapistService', () => {
     expect(result[0].nextAvailableSlot).toEqual(
       new Date('2026-07-21T04:30:00Z'),
     );
+    expect(slotRepository.find).toHaveBeenCalledTimes(1);
   });
 });

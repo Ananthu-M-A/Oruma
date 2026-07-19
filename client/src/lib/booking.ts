@@ -36,7 +36,7 @@ export interface BookingResponse {
     phone?: string | null;
     age?: number | null;
     gender?: string | null;
-    healthInfo?: Record<string, string> | null;
+    healthInfo?: Record<string, unknown> | null;
   };
   therapist: {
     id: string;

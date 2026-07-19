@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { LucideIcon } from "@site-builder/icons";
 import {
   AvailabilitySlot,
@@ -31,8 +31,7 @@ import {
 } from "../src/lib/sessionPackages";
 
 const isPaymentBypassEnabled =
-  import.meta.env.DEV &&
-  import.meta.env.VITE_PAYMENT_BYPASS_ENABLED === "true";
+  import.meta.env.DEV && import.meta.env.VITE_PAYMENT_BYPASS_ENABLED === "true";
 function redirectToPatientProfile(notice: string) {
   try {
     window.sessionStorage.setItem(POST_PAYMENT_NOTICE_KEY, notice);
@@ -88,6 +87,7 @@ export default function BookingModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     service: "Individual Therapy",
     sessionCount: 1,
@@ -167,6 +167,27 @@ export default function BookingModal({
       isMounted = false;
     };
   }, [isOpen, therapist?.id]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const focusFrame = window.requestAnimationFrame(() =>
+      dialogRef.current?.focus(),
+    );
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isSubmitting) onClose();
+    };
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, isSubmitting, onClose]);
 
   if (!isOpen) return null;
 
@@ -368,19 +389,31 @@ export default function BookingModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center sm:p-4">
       <div
+        aria-hidden="true"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
         onClick={onClose}
       />
 
-      <div className="relative bg-white w-full max-w-md rounded-[2rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="booking-dialog-title"
+        aria-describedby="booking-dialog-progress"
+        aria-busy={isSubmitting}
+        tabIndex={-1}
+        className="relative flex max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white shadow-2xl outline-none animate-in zoom-in-95 duration-300 sm:max-h-[90dvh] sm:rounded-[2rem]"
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white p-4 sm:p-6">
           <div className="flex items-center gap-3">
             {step > 1 && (
               <button
+                type="button"
                 onClick={prevStep}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Go to previous booking step"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0A7F7A]"
               >
                 <LucideIcon
                   name="chevron-left"
@@ -389,7 +422,10 @@ export default function BookingModal({
                 />
               </button>
             )}
-            <h3 className="text-xl font-bold text-[#064F4B]">
+            <h3
+              id="booking-dialog-title"
+              className="text-lg font-bold text-[#064F4B] sm:text-xl"
+            >
               {step === 1 && "Service Selection"}
               {step === 2 && "Appointments"}
               {step === 3 && "Your Information"}
@@ -397,14 +433,21 @@ export default function BookingModal({
             </h3>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            disabled={isSubmitting}
+            aria-label="Close booking dialog"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0A7F7A] disabled:opacity-50"
           >
             <LucideIcon name="x" size={24} className="text-gray-400" />
           </button>
         </div>
 
-        <div className="overflow-y-auto p-6">
+        <p id="booking-dialog-progress" className="sr-only">
+          Step {step} of 4
+        </p>
+
+        <div className="overflow-y-auto p-4 sm:p-6">
           {step === 1 && (
             <div className="space-y-6">
               {therapist && (
@@ -413,6 +456,10 @@ export default function BookingModal({
                     src={therapist.image || therapist.img}
                     className="w-12 h-12 rounded-full object-cover"
                     alt={therapist.name}
+                    width="48"
+                    height="48"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div>
                     <p className="font-bold text-[#064F4B]">{therapist.name}</p>
@@ -424,10 +471,14 @@ export default function BookingModal({
               )}
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label
+                  htmlFor="booking-service"
+                  className="block text-sm font-bold text-gray-700 mb-2"
+                >
                   Service
                 </label>
                 <select
+                  id="booking-service"
                   className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#A3B899] appearance-none"
                   value={formData.service}
                   onChange={(event) =>
@@ -571,7 +622,9 @@ export default function BookingModal({
                         {availabilitySlots.map((slot) => (
                           <button
                             key={slot.id}
+                            type="button"
                             onClick={() => selectSlot(slot)}
+                            aria-pressed={formData.slotId === slot.id}
                             className={`w-full rounded-xl border p-4 text-left transition-all ${
                               formData.slotId === slot.id
                                 ? "bg-[#A3B899] border-[#A3B899] text-white shadow-lg"
@@ -644,22 +697,24 @@ export default function BookingModal({
                   }
                 />
               </label>
-              <div className="space-y-3">
-                <label className="text-sm font-bold text-gray-700">
+              <fieldset className="space-y-3">
+                <legend className="text-sm font-bold text-gray-700">
                   Mode of Therapy
-                </label>
-                <div className="flex gap-3">
+                </legend>
+                <div className="grid grid-cols-3 gap-3">
                   {["Video", "Audio", "Chat"].map((mode) => (
                     <button
                       key={mode}
+                      type="button"
                       onClick={() => setFormData({ ...formData, mode })}
-                      className={`flex-1 py-3 rounded-xl border font-bold transition-all ${formData.mode === mode ? "bg-[#A3B899] border-[#A3B899] text-white" : "border-gray-200 text-gray-600"}`}
+                      aria-pressed={formData.mode === mode}
+                      className={`min-h-11 rounded-xl border px-2 py-3 font-bold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0A7F7A] ${formData.mode === mode ? "bg-[#A3B899] border-[#A3B899] text-white" : "border-gray-200 text-gray-600"}`}
                     >
                       {mode}
                     </button>
                   ))}
                 </div>
-              </div>
+              </fieldset>
             </div>
           )}
 
@@ -708,9 +763,13 @@ export default function BookingModal({
           )}
         </div>
 
-        <div className="p-6 border-t border-gray-100 bg-gray-50/50 sticky bottom-0 z-10">
+        <div className="sticky bottom-0 z-10 border-t border-gray-100 bg-gray-50/95 p-4 backdrop-blur sm:p-6">
           {submitSuccess && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+            <div
+              role="status"
+              aria-live="polite"
+              className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl"
+            >
               <p className="text-sm font-bold text-green-700">
                 Appointment booked successfully.
               </p>
@@ -722,13 +781,17 @@ export default function BookingModal({
           )}
 
           {submitError && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <div
+              role="alert"
+              className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl"
+            >
               <p className="text-sm font-bold text-red-700">{submitError}</p>
             </div>
           )}
 
           {step < 4 ? (
             <button
+              type="button"
               onClick={nextStep}
               disabled={isSubmitting}
               className="w-full bg-[#064F4B] text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-[#0A7F7A] transition-all disabled:opacity-50"
@@ -737,6 +800,7 @@ export default function BookingModal({
             </button>
           ) : (
             <button
+              type="button"
               className="w-full bg-[#00D494] text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-[#00B37E] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               onClick={handleBooking}
               disabled={isSubmitting}

@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LucideIcon } from "@site-builder/icons";
-import { AUTH_CHANGED_EVENT, AuthAccount, AuthRole, clearAccessToken, getAccessToken, getCurrentUser, getMyAccount } from "../src/lib/auth";
+import {
+  AUTH_CHANGED_EVENT,
+  AuthAccount,
+  AuthRole,
+  clearAccessToken,
+  getAccessToken,
+  getCurrentUser,
+  getMyAccount,
+} from "../src/lib/auth";
 import {
   AppNotification,
   getNotifications,
@@ -64,7 +72,9 @@ export default function DashboardNavbar() {
     navigate("/login", { replace: true });
   };
 
-  const unreadCount = notifications.filter((notification) => !notification.readAt).length;
+  const unreadCount = notifications.filter(
+    (notification) => !notification.readAt,
+  ).length;
 
   const handleMarkRead = async (notification: AppNotification) => {
     if (notification.readAt) return;
@@ -73,7 +83,9 @@ export default function DashboardNavbar() {
 
     setNotifications((current) =>
       current.map((item) =>
-        item.id === notification.id ? { ...item, readAt: new Date().toISOString() } : item,
+        item.id === notification.id
+          ? { ...item, readAt: new Date().toISOString() }
+          : item,
       ),
     );
     await markNotificationRead(token, notification.id).catch(loadNotifications);
@@ -91,32 +103,59 @@ export default function DashboardNavbar() {
   return (
     <header className="fixed left-0 right-0 top-0 z-[1000] border-b border-[#E2E8E6] bg-white shadow-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
-        <Link to={user ? roleHome[user.role] : "/"} className="flex items-center gap-3">
-          <img src="/assets/oruma-main-logo.webp" alt="Oruma Logo" className="h-10 w-auto object-contain" />
-          <div>
-            <p className="text-lg font-heading font-black uppercase leading-none text-[#01413D]">oruma</p>
-            <p className="mt-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#0A7F7A]">Dashboard</p>
+        <Link
+          to={user ? roleHome[user.role] : "/"}
+          className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A7F7A]"
+          aria-label="Oruma dashboard home"
+        >
+          <img
+            src="/assets/oruma-main-logo.webp"
+            alt=""
+            width="104"
+            height="40"
+            decoding="async"
+            className="h-9 w-auto object-contain sm:h-10"
+          />
+          <div className="hidden sm:block">
+            <p className="text-lg font-heading font-black uppercase leading-none text-[#01413D]">
+              oruma
+            </p>
+            <p className="mt-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#0A7F7A]">
+              Dashboard
+            </p>
           </div>
         </Link>
 
         <nav className="flex items-center gap-2">
           {user?.role === "ADMIN" && (
             <>
-              <Link to="/profile/admin" className="hidden rounded-full px-4 py-2 text-xs font-black uppercase tracking-widest text-[#064F4B] hover:bg-[#F5F8F7] sm:inline-flex">
+              <Link
+                to="/profile/admin"
+                className="hidden rounded-full px-4 py-2 text-xs font-black uppercase tracking-widest text-[#064F4B] hover:bg-[#F5F8F7] sm:inline-flex"
+              >
                 Overview
               </Link>
-              <Link to="/profile/admin/therapists" className="hidden rounded-full px-4 py-2 text-xs font-black uppercase tracking-widest text-[#064F4B] hover:bg-[#F5F8F7] sm:inline-flex">
+              <Link
+                to="/profile/admin/therapists"
+                className="hidden rounded-full px-4 py-2 text-xs font-black uppercase tracking-widest text-[#064F4B] hover:bg-[#F5F8F7] sm:inline-flex"
+              >
                 Therapists
               </Link>
             </>
           )}
           {user?.role === "PATIENT" && (
-            <Link to="/therapists" className="hidden rounded-full px-4 py-2 text-xs font-black uppercase tracking-widest text-[#064F4B] hover:bg-[#F5F8F7] sm:inline-flex">
+            <Link
+              to="/therapists"
+              className="hidden rounded-full px-4 py-2 text-xs font-black uppercase tracking-widest text-[#064F4B] hover:bg-[#F5F8F7] sm:inline-flex"
+            >
               Book
             </Link>
           )}
           {user && (
-            <Link to={roleHome[user.role]} className="hidden rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A] md:inline-flex">
+            <Link
+              to={roleHome[user.role]}
+              className="hidden rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A] md:inline-flex"
+            >
               {(account?.fullName || user.email).slice(0, 28)} · {user.role}
             </Link>
           )}
@@ -128,17 +167,24 @@ export default function DashboardNavbar() {
               title="Notifications"
               aria-label="Notifications"
               aria-expanded={isNotificationsOpen}
+              aria-controls="dashboard-notifications"
             >
               <LucideIcon name="bell" size={17} />
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#D9480F] px-1 text-[10px] font-black leading-none text-white">
+                <span
+                  className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#D9480F] px-1 text-[10px] font-black leading-none text-white"
+                  aria-live="polite"
+                >
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </button>
 
             {isNotificationsOpen && (
-              <div className="absolute right-0 mt-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-[#E2E8E6] bg-white shadow-2xl shadow-[#064F4B]/10">
+              <div
+                id="dashboard-notifications"
+                className="absolute right-0 mt-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-[#E2E8E6] bg-white shadow-2xl shadow-[#064F4B]/10"
+              >
                 <div className="flex items-center justify-between border-b border-[#E2E8E6] px-4 py-3">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
@@ -160,10 +206,14 @@ export default function DashboardNavbar() {
 
                 <div className="max-h-96 overflow-y-auto">
                   {isNotificationsLoading && notifications.length === 0 && (
-                    <p className="p-5 text-sm font-bold text-[#5F7F7A]">Loading notifications...</p>
+                    <p className="p-5 text-sm font-bold text-[#5F7F7A]">
+                      Loading notifications...
+                    </p>
                   )}
                   {!isNotificationsLoading && notifications.length === 0 && (
-                    <p className="p-5 text-sm font-bold text-[#5F7F7A]">No notifications yet.</p>
+                    <p className="p-5 text-sm font-bold text-[#5F7F7A]">
+                      No notifications yet.
+                    </p>
                   )}
                   {notifications.map((notification) => (
                     <NotificationItem
@@ -180,9 +230,11 @@ export default function DashboardNavbar() {
             )}
           </div>
           <button
+            type="button"
             onClick={handleLogout}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#064F4B] text-white"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#064F4B] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A7F7A]"
             title="Logout"
+            aria-label="Log out"
           >
             <LucideIcon name="log-out" size={16} />
           </button>
@@ -208,7 +260,9 @@ function NotificationItem({
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-3">
-          <p className="truncate text-sm font-black text-[#064F4B]">{notification.title}</p>
+          <p className="truncate text-sm font-black text-[#064F4B]">
+            {notification.title}
+          </p>
           <p className="shrink-0 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
             {formatNotificationTime(notification.createdAt)}
           </p>

@@ -426,6 +426,11 @@ export class AppointmentService {
             },
           },
         },
+        relations: {
+          patient: true,
+          therapist: true,
+          slot: true,
+        },
         order: {
           createdAt: 'DESC',
         },

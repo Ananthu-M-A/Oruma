@@ -12,9 +12,17 @@ type ProfileTabsProps = {
   className?: string;
 };
 
-export default function ProfileTabs({ tabs, activeTab, onChange, className = "" }: ProfileTabsProps) {
+export default function ProfileTabs({
+  tabs,
+  activeTab,
+  onChange,
+  className = "",
+}: ProfileTabsProps) {
   return (
-    <div className={`flex flex-wrap gap-2 border-b border-[#E2E8E6] pb-4 ${className}`}>
+    <nav
+      aria-label="Profile sections"
+      className={`flex max-w-full gap-2 overflow-x-auto border-b border-[#E2E8E6] pb-4 sm:flex-wrap ${className}`}
+    >
       {tabs.map((tab) => {
         const isActive = tab.id === activeTab;
         return (
@@ -22,7 +30,8 @@ export default function ProfileTabs({ tabs, activeTab, onChange, className = "" 
             key={tab.id}
             type="button"
             onClick={() => onChange(tab.id)}
-            className={`rounded-full px-5 py-3 text-xs font-black uppercase tracking-widest transition ${
+            aria-pressed={isActive}
+            className={`min-h-11 shrink-0 whitespace-nowrap rounded-full px-5 py-3 text-xs font-black uppercase tracking-widest transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A7F7A] ${
               isActive
                 ? "bg-[#064F4B] text-white shadow-sm"
                 : "bg-[#F5F8F7] text-[#064F4B] hover:bg-[#E8F2EE]"
@@ -32,6 +41,6 @@ export default function ProfileTabs({ tabs, activeTab, onChange, className = "" 
           </button>
         );
       })}
-    </div>
+    </nav>
   );
 }

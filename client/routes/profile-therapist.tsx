@@ -46,6 +46,182 @@ function formatSlot(value?: string) {
   return formatIstDateTime(value, "Time pending");
 }
 
+const healthInfoLabels: Record<string, string> = {
+  primaryConcern: "Primary concern",
+  currentSymptoms: "Current symptoms",
+  medication: "Medication",
+  previousTherapy: "Previous therapy",
+  emergencyContact: "Emergency contact",
+  notes: "Additional notes",
+};
+
+function formatHealthInfoLabel(key: string) {
+  return (
+    healthInfoLabels[key] ??
+    key
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/[_-]+/g, " ")
+      .replace(/^./, (character) => character.toUpperCase())
+  );
+}
+
+function formatHealthInfoValue(value: unknown) {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map(formatHealthInfoValue).filter(Boolean).join(", ");
+  }
+  if (value && typeof value === "object") {
+    return Object.values(value)
+      .map(formatHealthInfoValue)
+      .filter(Boolean)
+      .join(", ");
+  }
+  return "";
+}
+
+function TherapistAppointmentCard({
+  appointment,
+  onStatusChange,
+}: {
+  appointment: BookingResponse;
+  onStatusChange: (
+    appointment: BookingResponse,
+    status: BookingResponse["status"],
+  ) => void;
+}) {
+  const patientName =
+    appointment.patient?.fullName || appointment.patient?.email || "Patient";
+  const healthEntries = Object.entries(appointment.patient?.healthInfo ?? {})
+    .map(([key, value]) => [key, formatHealthInfoValue(value)] as const)
+    .filter(([, value]) => Boolean(value));
+
+  return (
+    <article className="rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5 shadow-sm md:p-6">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_auto] lg:items-start">
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+            Patient
+          </p>
+          <h3 className="mt-1 break-words text-lg font-black text-[#064F4B]">
+            {patientName}
+          </h3>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold text-[#5F7F7A]">
+            {appointment.patient?.email && (
+              <span className="break-all">{appointment.patient.email}</span>
+            )}
+            {appointment.patient?.phone && (
+              <span>{appointment.patient.phone}</span>
+            )}
+            {appointment.patient?.age && (
+              <span>{appointment.patient.age} years</span>
+            )}
+            {appointment.patient?.gender && (
+              <span>{appointment.patient.gender}</span>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+            Session time
+          </p>
+          <p className="mt-1 font-bold leading-relaxed text-[#064F4B]">
+            {formatSlot(appointment.slot?.startTime)}
+          </p>
+          {appointment.sessionCount > 1 && (
+            <p className="mt-1 text-xs font-black uppercase tracking-widest text-[#0A7F7A]">
+              {appointment.packageName ??
+                `${appointment.sessionCount} sessions`}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 lg:max-w-56 lg:justify-end">
+          <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+            {appointment.status}
+          </span>
+          {appointment.status === "CONFIRMED" && appointment.meetingLink ? (
+            <a
+              href={appointment.meetingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-[#0A7F7A] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#064F4B]"
+            >
+              <LucideIcon name="video" size={14} />
+              Join session
+            </a>
+          ) : (
+            <span className="inline-flex min-h-11 w-fit items-center rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+              No Zoom link
+            </span>
+          )}
+          <label className="sr-only" htmlFor={`status-${appointment.id}`}>
+            Update status for {patientName}
+          </label>
+          <select
+            id={`status-${appointment.id}`}
+            value={appointment.status}
+            aria-label={`Update status for ${patientName}`}
+            onChange={(event) =>
+              onStatusChange(
+                appointment,
+                event.target.value as BookingResponse["status"],
+              )
+            }
+            className="min-h-11 rounded-full border border-[#DDE8E5] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B] outline-none focus:border-[#0A7F7A] focus:ring-2 focus:ring-[#0A7F7A]/20"
+          >
+            <option value="PENDING">Pending</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      <details className="group mt-5 rounded-[1.25rem] border border-[#DDE8E5] bg-[#F8FBF8]">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-sm font-black text-[#064F4B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A7F7A]">
+          <span className="inline-flex items-center gap-2">
+            <LucideIcon name="heart-pulse" size={17} />
+            Patient health information
+          </span>
+          <span className="shrink-0 text-[10px] uppercase tracking-widest text-[#5F7F7A]">
+            {healthEntries.length > 0
+              ? `${healthEntries.length} shared fields`
+              : "Not added"}
+          </span>
+        </summary>
+        <div className="border-t border-[#DDE8E5] px-4 py-4">
+          {healthEntries.length > 0 ? (
+            <dl className="grid gap-4 sm:grid-cols-2">
+              {healthEntries.map(([key, value]) => (
+                <div key={key} className="min-w-0 rounded-lg bg-white p-4">
+                  <dt className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                    {formatHealthInfoLabel(key)}
+                  </dt>
+                  <dd className="mt-2 whitespace-pre-wrap break-words text-sm font-bold leading-relaxed text-[#2E3E3C]">
+                    {value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="text-sm font-bold text-[#5F7F7A]">
+              This patient has not shared health information yet.
+            </p>
+          )}
+          <p className="mt-4 text-xs font-bold text-[#5F7F7A]">
+            Health information is private and should only be used for the
+            patient&apos;s care.
+          </p>
+        </div>
+      </details>
+    </article>
+  );
+}
+
 export default function TherapistProfilePage() {
   const user = getCurrentUser();
   const [appointments, setAppointments] = useState<BookingResponse[]>([]);
@@ -84,6 +260,8 @@ export default function TherapistProfilePage() {
     voiceIntro: null,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isAppointmentsRefreshing, setIsAppointmentsRefreshing] =
+    useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingField, setUploadingField] = useState<
     "image" | "voiceIntro" | null
@@ -273,6 +451,24 @@ export default function TherapistProfilePage() {
     setSlots(await getMyAvailabilitySlots(token));
   };
 
+  const refreshAppointments = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    setIsAppointmentsRefreshing(true);
+    setError("");
+    try {
+      setAppointments(await getAppointments(token));
+      setNotice("Appointments and patient health information refreshed.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Unable to refresh appointments.",
+      );
+    } finally {
+      setIsAppointmentsRefreshing(false);
+    }
+  };
+
   const saveSlot = async (event: React.FormEvent) => {
     event.preventDefault();
     const token = getAccessToken();
@@ -356,7 +552,7 @@ export default function TherapistProfilePage() {
   return (
     <main className="min-h-screen bg-[#F8FBF8] font-body text-[#2E3E3C]">
       <DashboardNavbar />
-      <section className="pt-24 pb-20 px-6">
+      <section className="px-4 pb-20 pt-24 sm:px-6">
         <div className="mx-auto max-w-7xl">
           <div className="rounded-[2rem] bg-white p-6 md:p-9 shadow-sm border border-[#E2E8E6]">
             <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr]">
@@ -436,12 +632,19 @@ export default function TherapistProfilePage() {
 
                 <div className="mt-8">
                   {notice && (
-                    <p className="mb-4 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]">
+                    <p
+                      role="status"
+                      aria-live="polite"
+                      className="mb-4 rounded-lg bg-[#EAF7F2] p-4 font-bold text-[#075E59]"
+                    >
                       {notice}
                     </p>
                   )}
                   {error && (
-                    <p className="mb-4 rounded-lg bg-red-50 p-4 font-bold text-red-700">
+                    <p
+                      role="alert"
+                      className="mb-4 rounded-lg bg-red-50 p-4 font-bold text-red-700"
+                    >
                       {error}
                     </p>
                   )}
@@ -671,6 +874,7 @@ export default function TherapistProfilePage() {
                                 onClick={() => editSlot(slot)}
                                 className="rounded-full border border-[#DDE8E5] p-3 text-[#064F4B] disabled:opacity-40"
                                 title="Edit slot"
+                                aria-label={`Edit slot ${formatAvailabilitySlotRange(slot)}`}
                               >
                                 <LucideIcon name="pencil" size={16} />
                               </button>
@@ -680,6 +884,7 @@ export default function TherapistProfilePage() {
                                 onClick={() => removeSlot(slot)}
                                 className="rounded-full border border-red-100 p-3 text-red-600 disabled:opacity-40"
                                 title="Delete slot"
+                                aria-label={`Delete slot ${formatAvailabilitySlotRange(slot)}`}
                               >
                                 <LucideIcon name="trash-2" size={16} />
                               </button>
@@ -691,103 +896,60 @@ export default function TherapistProfilePage() {
                   )}
 
                   {activeTab === "appointments" && (
-                    <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-[#E2E8E6]">
+                    <section className="mt-8">
+                      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <h3 className="text-xl font-heading font-black text-[#064F4B]">
+                            Patient appointments
+                          </h3>
+                          <p className="mt-1 text-sm font-bold text-[#5F7F7A]">
+                            Review current patient details and private health
+                            information.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={refreshAppointments}
+                          disabled={isAppointmentsRefreshing}
+                          className="inline-flex min-h-11 w-fit items-center gap-2 rounded-full border border-[#DDE8E5] bg-white px-5 py-3 text-xs font-black uppercase tracking-widest text-[#064F4B] disabled:cursor-wait disabled:opacity-60"
+                        >
+                          <LucideIcon
+                            name="refresh-cw"
+                            size={15}
+                            className={
+                              isAppointmentsRefreshing ? "animate-spin" : ""
+                            }
+                          />
+                          {isAppointmentsRefreshing ? "Refreshing" : "Refresh"}
+                        </button>
+                      </div>
                       {isLoading && (
-                        <p className="bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">
+                        <p className="rounded-[1.5rem] bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">
                           Loading appointments...
                         </p>
                       )}
                       {!isLoading && error && (
-                        <p className="bg-red-50 p-5 font-bold text-red-700">
+                        <p className="rounded-[1.5rem] bg-red-50 p-5 font-bold text-red-700">
                           {error}
                         </p>
                       )}
                       {!isLoading && !error && appointments.length === 0 && (
-                        <p className="bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">
+                        <p className="rounded-[1.5rem] bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">
                           No appointments have been booked yet.
                         </p>
                       )}
-                      {!isLoading &&
-                        !error &&
-                        appointments.map((appointment) => (
-                          <article
-                            key={appointment.id}
-                            className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 md:grid-cols-[1fr_1fr_auto_auto_auto] md:items-center"
-                          >
-                            <div>
-                              <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
-                                Patient
-                              </p>
-                              <p className="mt-1 font-black text-[#064F4B]">
-                                {appointment.patient?.fullName ||
-                                  appointment.patient?.email ||
-                                  "Patient"}
-                              </p>
-                              {appointment.patient?.healthInfo && (
-                                <p className="mt-1 text-xs font-bold text-[#5F7F7A]">
-                                  {[
-                                    appointment.patient.healthInfo
-                                      .primaryConcern,
-                                    appointment.patient.healthInfo
-                                      .currentSymptoms,
-                                  ]
-                                    .filter(Boolean)
-                                    .join(" · ") || "Health info added"}
-                                </p>
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
-                                Slot
-                              </p>
-                              <p className="mt-1 font-bold text-[#064F4B]">
-                                {formatSlot(appointment.slot?.startTime)}
-                              </p>
-                              {appointment.sessionCount > 1 && (
-                                <p className="mt-1 text-xs font-black uppercase tracking-widest text-[#0A7F7A]">
-                                  {appointment.packageName ??
-                                    `${appointment.sessionCount} sessions`}
-                                </p>
-                              )}
-                            </div>
-                            <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
-                              {appointment.status}
-                            </span>
-                            {appointment.status === "CONFIRMED" &&
-                            appointment.meetingLink ? (
-                              <a
-                                href={appointment.meetingLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex w-fit items-center gap-2 rounded-full bg-[#0A7F7A] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white"
-                              >
-                                <LucideIcon name="video" size={14} />
-                                Join session
-                              </a>
-                            ) : (
-                              <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
-                                No Zoom link
-                              </span>
-                            )}
-                            <select
-                              value={appointment.status}
-                              onChange={(event) =>
-                                changeAppointmentStatus(
-                                  appointment,
-                                  event.target
-                                    .value as BookingResponse["status"],
-                                )
-                              }
-                              className="rounded-full border border-[#DDE8E5] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#064F4B] outline-none"
-                            >
-                              <option value="PENDING">Pending</option>
-                              <option value="CONFIRMED">Confirmed</option>
-                              <option value="COMPLETED">Completed</option>
-                              <option value="CANCELLED">Cancelled</option>
-                            </select>
-                          </article>
-                        ))}
-                    </div>
+                      {!isLoading && !error && appointments.length > 0 && (
+                        <div className="grid gap-4">
+                          {appointments.map((appointment) => (
+                            <TherapistAppointmentCard
+                              key={appointment.id}
+                              appointment={appointment}
+                              onStatusChange={changeAppointmentStatus}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </section>
                   )}
 
                   {activeTab === "cases" && (
@@ -886,8 +1048,7 @@ export default function TherapistProfilePage() {
                                 "Patient"}
                             </p>
                             <p className="mt-1 text-xs font-black uppercase tracking-widest text-[#5F7F7A]">
-                              Updated{" "}
-                              {formatIstDateTime(sheet.updatedAt)}
+                              Updated {formatIstDateTime(sheet.updatedAt)}
                             </p>
                             <p className="mt-3 text-sm font-bold text-[#5F7F7A]">
                               {sheet.presentingConcern ||
@@ -988,6 +1149,8 @@ function MediaUploadField({
         <img
           src={previewValue}
           alt={`${label} preview`}
+          loading="lazy"
+          decoding="async"
           className="mt-4 h-32 w-32 rounded-lg object-cover"
         />
       )}

@@ -77,6 +77,7 @@ function AppointmentCard({
   payment,
   isPaid,
   isCancelling,
+  policyNow,
   onInvoice,
   onCancel,
 }: {
@@ -84,15 +85,10 @@ function AppointmentCard({
   payment?: Payment;
   isPaid: boolean;
   isCancelling: boolean;
+  policyNow: number;
   onInvoice: (payment: Payment) => void;
   onCancel: (appointment: BookingResponse) => void;
 }) {
-  const [policyNow, setPolicyNow] = useState(Date.now());
-  useEffect(() => {
-    const interval = window.setInterval(() => setPolicyNow(Date.now()), 15_000);
-    return () => window.clearInterval(interval);
-  }, []);
-
   const canJoinSession =
     appointment.status === "CONFIRMED" && Boolean(appointment.meetingLink);
   const canOpenInvoice =
@@ -210,6 +206,12 @@ export default function PatientProfilePage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [activeTab, setActiveTab] = useState("appointments");
+  const [policyNow, setPolicyNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setPolicyNow(Date.now()), 15_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     try {
@@ -445,7 +447,7 @@ export default function PatientProfilePage() {
   return (
     <main className="min-h-screen bg-[#F8FBF8] font-body text-[#2E3E3C]">
       <DashboardNavbar />
-      <section className="pt-24 pb-20 px-6">
+      <section className="px-4 pb-20 pt-24 sm:px-6">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-8 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.1fr)] lg:items-start">
             <section className="rounded-[2rem] bg-[#064F4B] p-7 md:p-9 text-white shadow-xl shadow-[#064F4B]/10">
@@ -536,7 +538,11 @@ export default function PatientProfilePage() {
 
               <div className="mt-8">
                 {notice && (
-                  <div className="mb-4 rounded-2xl border border-[#BFE8D9] bg-[#EAF7F2] p-4">
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="mb-4 rounded-2xl border border-[#BFE8D9] bg-[#EAF7F2] p-4"
+                  >
                     <p className="font-bold text-[#075E59]">{notice}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
@@ -557,7 +563,10 @@ export default function PatientProfilePage() {
                   </div>
                 )}
                 {error && (
-                  <p className="mb-4 rounded-lg bg-red-50 p-4 font-bold text-red-700">
+                  <p
+                    role="alert"
+                    className="mb-4 rounded-lg bg-red-50 p-4 font-bold text-red-700"
+                  >
                     {error}
                   </p>
                 )}
@@ -589,6 +598,7 @@ export default function PatientProfilePage() {
                           isCancelling={
                             cancellingAppointmentId === appointment.id
                           }
+                          policyNow={policyNow}
                           onInvoice={openInvoice}
                           onCancel={cancelBooking}
                         />

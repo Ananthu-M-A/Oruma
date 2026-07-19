@@ -15,7 +15,12 @@ describe('getDatabaseConnectionOptions', () => {
       retryDelay: 3000,
     });
     expect(options.ssl).toEqual({ rejectUnauthorized: true });
-    expect(options.extra).toEqual({ options: '-c timezone=Asia/Kolkata' });
+    expect(options.extra).toEqual({
+      options: '-c timezone=Asia/Kolkata',
+      max: 5,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 10_000,
+    });
   });
 
   it('uses explicit host credentials when no DATABASE_URL is provided', () => {
@@ -37,7 +42,29 @@ describe('getDatabaseConnectionOptions', () => {
       database: 'oruma',
       retryAttempts: 5,
       retryDelay: 3000,
-      extra: { options: '-c timezone=Asia/Kolkata' },
+      extra: {
+        options: '-c timezone=Asia/Kolkata',
+        max: 5,
+        idleTimeoutMillis: 30_000,
+        connectionTimeoutMillis: 10_000,
+      },
+    });
+  });
+
+  it('supports a bounded database pool configuration', () => {
+    const options = getDatabaseConnectionOptions((key) => {
+      if (key === 'DATABASE_URL')
+        return 'postgresql://user:pass@remote.example.com/db';
+      if (key === 'DATABASE_POOL_MAX') return '3';
+      if (key === 'DATABASE_POOL_IDLE_TIMEOUT_MS') return '15000';
+      if (key === 'DATABASE_CONNECTION_TIMEOUT_MS') return '7000';
+      return undefined;
+    });
+
+    expect(options.extra).toMatchObject({
+      max: 3,
+      idleTimeoutMillis: 15_000,
+      connectionTimeoutMillis: 7_000,
     });
   });
 
