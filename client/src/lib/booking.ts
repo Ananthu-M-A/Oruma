@@ -1,6 +1,20 @@
 import { API_BASE_URL } from "./auth";
 
 export const PATIENT_CANCELLATION_WINDOW_MS = 60 * 60 * 1000;
+export const POST_PAYMENT_NOTICE_KEY = "oruma_post_payment_notice";
+export const BOOKING_LEAD_TIME_MS = 24 * 60 * 60 * 1000;
+export const isBookingLeadTimeBypassEnabled =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_BOOKING_LEAD_TIME_BYPASS_ENABLED === "true";
+
+export function getEarliestBookableSlotTime(now = Date.now()) {
+  const cutoff =
+    now + (isBookingLeadTimeBypassEnabled ? 0 : BOOKING_LEAD_TIME_MS);
+
+  // datetime-local inputs use minute precision, so round upward to ensure the
+  // submitted timestamp never falls just before the server-side cutoff.
+  return Math.ceil((cutoff + 1) / 60_000) * 60_000;
+}
 
 export interface BookingData {
   slotId: string;

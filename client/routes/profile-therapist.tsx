@@ -7,7 +7,9 @@ import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
 import {
   BookingResponse,
+  getEarliestBookableSlotTime,
   getAppointments,
+  isBookingLeadTimeBypassEnabled,
   updateAppointmentStatus,
 } from "../src/lib/booking";
 import {
@@ -589,7 +591,7 @@ export default function TherapistProfilePage() {
                             type="datetime-local"
                             required
                             min={toIstDateTimeInputValue(
-                              new Date(Date.now() + 60 * 1000).toISOString(),
+                              getEarliestBookableSlotTime(),
                             )}
                             value={slotForm.startTime}
                             onChange={(event) => {
@@ -625,6 +627,11 @@ export default function TherapistProfilePage() {
                           {editingSlotId ? "Update" : "Add"}
                         </button>
                       </form>
+                      <p className="mt-3 text-xs font-bold text-[#5F7F7A]">
+                        {isBookingLeadTimeBypassEnabled
+                          ? "Development lead-time bypass is enabled; any future slot may be posted."
+                          : "Availability must start at least 24 hours from the current time."}
+                      </p>
                       {editingSlotId && (
                         <button
                           type="button"

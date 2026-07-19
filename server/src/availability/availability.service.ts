@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
 
 import { AvailabilitySlot } from './entities/availability-slot.entity';
 import { Therapist } from '../therapist/entities/therapist.entity';
@@ -17,6 +17,10 @@ import { BulkCreateAvailabilityDto } from './dto/bulk-create-availability.dto';
 import { JwtPayload } from '../auth/strategies/jwt.strategy';
 import { CreateOwnAvailabilitySlotDto } from './dto/create-own-availability-slot.dto';
 import { UpdateAvailabilitySlotDto } from './dto/update-availability-slot.dto';
+import {
+  getEarliestBookableStartTime,
+  isStartTimeBookable,
+} from '../appointment/booking-lead-time';
 
 @Injectable()
 export class AvailabilityService {
@@ -60,6 +64,12 @@ export class AvailabilityService {
 
     if (startTime <= new Date()) {
       throw new BadRequestException('Past time slots cannot be added');
+    }
+
+    if (!isStartTimeBookable(startTime)) {
+      throw new BadRequestException(
+        'Availability slots must start at least 24 hours from the current time.',
+      );
     }
 
     if (endTime <= startTime) {
@@ -135,7 +145,7 @@ export class AvailabilityService {
           id: therapistId,
         },
         status: SlotStatus.AVAILABLE,
-        startTime: MoreThan(new Date()),
+        startTime: MoreThanOrEqual(getEarliestBookableStartTime()),
       },
       order: {
         startTime: 'ASC',
@@ -158,7 +168,11 @@ export class AvailabilityService {
     });
   }
 
-  async update(slotId: string, dto: UpdateAvailabilitySlotDto, user: JwtPayload) {
+  async update(
+    slotId: string,
+    dto: UpdateAvailabilitySlotDto,
+    user: JwtPayload,
+  ) {
     const slot = await this.findOwnedSlot(slotId, user);
 
     if (slot.status === SlotStatus.BOOKED) {

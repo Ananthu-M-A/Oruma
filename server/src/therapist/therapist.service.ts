@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { ConfigService } from '@nestjs/config';
@@ -22,6 +22,7 @@ import { NotificationService } from '../notification/notification.service';
 import { Therapist } from './entities/therapist.entity';
 import { CreateTherapistDto } from './dto/create-therapist.dto';
 import { UpdateTherapistDto } from './dto/update-therapist.dto';
+import { getEarliestBookableStartTime } from '../appointment/booking-lead-time';
 
 type TherapistPerformance = {
   therapistId: string;
@@ -113,7 +114,12 @@ export class TherapistService {
       },
     });
 
-    return this.attachNextAvailableSlots(therapists);
+    const therapistsWithAvailability =
+      await this.attachNextAvailableSlots(therapists);
+
+    return therapistsWithAvailability.filter(
+      (therapist) => therapist.nextAvailableSlot !== null,
+    );
   }
 
   findAllForAdmin(): Promise<Therapist[]> {
@@ -187,9 +193,8 @@ export class TherapistService {
 
     void email;
     void isActive;
-    therapist.pendingProfileChanges = this.removeEmptyProfileChanges(
-      profileUpdates as Record<string, unknown>,
-    );
+    therapist.pendingProfileChanges =
+      this.removeEmptyProfileChanges(profileUpdates);
     therapist.pendingProfileSubmittedAt = new Date();
 
     const savedTherapist = await this.therapistRepo.save(therapist);
@@ -325,7 +330,7 @@ export class TherapistService {
   }
 
   private async attachNextAvailableSlots(therapists: Therapist[]) {
-    const now = new Date();
+    const earliestBookableStartTime = getEarliestBookableStartTime();
 
     return Promise.all(
       therapists.map(async (therapist) => {
@@ -335,7 +340,7 @@ export class TherapistService {
               id: therapist.id,
             },
             status: SlotStatus.AVAILABLE,
-            startTime: MoreThan(now),
+            startTime: MoreThanOrEqual(earliestBookableStartTime),
           },
           order: {
             startTime: 'ASC',

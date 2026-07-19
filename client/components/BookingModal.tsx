@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { LucideIcon } from "@site-builder/icons";
 import {
   AvailabilitySlot,
@@ -11,6 +10,8 @@ import {
   createAppointment,
   createQuickAppointment,
   cancelAppointment,
+  isBookingLeadTimeBypassEnabled,
+  POST_PAYMENT_NOTICE_KEY,
 } from "../src/lib/booking";
 import {
   getAccessToken,
@@ -32,6 +33,17 @@ import {
 const isPaymentBypassEnabled =
   import.meta.env.DEV &&
   import.meta.env.VITE_PAYMENT_BYPASS_ENABLED === "true";
+function redirectToPatientProfile(notice: string) {
+  try {
+    window.sessionStorage.setItem(POST_PAYMENT_NOTICE_KEY, notice);
+  } catch {
+    // The redirect still works when browser storage is unavailable.
+  }
+
+  // A full navigation removes any Razorpay iframe/backdrop before the profile
+  // renders and guarantees that the profile reloads its confirmed payment.
+  window.location.replace("/profile/patient");
+}
 
 function loadRazorpayCheckout() {
   if (window.Razorpay) return Promise.resolve();
@@ -67,7 +79,6 @@ export default function BookingModal({
   therapist,
   initialSlot = null,
 }) {
-  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [availabilitySlots, setAvailabilitySlots] = useState<
     AvailabilitySlot[]
@@ -127,7 +138,18 @@ export default function BookingModal({
 
     getAvailabilitySlots(therapist.id)
       .then((slots) => {
-        if (isMounted) setAvailabilitySlots(slots);
+        if (!isMounted) return;
+        setAvailabilitySlots(slots);
+        setFormData((current) => {
+          if (
+            !current.slotId ||
+            slots.some((slot) => slot.id === current.slotId)
+          ) {
+            return current;
+          }
+
+          return { ...current, slotId: "", date: "", time: "" };
+        });
       })
       .catch((err) => {
         if (isMounted)
@@ -200,6 +222,7 @@ export default function BookingModal({
     const currentUser = getCurrentUser();
     const isQuickBooking = !currentUser || !accessToken;
     let paymentCompleted = false;
+    let paymentVerificationStarted = false;
 
     try {
       setSubmitError("");
@@ -259,13 +282,9 @@ export default function BookingModal({
         setIsSubmitting(false);
         setTimeout(() => {
           onClose();
-          navigate("/profile/patient", {
-            state: {
-              notice:
-                "Test booking completed with the development payment bypass.",
-              activeTab: "appointments",
-            },
-          });
+          redirectToPatientProfile(
+            "Test booking completed with the development payment bypass.",
+          );
         }, 1000);
         return;
       }
@@ -289,6 +308,7 @@ export default function BookingModal({
           contact: formData.phone,
         },
         handler: async (response) => {
+          paymentVerificationStarted = true;
           try {
             await verifyRazorpayPayment(accessToken!, {
               razorpayOrderId: response.razorpay_order_id,
@@ -300,13 +320,9 @@ export default function BookingModal({
             setSubmitError("");
             setTimeout(() => {
               onClose();
-              navigate("/profile/patient", {
-                state: {
-                  notice:
-                    "Appointment booked and payment verified successfully.",
-                  activeTab: "appointments",
-                },
-              });
+              redirectToPatientProfile(
+                "Appointment booked and payment verified successfully.",
+              );
             }, 1000);
           } catch (err) {
             setSubmitError(
@@ -321,7 +337,11 @@ export default function BookingModal({
         },
         modal: {
           ondismiss: async () => {
-            if (!paymentCompleted && appointmentId) {
+            if (
+              !paymentCompleted &&
+              !paymentVerificationStarted &&
+              appointmentId
+            ) {
               await cancelAppointment(appointmentId, accessToken!).catch(
                 () => undefined,
               );
@@ -528,7 +548,9 @@ export default function BookingModal({
                   availabilitySlots.length === 0 && (
                     <div className="rounded-xl bg-white p-4">
                       <p className="text-sm font-bold text-gray-700">
-                        No detailed slots are published yet.
+                        {isBookingLeadTimeBypassEnabled
+                          ? "No future slots are available."
+                          : "No slots bookable at least 24 hours in advance are available."}
                       </p>
                       <p className="text-xs font-medium text-gray-500 mt-1">
                         Please choose another therapist or check again later.
@@ -539,34 +561,41 @@ export default function BookingModal({
                 {!isAvailabilityLoading &&
                   !availabilityError &&
                   availabilitySlots.length > 0 && (
-                    <div className="grid gap-3 max-h-72 overflow-y-auto pr-1">
-                      {availabilitySlots.map((slot) => (
-                        <button
-                          key={slot.id}
-                          onClick={() => selectSlot(slot)}
-                          className={`w-full rounded-xl border p-4 text-left transition-all ${
-                            formData.slotId === slot.id
-                              ? "bg-[#A3B899] border-[#A3B899] text-white shadow-lg"
-                              : "bg-white border-gray-200 text-gray-700 hover:border-[#A3B899]"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="font-black text-sm">
-                              {getSlotDateLabel(slot)}
-                            </span>
-                            <span
-                              className={`text-[10px] font-black uppercase tracking-widest ${formData.slotId === slot.id ? "text-white/70" : "text-[#064F4B]/40"}`}
-                            >
-                              Available
-                            </span>
-                          </div>
-                          <p
-                            className={`mt-1 text-xs font-bold ${formData.slotId === slot.id ? "text-white/80" : "text-gray-500"}`}
+                    <div>
+                      <p className="mb-3 text-xs font-bold text-gray-500">
+                        {isBookingLeadTimeBypassEnabled
+                          ? "Development lead-time bypass is enabled."
+                          : "Appointments must be scheduled at least 24 hours in advance."}
+                      </p>
+                      <div className="grid gap-3 max-h-72 overflow-y-auto pr-1">
+                        {availabilitySlots.map((slot) => (
+                          <button
+                            key={slot.id}
+                            onClick={() => selectSlot(slot)}
+                            className={`w-full rounded-xl border p-4 text-left transition-all ${
+                              formData.slotId === slot.id
+                                ? "bg-[#A3B899] border-[#A3B899] text-white shadow-lg"
+                                : "bg-white border-gray-200 text-gray-700 hover:border-[#A3B899]"
+                            }`}
                           >
-                            {getSlotTimeLabel(slot)}
-                          </p>
-                        </button>
-                      ))}
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="font-black text-sm">
+                                {getSlotDateLabel(slot)}
+                              </span>
+                              <span
+                                className={`text-[10px] font-black uppercase tracking-widest ${formData.slotId === slot.id ? "text-white/70" : "text-[#064F4B]/40"}`}
+                              >
+                                Available
+                              </span>
+                            </div>
+                            <p
+                              className={`mt-1 text-xs font-bold ${formData.slotId === slot.id ? "text-white/80" : "text-gray-500"}`}
+                            >
+                              {getSlotTimeLabel(slot)}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
               </div>

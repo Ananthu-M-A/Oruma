@@ -37,6 +37,7 @@ describe('TherapistService', () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TherapistService,
@@ -76,5 +77,24 @@ describe('TherapistService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  it('omits public therapists without bookable slots', async () => {
+    const therapists = [
+      { id: 'therapist-with-slot', isActive: true, nextAvailableSlot: null },
+      { id: 'therapist-without-slot', isActive: true, nextAvailableSlot: null },
+    ];
+    therapistRepository.find.mockResolvedValue(therapists);
+    slotRepository.findOne
+      .mockResolvedValueOnce({ startTime: new Date('2026-07-21T04:30:00Z') })
+      .mockResolvedValueOnce(null);
+
+    const result = await service.findAll();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('therapist-with-slot');
+    expect(result[0].nextAvailableSlot).toEqual(
+      new Date('2026-07-21T04:30:00Z'),
+    );
   });
 });

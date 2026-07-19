@@ -270,7 +270,7 @@ export default function TherapistDetailPage() {
 
                   {!isAvailabilityLoading && !availabilityError && availabilitySlots.length === 0 && (
                     <div className="mt-6 bg-[#F5F8F7] rounded-[1.25rem] p-5">
-                      <p className="text-sm font-black text-[#064F4B]">Detailed slots are not published yet.</p>
+                      <p className="text-sm font-black text-[#064F4B]">No slots bookable at least 24 hours in advance are available.</p>
                       <p className="text-sm font-bold text-[#5F7F7A] mt-1">Next available: {profile.slot}</p>
                     </div>
                   )}

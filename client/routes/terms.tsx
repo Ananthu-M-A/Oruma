@@ -36,6 +36,7 @@ const sections = [
     title: '4. Appointments and Consultations',
     body: [
       'Appointments are subject to therapist availability, confirmation, successful payment where applicable, and platform scheduling rules.',
+      'Therapists may publish, and patients may select, only appointment times scheduled at least twenty-four (24) hours after the current time.',
       'All appointment times, therapist availability, booking timestamps, cancellation windows, and related schedule information displayed by ORUMA use Indian Standard Time (IST, Asia/Kolkata).',
       'ORUMA may send confirmations, reminders, payment updates, Zoom/session links, and support communications through email, WhatsApp/SMS, dashboard notices, or other configured channels.',
       'Therapists may update case sheets or session notes for continuity of care, administrative review, and lawful record keeping.',

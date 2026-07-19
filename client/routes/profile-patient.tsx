@@ -17,6 +17,7 @@ import {
   canPatientCancelAppointment,
   cancelAppointment,
   getMyAppointments,
+  POST_PAYMENT_NOTICE_KEY,
 } from "../src/lib/booking";
 import {
   createTicket,
@@ -209,6 +210,21 @@ export default function PatientProfilePage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [activeTab, setActiveTab] = useState("appointments");
+
+  useEffect(() => {
+    try {
+      const paymentNotice = window.sessionStorage.getItem(
+        POST_PAYMENT_NOTICE_KEY,
+      );
+      if (!paymentNotice) return;
+
+      window.sessionStorage.removeItem(POST_PAYMENT_NOTICE_KEY);
+      setNotice(paymentNotice);
+      setActiveTab("appointments");
+    } catch {
+      // The profile remains usable when browser storage is unavailable.
+    }
+  }, []);
 
   useEffect(() => {
     const state = location.state as {

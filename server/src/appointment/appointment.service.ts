@@ -29,6 +29,7 @@ import { AppointmentStatus } from './entities/appointment-status.enum';
 import { calculateSessionPackagePricing } from './session-package-pricing';
 import { canPatientCancelAppointment } from './appointment-policy';
 import { formatIstSlotRange } from '../common/ist-date-time';
+import { isStartTimeBookable } from './booking-lead-time';
 
 @Injectable()
 export class AppointmentService {
@@ -144,6 +145,12 @@ export class AppointmentService {
 
     if (slot.status !== SlotStatus.AVAILABLE) {
       throw new BadRequestException('Selected slot is unavailable');
+    }
+
+    if (!isStartTimeBookable(slot.startTime)) {
+      throw new BadRequestException(
+        'Appointments must be booked for a time at least 24 hours in advance.',
+      );
     }
 
     const existingAppointment = await appointmentRepo.findOne({

@@ -89,7 +89,10 @@ export async function getTherapists() {
     throw new Error(message);
   }
 
-  return (data as Therapist[]).filter((therapist) => therapist.isActive);
+  return (data as Therapist[]).filter(
+    (therapist) =>
+      therapist.isActive && therapist.nextAvailableSlot !== null,
+  );
 }
 
 export async function getAdminTherapists(accessToken: string) {
