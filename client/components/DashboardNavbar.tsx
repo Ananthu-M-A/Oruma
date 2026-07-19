@@ -8,6 +8,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "../src/lib/notifications";
+import { IST_TIME_ZONE } from "../src/lib/dateTime";
 
 const roleHome: Record<AuthRole, string> = {
   PATIENT: "/profile/patient",
@@ -253,5 +254,9 @@ function formatNotificationTime(value: string) {
   const diffHours = Math.floor(diffMinutes / 60);
   if (diffHours < 24) return `${diffHours}h`;
 
-  return date.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  return date.toLocaleDateString("en-IN", {
+    timeZone: IST_TIME_ZONE,
+    day: "numeric",
+    month: "short",
+  });
 }

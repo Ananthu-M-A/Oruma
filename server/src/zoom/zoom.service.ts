@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Appointment } from '../appointment/entities/appointment.entity';
+import { IST_TIME_ZONE } from '../common/ist-date-time';
 
 type ZoomTokenResponse = {
   access_token?: string;
@@ -67,10 +68,7 @@ export class ZoomService {
             type: 2,
             start_time: startTime?.toISOString(),
             duration,
-            timezone: this.configService.get<string>(
-              'ZOOM_TIMEZONE',
-              'Asia/Kolkata',
-            ),
+            timezone: IST_TIME_ZONE,
             agenda: `Oruma appointment ${appointment.id}`,
             settings: {
               host_video: true,

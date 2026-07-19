@@ -6,9 +6,10 @@ async function readResponse<T>(response: Response, fallback: string): Promise<T>
   const data = (await response.json().catch(() => ({}))) as T | ApiMessage;
 
   if (!response.ok) {
-    const message = Array.isArray((data as ApiMessage).message)
-      ? (data as { message: string[] }).message.join(" ")
-      : ((data as ApiMessage).message ?? fallback);
+    const apiMessage = (data as ApiMessage).message;
+    const message = Array.isArray(apiMessage)
+      ? apiMessage.join(" ")
+      : (apiMessage ?? fallback);
     throw new Error(message);
   }
 

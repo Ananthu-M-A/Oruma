@@ -15,6 +15,7 @@ import {
   getTherapistImage,
   Therapist,
 } from '../src/lib/therapists';
+import { getIstDateKey } from '../src/lib/dateTime';
 
 export const meta = {
   title: 'Therapist Profile | ORUMA Wellness',
@@ -112,9 +113,9 @@ export default function TherapistDetailPage() {
     if (availabilitySlots.length === 0) return [];
 
     const firstSlot = availabilitySlots[0];
-    const firstDate = new Date(firstSlot.startTime).toDateString();
+    const firstDate = getIstDateKey(firstSlot.startTime);
 
-    return availabilitySlots.filter((slot) => new Date(slot.startTime).toDateString() === firstDate);
+    return availabilitySlots.filter((slot) => getIstDateKey(slot.startTime) === firstDate);
   }, [availabilitySlots]);
 
   return (

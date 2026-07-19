@@ -8,7 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, Not, Repository } from 'typeorm';
 
 import { JwtPayload } from '../auth/strategies/jwt.strategy';
 import { Appointment } from './entities/appointment.entity';
@@ -27,6 +27,8 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
 import { AppointmentStatus } from './entities/appointment-status.enum';
 import { calculateSessionPackagePricing } from './session-package-pricing';
+import { canPatientCancelAppointment } from './appointment-policy';
+import { formatIstSlotRange } from '../common/ist-date-time';
 
 @Injectable()
 export class AppointmentService {
@@ -36,8 +38,6 @@ export class AppointmentService {
     @InjectRepository(Appointment)
     private readonly appointmentRepo: Repository<Appointment>,
 
-    @InjectRepository(AvailabilitySlot)
-    private readonly slotRepo: Repository<AvailabilitySlot>,
     private readonly mailService: MailService,
     private readonly whatsAppService: WhatsAppService,
     private readonly dataSource: DataSource,
@@ -151,6 +151,7 @@ export class AppointmentService {
         slot: {
           id: slot.id,
         },
+        status: Not(AppointmentStatus.CANCELLED),
       },
     });
 
@@ -306,7 +307,10 @@ export class AppointmentService {
     appointment: Appointment,
     email: string | null,
   ) {
-    const slotRange = `${appointment.slot.startTime.toISOString()} - ${appointment.slot.endTime.toISOString()}`;
+    const slotRange = formatIstSlotRange(
+      appointment.slot.startTime,
+      appointment.slot.endTime,
+    );
     const service = appointment.service ?? 'Therapy session';
 
     if (email) {
@@ -480,6 +484,35 @@ export class AppointmentService {
       ? await this.findOneForUser(id, user)
       : await this.findOne(id);
 
+    if (
+      appointment.status === AppointmentStatus.CANCELLED &&
+      dto.status !== AppointmentStatus.CANCELLED
+    ) {
+      throw new BadRequestException(
+        'A cancelled appointment cannot be reopened. Book the available slot again instead.',
+      );
+    }
+
+    if (
+      dto.status === AppointmentStatus.CANCELLED &&
+      appointment.status === AppointmentStatus.COMPLETED
+    ) {
+      throw new BadRequestException(
+        'A completed appointment cannot be cancelled',
+      );
+    }
+
+    if (appointment.status === dto.status) return appointment;
+
+    if (dto.status === AppointmentStatus.CANCELLED) {
+      const savedAppointment = await this.persistCancellation(appointment);
+      await this.sendAppointmentStatusInAppNotifications(
+        savedAppointment,
+        user,
+      );
+      return savedAppointment;
+    }
+
     appointment.status = dto.status;
 
     const shouldCreateMeeting =
@@ -504,29 +537,71 @@ export class AppointmentService {
     return savedAppointment;
   }
 
-  async remove(id: string, user?: JwtPayload): Promise<{ message: string }> {
+  async remove(id: string, user?: JwtPayload): Promise<Appointment> {
     const appointment = user
       ? await this.findOneForUser(id, user)
       : await this.findOne(id);
 
-    if (appointment.slot) {
-      appointment.slot.status = SlotStatus.AVAILABLE;
-
-      await this.slotRepo.save(appointment.slot);
+    if (appointment.status === AppointmentStatus.CANCELLED) {
+      return appointment;
     }
 
-    await this.appointmentRepo.remove(appointment);
+    if (appointment.status === AppointmentStatus.COMPLETED) {
+      throw new BadRequestException(
+        'A completed appointment cannot be cancelled',
+      );
+    }
 
-    return {
-      message: 'Appointment deleted successfully',
-    };
+    if (
+      user?.role === Role.PATIENT &&
+      (!appointment.createdAt ||
+        !appointment.slot?.startTime ||
+        !canPatientCancelAppointment(
+          appointment.createdAt,
+          appointment.slot.startTime,
+        ))
+    ) {
+      throw new BadRequestException(
+        'Patient cancellation is available only during the first hour after booking and before the appointment starts. Contact support for exceptional requests.',
+      );
+    }
+
+    const savedAppointment = await this.persistCancellation(appointment);
+    await this.sendAppointmentStatusInAppNotifications(savedAppointment, user);
+
+    return savedAppointment;
+  }
+
+  private async persistCancellation(appointment: Appointment) {
+    return this.dataSource.transaction(async (manager) => {
+      if (appointment.slot?.id) {
+        const slot = await manager
+          .getRepository(AvailabilitySlot)
+          .createQueryBuilder('slot')
+          .setLock('pessimistic_write')
+          .where('slot.id = :slotId', { slotId: appointment.slot.id })
+          .getOne();
+
+        if (slot?.status === SlotStatus.BOOKED) {
+          slot.status = SlotStatus.AVAILABLE;
+          await manager.getRepository(AvailabilitySlot).save(slot);
+        }
+      }
+
+      appointment.status = AppointmentStatus.CANCELLED;
+      appointment.meetingLink = null;
+      return manager.getRepository(Appointment).save(appointment);
+    });
   }
 
   private async sendMeetingLinkNotifications(appointment: Appointment) {
     const meetingLink = appointment.meetingLink;
     if (!meetingLink) return;
 
-    const slotRange = `${appointment.slot.startTime.toISOString()} - ${appointment.slot.endTime.toISOString()}`;
+    const slotRange = formatIstSlotRange(
+      appointment.slot.startTime,
+      appointment.slot.endTime,
+    );
     const service = appointment.service ?? 'Therapy session';
     const patientEmail = appointment.contactEmail ?? appointment.patient?.email;
     const patientName =
@@ -650,15 +725,9 @@ export class AppointmentService {
       return 'the selected slot';
     }
 
-    return `${appointment.slot.startTime.toLocaleString('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    })} - ${appointment.slot.endTime.toLocaleTimeString('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    })}`;
+    return formatIstSlotRange(
+      appointment.slot.startTime,
+      appointment.slot.endTime,
+    );
   }
 }

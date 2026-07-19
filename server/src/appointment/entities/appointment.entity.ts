@@ -3,7 +3,6 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToOne,
   JoinColumn,
   CreateDateColumn,
   Index,
@@ -15,6 +14,10 @@ import { AvailabilitySlot } from '../../availability/entities/availability-slot.
 import { AppointmentStatus } from './appointment-status.enum';
 
 @Entity()
+@Index('IDX_appointment_slot_active_unique', ['slot'], {
+  unique: true,
+  where: `"status" <> 'CANCELLED'`,
+})
 export class Appointment {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -29,11 +32,11 @@ export class Appointment {
   })
   therapist: Therapist;
 
-  @OneToOne(() => AvailabilitySlot, {
+  @ManyToOne(() => AvailabilitySlot, {
     eager: true,
   })
   @JoinColumn()
-  @Index('IDX_appointment_slot_unique', { unique: true })
+  @Index('IDX_appointment_slot')
   slot: AvailabilitySlot;
 
   @Column({
@@ -77,7 +80,7 @@ export class Appointment {
   packageDiscountPercent: number;
 
   @Column({ type: 'text', nullable: true })
-  meetingLink: string;
+  meetingLink: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -57,6 +57,7 @@ const sections = [
     title: '6. Data Security',
     body: [
       'ORUMA uses access controls, authentication, role-based restrictions, encryption in transit where available, restricted administrative access, and operational safeguards to protect user information.',
+      'Authenticated dashboards use an access token stored in the user browser until the user signs out or the token is removed. Users should sign out and avoid using a shared or untrusted device for sensitive account activity.',
       'No online platform can guarantee absolute security. Users should protect their login credentials and immediately report suspected unauthorized access.',
     ],
   },
@@ -82,9 +83,16 @@ const sections = [
     ],
   },
   {
-    title: '10. Contact and Grievance',
+    title: '10. Changes to this Privacy Policy',
     body: [
-      'For privacy questions, correction requests, deletion requests, or grievances, contact ORUMA at Oruma987@gmail.com or through the official contact page.',
+      'ORUMA may update this Privacy Policy to reflect legal, operational, technical, or business changes. The latest version will be published on this page with its revised effective date.',
+      'Continued use of the platform after an update constitutes acceptance of the revised Privacy Policy.',
+    ],
+  },
+  {
+    title: '11. Contact and Privacy Grievances',
+    body: [
+      'For privacy questions, correction requests, deletion requests, or grievances, contact ORUMA at privacy@oruma.me or through the official contact page.',
       'Users should include enough information for ORUMA to verify the request and respond appropriately.',
     ],
   },
@@ -109,7 +117,7 @@ export default function PrivacyPolicyPage() {
             consultation workflows, and support services.
           </p>
           <p className="mt-6 text-sm font-bold text-[#064F4B]">
-            Effective date: June 12, 2026
+            Effective date: July 19, 2026
           </p>
         </div>
       </section>

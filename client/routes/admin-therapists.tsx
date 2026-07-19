@@ -13,6 +13,7 @@ import {
   TherapistPerformance,
   updateTherapist,
 } from "../src/lib/therapists";
+import { formatIstDateTime } from "../src/lib/dateTime";
 
 export const meta = {
   title: "Manage Therapists | Oruma",
@@ -330,11 +331,10 @@ export default function AdminTherapistsPage() {
                           <div className="mt-4 rounded-lg bg-amber-50 p-4">
                             <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
                               Submitted{" "}
-                              {therapist.pendingProfileSubmittedAt
-                                ? new Date(
-                                    therapist.pendingProfileSubmittedAt,
-                                  ).toLocaleString("en-IN")
-                                : "recently"}
+                              {formatIstDateTime(
+                                therapist.pendingProfileSubmittedAt,
+                                "recently",
+                              )}
                             </p>
                             <div className="mt-3 grid gap-2 text-sm font-bold text-[#064F4B]">
                               {Object.entries(

@@ -36,6 +36,7 @@ const sections = [
     title: '4. Appointments and Consultations',
     body: [
       'Appointments are subject to therapist availability, confirmation, successful payment where applicable, and platform scheduling rules.',
+      'All appointment times, therapist availability, booking timestamps, cancellation windows, and related schedule information displayed by ORUMA use Indian Standard Time (IST, Asia/Kolkata).',
       'ORUMA may send confirmations, reminders, payment updates, Zoom/session links, and support communications through email, WhatsApp/SMS, dashboard notices, or other configured channels.',
       'Therapists may update case sheets or session notes for continuity of care, administrative review, and lawful record keeping.',
       'Users must join sessions on time and ensure they have a private environment, stable internet connection, and compatible device.',
@@ -47,7 +48,7 @@ const sections = [
       'Fees displayed on the platform may vary by therapist, service type, offer, currency, and administrative decision.',
       'Payments may be processed through third-party payment gateways. Gateway charges, transaction failures, delays, chargebacks, and bank-side issues may be governed by the respective provider policies.',
       'Invoices or receipts may be generated for paid or refunded payments through the platform.',
-      'Refund eligibility, cancellation windows, rescheduling, and no-show treatment may depend on ORUMA policy, therapist availability, payment status, and administrative approval.',
+      'Users may cancel online only during the first one (1) hour after booking and before the appointment starts. Refund eligibility, exceptional cancellation requests, rescheduling, and no-show treatment are governed by the current Cancellation Policy and Refund Policy.',
     ],
   },
   {
@@ -105,7 +106,7 @@ const sections = [
     title: '13. Governing Law and Contact',
     body: [
       'These terms are governed by the laws of India, subject to applicable jurisdictional rules.',
-      'For questions about these terms, users may contact ORUMA at Oruma987@gmail.com or through the official contact page.',
+      'For questions about these terms, users may contact ORUMA at terms-conditions@oruma.me or through the official contact page.',
     ],
   },
 ];
@@ -129,7 +130,7 @@ export default function TermsPage() {
             features.
           </p>
           <p className="mt-6 text-sm font-bold text-[#064F4B]">
-            Effective date: June 12, 2026
+            Effective date: July 19, 2026
           </p>
         </div>
       </section>

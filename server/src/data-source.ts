@@ -11,6 +11,7 @@ import { Therapist } from './therapist/entities/therapist.entity';
 import { Ticket } from './ticket/entities/ticket.entity';
 import { User } from './user/entities/user.entity';
 import { getDatabaseConnectionOptions } from './database/database-options';
+import { IST_TIME_ZONE } from './common/ist-date-time';
 
 function loadEnvFile() {
   const envPath = resolve(process.cwd(), '.env');
@@ -35,6 +36,7 @@ function loadEnvFile() {
 }
 
 loadEnvFile();
+process.env.TZ = IST_TIME_ZONE;
 
 export default new DataSource({
   ...getDatabaseConnectionOptions((key) => process.env[key]),

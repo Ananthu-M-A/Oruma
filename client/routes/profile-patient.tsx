@@ -14,6 +14,7 @@ import {
 } from "../src/lib/auth";
 import {
   BookingResponse,
+  canPatientCancelAppointment,
   cancelAppointment,
   getMyAppointments,
 } from "../src/lib/booking";
@@ -31,6 +32,7 @@ import {
   isValidPhoneNumber,
   parsePhoneInput,
 } from "../src/lib/phone";
+import { formatIstDateTime } from "../src/lib/dateTime";
 
 export const meta = {
   title: "Patient Profile | Oruma",
@@ -38,18 +40,7 @@ export const meta = {
 };
 
 function formatDate(value?: string) {
-  if (!value) return "To be scheduled";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "To be scheduled";
-
-  return date.toLocaleString("en-IN", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+  return formatIstDateTime(value, "To be scheduled");
 }
 
 function loadRazorpayCheckout() {
@@ -95,11 +86,17 @@ function AppointmentCard({
   onInvoice: (payment: Payment) => void;
   onCancel: (appointment: BookingResponse) => void;
 }) {
+  const [policyNow, setPolicyNow] = useState(Date.now());
+  useEffect(() => {
+    const interval = window.setInterval(() => setPolicyNow(Date.now()), 15_000);
+    return () => window.clearInterval(interval);
+  }, []);
+
   const canJoinSession =
     appointment.status === "CONFIRMED" && Boolean(appointment.meetingLink);
   const canOpenInvoice =
     payment?.status === "PAID" || payment?.status === "REFUNDED";
-  const canCancel = appointment.status !== "CANCELLED";
+  const canCancel = canPatientCancelAppointment(appointment, policyNow);
 
   return (
     <article className="rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5 shadow-sm">
@@ -165,6 +162,14 @@ function AppointmentCard({
           Zoom link will appear here once the session link is generated.
         </p>
       )}
+      {!canCancel &&
+        appointment.status !== "CANCELLED" &&
+        appointment.status !== "COMPLETED" && (
+          <p className="mt-4 rounded-lg bg-[#F5F8F7] px-4 py-3 text-xs font-bold text-[#5F7F7A]">
+            Online cancellation is available for one hour after booking. All
+            appointment times are shown in IST.
+          </p>
+        )}
     </article>
   );
 }
@@ -387,20 +392,31 @@ export default function PatientProfilePage() {
   const cancelBooking = async (appointment: BookingResponse) => {
     const token = getAccessToken();
     if (!token) return;
+    if (
+      !window.confirm(
+        "Cancel this appointment? The slot will be released. Any eligible refund is processed separately under the Refund Policy.",
+      )
+    ) {
+      return;
+    }
 
     setError("");
     setNotice("");
     setCancellingAppointmentId(appointment.id);
 
     try {
-      await cancelAppointment(appointment.id, token);
+      const cancelledAppointment = await cancelAppointment(
+        appointment.id,
+        token,
+      );
       setAppointments((current) =>
-        current.filter((item) => item.id !== appointment.id),
+        current.map((item) =>
+          item.id === appointment.id ? cancelledAppointment : item,
+        ),
       );
-      setPayments((current) =>
-        current.filter((payment) => payment.appointment?.id !== appointment.id),
+      setNotice(
+        "Appointment cancelled. Any eligible refund is reviewed under the Refund Policy.",
       );
-      setNotice("Appointment cancelled.");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Unable to cancel appointment.",

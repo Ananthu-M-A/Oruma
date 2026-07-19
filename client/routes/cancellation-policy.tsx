@@ -19,9 +19,10 @@ const sections = [
   {
     title: '2. User Cancellation',
     body: [
-      'Users should request cancellation as early as possible through the dashboard, support ticket, contact page, or email at Oruma987@gmail.com.',
+      'A user may cancel a booked appointment through the dashboard only during the first one (1) hour after the booking is confirmed and only before the scheduled appointment has started. The one-hour period is measured from the booking creation time recorded by ORUMA.',
+      'After this one-hour window expires, online cancellation is unavailable. The user may submit an exceptional request through a support ticket, the contact page, or Oruma987@gmail.com, but approval and refund are not guaranteed.',
       'A cancellation request should include the registered name, contact details, appointment date and time, therapist name where available, and reason for cancellation.',
-      'Cancellation approval may depend on the appointment status, time remaining before the session, therapist schedule, and payment status.',
+      'All appointment, booking-window, cancellation, and availability times displayed by ORUMA are in Indian Standard Time (IST, Asia/Kolkata).',
     ],
   },
   {
@@ -63,10 +64,24 @@ const sections = [
     ],
   },
   {
-    title: '8. Contact',
+    title: '8. Cancellation and Refund Handling',
     body: [
-      'For cancellation or rescheduling requests, contact ORUMA at Oruma987@gmail.com or through the official contact page.',
+      'A cancellation recorded within the permitted one-hour window may qualify for a full refund of the amount actually paid. Cancellation does not itself mean that money has already been credited; eligible refunds are reviewed, initiated, and tracked separately under the Refund Policy.',
+      'Late cancellation, no-show, late arrival, or a user-side technical problem normally does not qualify for a refund. Exceptional cases may be reviewed by ORUMA on supporting evidence.',
+      'A cancelled appointment remains in ORUMA records for payment, refund, support, security, and audit purposes. Its released time slot may become available for another booking.',
+    ],
+  },
+  {
+    title: '9. Changes to this Cancellation Policy',
+    body: [
       'ORUMA may update this Cancellation Policy from time to time. Updated terms will be posted on this page.',
+      'Continued use of the platform after an update constitutes acceptance of the revised Cancellation Policy.',
+    ],
+  },
+  {
+    title: '10. Contact',
+    body: [
+      'For cancellation or rescheduling requests, contact ORUMA at cancellation-policy@oruma.me, use the dashboard support system, or use the official contact page.',
     ],
   },
 ];
@@ -89,7 +104,7 @@ export default function CancellationPolicyPage() {
             therapist-initiated changes.
           </p>
           <p className="mt-6 text-sm font-bold text-[#064F4B]">
-            Effective date: July 9, 2026
+            Effective date: July 19, 2026
           </p>
         </div>
       </section>

@@ -1,4 +1,11 @@
 import { API_BASE_URL } from "./auth";
+import {
+  formatIstDate,
+  formatIstDateTime,
+  formatIstSlotRange,
+  formatIstTime,
+  isTomorrowInIst,
+} from "./dateTime";
 
 export type Therapist = {
   id: string;
@@ -429,87 +436,27 @@ export function formatTherapistPrice(therapist: Therapist) {
 }
 
 export function formatAvailabilitySlotRange(slot: AvailabilitySlot) {
-  const start = new Date(slot.startTime);
-  const end = new Date(slot.endTime);
-
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()))
-    return "Time to be confirmed";
-
-  const date = start.toLocaleDateString("en-IN", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-  const startTime = start.toLocaleTimeString("en-IN", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-  const endTime = end.toLocaleTimeString("en-IN", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-
-  return `${date}, ${startTime} - ${endTime}`;
+  return formatIstSlotRange(slot.startTime, slot.endTime);
 }
 
 export function getSlotDateLabel(slot: AvailabilitySlot) {
-  const date = new Date(slot.startTime);
-  if (Number.isNaN(date.getTime())) return "Date";
-
-  return date.toLocaleDateString("en-IN", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
+  return formatIstDate(slot.startTime, "Date");
 }
 
 export function getSlotTimeLabel(slot: AvailabilitySlot) {
-  const start = new Date(slot.startTime);
-  const end = new Date(slot.endTime);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()))
-    return "Time";
-
-  const options: Intl.DateTimeFormatOptions = {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  };
-
-  return `${start.toLocaleTimeString("en-IN", options)} - ${end.toLocaleTimeString("en-IN", options)}`;
+  const start = formatIstTime(slot.startTime, "");
+  const end = formatIstTime(slot.endTime, "");
+  return start && end ? `${start} - ${end} IST` : "Time";
 }
 
 export function formatTherapistSlot(slot: string | null) {
   if (!slot) return "Contact for availability";
-
-  const date = new Date(slot);
-  if (Number.isNaN(date.getTime())) return "Contact for availability";
-
-  return date.toLocaleString("en-IN", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+  return formatIstDateTime(slot, "Contact for availability");
 }
 
 export function isSlotOnNextDay(slot: string | null) {
   if (!slot) return false;
-
-  const slotDate = new Date(slot);
-  if (Number.isNaN(slotDate.getTime())) return false;
-
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  return (
-    slotDate.getFullYear() === tomorrow.getFullYear() &&
-    slotDate.getMonth() === tomorrow.getMonth() &&
-    slotDate.getDate() === tomorrow.getDate()
-  );
+  return isTomorrowInIst(slot);
 }
 
 export function getTherapistImage(image: string | null) {

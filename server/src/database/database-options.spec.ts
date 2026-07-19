@@ -15,6 +15,7 @@ describe('getDatabaseConnectionOptions', () => {
       retryDelay: 3000,
     });
     expect(options.ssl).toEqual({ rejectUnauthorized: true });
+    expect(options.extra).toEqual({ options: '-c timezone=Asia/Kolkata' });
   });
 
   it('uses explicit host credentials when no DATABASE_URL is provided', () => {
@@ -36,6 +37,7 @@ describe('getDatabaseConnectionOptions', () => {
       database: 'oruma',
       retryAttempts: 5,
       retryDelay: 3000,
+      extra: { options: '-c timezone=Asia/Kolkata' },
     });
   });
 

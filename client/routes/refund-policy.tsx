@@ -19,17 +19,17 @@ const sections = [
   {
     title: '2. Eligible Refund Situations',
     body: [
-      'A refund may be considered when ORUMA or the assigned therapist is unable to provide a confirmed paid session.',
-      'A refund may be considered for duplicate payments, payment gateway errors, accidental overpayment, or a failed booking where money was debited and no appointment was confirmed.',
-      'A refund may also be considered when ORUMA approves cancellation under the Cancellation Policy.',
+      'A full refund of the amount actually paid may be approved when a user cancels within the one-hour online cancellation window stated in the Cancellation Policy and before the appointment starts.',
+      'A full refund or free rescheduling will be offered when ORUMA or the assigned therapist is unable to provide a confirmed paid session, unless the user accepts another suitable remedy.',
+      'A full or partial refund may be approved for a verified duplicate payment, payment gateway error, accidental overpayment, or failed booking where money was debited and no appointment was confirmed.',
     ],
   },
   {
     title: '3. Non-Refundable Situations',
     body: [
-      'Fees may be non-refundable when a user does not attend a confirmed session, joins late, provides incorrect contact details, or is unavailable at the scheduled time.',
-      'Fees may be non-refundable after a consultation has started or has been completed.',
-      'Gateway fees, bank charges, currency conversion charges, or third-party charges may be non-refundable where applicable.',
+      'Fees are normally non-refundable when a user requests cancellation after the one-hour cancellation window, does not attend, joins late, provides incorrect contact details, or is unavailable at the scheduled time.',
+      'Fees are non-refundable after a consultation has started or has been completed, except where ORUMA confirms a service failure attributable to ORUMA or the therapist.',
+      'User-side device, internet, software, or session-link access issues do not normally qualify for a refund. Any fee or charge that was not collected by ORUMA may remain subject to the relevant third party rules.',
     ],
   },
   {
@@ -38,14 +38,16 @@ const sections = [
       'Users can request a refund by contacting ORUMA support through the official contact page, dashboard support ticket, or email at Oruma987@gmail.com.',
       'Refund requests should include the registered name, email address, phone number, appointment details, payment reference, and reason for the request.',
       'ORUMA may verify the payment status, appointment records, communication history, therapist confirmation, and gateway response before approving or declining a refund.',
+      'Requests should be submitted within seven (7) calendar days of the cancellation, failed service, duplicate debit, or other event giving rise to the request. This does not limit any non-waivable right available under applicable law.',
     ],
   },
   {
     title: '5. Refund Timelines',
     body: [
-      'Approved refunds are usually initiated to the original payment method.',
-      'After ORUMA initiates a refund, the final credit timeline depends on the payment gateway, bank, card network, wallet, or UPI provider.',
-      'Typical bank-side processing may take several business days. ORUMA cannot guarantee exact bank settlement dates after the refund is handed to the payment provider.',
+      'ORUMA will normally acknowledge a complete refund request within two (2) business days, decide it within five (5) business days, and initiate an approved refund within two (2) business days after approval.',
+      'For payments collected through Razorpay, approved refunds are sent through Razorpay to the original payment method used for the transaction. ORUMA will not ask the user to provide a different UPI ID, QR code, card, or bank account for such a refund. A manually recorded or offline payment, if any, will be refunded through the applicable original collection channel.',
+      'After initiation, UPI, card, net-banking, or wallet credits normally appear within five (5) to seven (7) working days, subject to Razorpay, the bank, and the payment provider. A failed or pending payment may instead be automatically reversed by the provider.',
+      'If the refund is not visible after seven working days, the user should contact ORUMA with the payment and refund reference so the status can be traced.',
     ],
   },
   {
@@ -54,6 +56,7 @@ const sections = [
       'ORUMA may offer a partial refund, full refund, or rescheduled appointment depending on the facts of the request.',
       'When rescheduling is available and accepted, a separate refund may not be issued for the same appointment.',
       'Refunds for discounted, promotional, bundled, or special-price services may be calculated based on the actual paid amount.',
+      'ORUMA will never refund more than the amount successfully captured for the relevant payment.',
     ],
   },
   {
@@ -64,10 +67,17 @@ const sections = [
     ],
   },
   {
-    title: '8. Contact',
+    title: '8. Changes to this Refund Policy',
     body: [
-      'For refund questions or requests, contact ORUMA at Oruma987@gmail.com or through the official contact page.',
-      'ORUMA may update this Refund Policy from time to time. Updated terms will be posted on this page.',
+      'ORUMA may update this Refund Policy from time to time to reflect operational, legal, payment-provider, or business changes. The latest version will be published on this page with its revised effective date.',
+      'Continued use of ORUMA services after an update constitutes acceptance of the revised Refund Policy.',
+    ],
+  },
+  {
+    title: '9. Contact',
+    body: [
+      'For refund questions or requests, contact ORUMA at refund-policy@oruma.me, use the dashboard support system, or use the official contact page.',
+      'All appointment dates, cancellation windows, and support timestamps referred to in this policy are interpreted in Indian Standard Time (IST, Asia/Kolkata). Payment-provider processing periods are counted in working or business days as stated above.',
     ],
   },
 ];
@@ -90,7 +100,7 @@ export default function RefundPolicyPage() {
             transactions, and approved cancellations.
           </p>
           <p className="mt-6 text-sm font-bold text-[#064F4B]">
-            Effective date: July 9, 2026
+            Effective date: July 19, 2026
           </p>
         </div>
       </section>

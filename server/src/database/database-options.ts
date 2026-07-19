@@ -1,5 +1,6 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
+import { IST_TIME_ZONE } from '../common/ist-date-time';
 
 type EnvReader = (key: string) => string | undefined;
 
@@ -55,16 +56,25 @@ export const getDatabaseConnectionOptions = (
 ): TypeOrmModuleOptions &
   Pick<
     PostgresConnectionOptions,
-    'type' | 'url' | 'host' | 'port' | 'username' | 'password' | 'database' | 'ssl'
+    | 'type'
+    | 'url'
+    | 'host'
+    | 'port'
+    | 'username'
+    | 'password'
+    | 'database'
+    | 'ssl'
   > => {
   const databaseUrl = readTrimmed(readEnv, 'DATABASE_URL');
   const ssl = getDatabaseSsl(readEnv);
+  const extra = { options: `-c timezone=${IST_TIME_ZONE}` };
 
   if (databaseUrl) {
     return {
       type: 'postgres',
       url: databaseUrl,
       ssl,
+      extra,
       retryAttempts: 5,
       retryDelay: 3000,
     };
@@ -105,6 +115,7 @@ export const getDatabaseConnectionOptions = (
     password,
     database,
     ssl,
+    extra,
     retryAttempts: 5,
     retryDelay: 3000,
   };

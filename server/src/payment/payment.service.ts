@@ -19,6 +19,8 @@ import { VerifyRazorpayPaymentDto } from './dto/verify-razorpay-payment.dto';
 import { NotificationType } from '../notification/entities/notification.entity';
 import { NotificationService } from '../notification/notification.service';
 import { AppointmentService } from '../appointment/appointment.service';
+import { Role } from '../user/entities/user.entity';
+import { IST_TIME_ZONE } from '../common/ist-date-time';
 
 type RazorpayOrderResponse = {
   id?: string;
@@ -101,7 +103,7 @@ export class PaymentService {
 
     if (!payment) throw new NotFoundException('Payment not found');
 
-    if (user.role !== 'ADMIN' && payment.patient?.id !== user.userId) {
+    if (user.role !== Role.ADMIN && payment.patient?.id !== user.userId) {
       throw new ForbiddenException('You cannot access this invoice');
     }
 
@@ -846,11 +848,11 @@ export class PaymentService {
   }
 
   private formatDate(date: Date) {
-    return new Intl.DateTimeFormat('en-IN', {
+    return `${new Intl.DateTimeFormat('en-IN', {
       dateStyle: 'medium',
       timeStyle: 'short',
-      timeZone: 'Asia/Kolkata',
-    }).format(date);
+      timeZone: IST_TIME_ZONE,
+    }).format(date)} IST`;
   }
 
   private escapeHtml(value: string) {

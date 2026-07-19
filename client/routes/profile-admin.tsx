@@ -26,6 +26,7 @@ import {
   Ticket,
   updateTicket,
 } from "../src/lib/operations";
+import { formatIstDate, formatIstDateTime } from "../src/lib/dateTime";
 
 export const meta = {
   title: "Admin Profile | Oruma",
@@ -129,7 +130,7 @@ export default function AdminProfilePage() {
     try {
       await refundPayment(token, payment.id, { amount });
       setRefundForm((current) => ({ ...current, [payment.id]: "" }));
-      setNotice("Refund recorded.");
+      setNotice("Refund initiated to the original payment method.");
       await loadAdminData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to record refund.");
@@ -387,9 +388,7 @@ export default function AdminProfilePage() {
                       />
                       <ActivityItem
                         label="Created"
-                        value={new Date(
-                          appointment.createdAt,
-                        ).toLocaleDateString("en-IN")}
+                        value={formatIstDate(appointment.createdAt)}
                       />
                       <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
                         {appointment.status}
@@ -612,9 +611,7 @@ export default function AdminProfilePage() {
                       />
                       <ActivityItem
                         label="Updated"
-                        value={new Date(sheet.updatedAt).toLocaleString(
-                          "en-IN",
-                        )}
+                        value={formatIstDateTime(sheet.updatedAt)}
                       />
                       <p className="text-sm font-bold text-[#5F7F7A] md:col-span-3">
                         {sheet.presentingConcern ||

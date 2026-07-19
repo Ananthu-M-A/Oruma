@@ -28,6 +28,12 @@ import {
   upsertCaseSheet,
 } from "../src/lib/operations";
 import { uploadMedia } from "../src/lib/media";
+import {
+  addMinutesToIstInput,
+  formatIstDateTime,
+  fromIstDateTimeInputValue,
+  toIstDateTimeInputValue,
+} from "../src/lib/dateTime";
 
 export const meta = {
   title: "Therapist Profile | Oruma",
@@ -35,18 +41,7 @@ export const meta = {
 };
 
 function formatSlot(value?: string) {
-  if (!value) return "Time pending";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Time pending";
-
-  return date.toLocaleString("en-IN", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+  return formatIstDateTime(value, "Time pending");
 }
 
 export default function TherapistProfilePage() {
@@ -285,8 +280,8 @@ export default function TherapistProfilePage() {
     setNotice("");
     try {
       const payload = {
-        startTime: new Date(slotForm.startTime).toISOString(),
-        endTime: new Date(slotForm.endTime).toISOString(),
+        startTime: fromIstDateTimeInputValue(slotForm.startTime),
+        endTime: fromIstDateTimeInputValue(slotForm.endTime),
       };
 
       if (editingSlotId) {
@@ -308,8 +303,8 @@ export default function TherapistProfilePage() {
   const editSlot = (slot: AvailabilitySlot) => {
     setEditingSlotId(slot.id);
     setSlotForm({
-      startTime: toLocalInputValue(slot.startTime),
-      endTime: toLocalInputValue(slot.endTime),
+      startTime: toIstDateTimeInputValue(slot.startTime),
+      endTime: toIstDateTimeInputValue(slot.endTime),
     });
   };
 
@@ -588,12 +583,12 @@ export default function TherapistProfilePage() {
                       >
                         <label>
                           <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
-                            Start
+                            Start (IST)
                           </span>
                           <input
                             type="datetime-local"
                             required
-                            min={toLocalInputValue(
+                            min={toIstDateTimeInputValue(
                               new Date(Date.now() + 60 * 1000).toISOString(),
                             )}
                             value={slotForm.startTime}
@@ -601,7 +596,7 @@ export default function TherapistProfilePage() {
                               const startTime = event.target.value;
                               setSlotForm({
                                 startTime,
-                                endTime: addOneHour(startTime),
+                                endTime: addMinutesToIstInput(startTime, 60),
                               });
                             }}
                             className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
@@ -609,7 +604,7 @@ export default function TherapistProfilePage() {
                         </label>
                         <label>
                           <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
-                            End
+                            End (IST)
                           </span>
                           <input
                             type="datetime-local"
@@ -885,9 +880,7 @@ export default function TherapistProfilePage() {
                             </p>
                             <p className="mt-1 text-xs font-black uppercase tracking-widest text-[#5F7F7A]">
                               Updated{" "}
-                              {new Date(sheet.updatedAt).toLocaleString(
-                                "en-IN",
-                              )}
+                              {formatIstDateTime(sheet.updatedAt)}
                             </p>
                             <p className="mt-3 text-sm font-bold text-[#5F7F7A]">
                               {sheet.presentingConcern ||
@@ -1025,22 +1018,6 @@ function MediaUploadField({
         </button>
       </div>
     </div>
-  );
-}
-
-function toLocalInputValue(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const offset = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
-}
-
-function addOneHour(value: string) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return toLocalInputValue(
-    new Date(date.getTime() + 60 * 60 * 1000).toISOString(),
   );
 }
 

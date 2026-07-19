@@ -65,7 +65,7 @@ export default function BookingModal({
   isOpen,
   onClose,
   therapist,
-  initialSlot,
+  initialSlot = null,
 }) {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);

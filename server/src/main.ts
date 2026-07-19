@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { json, urlencoded, Request } from 'express';
+import { json, urlencoded, Request, type Application } from 'express';
 import { AppModule } from './app.module';
 import {
   originGuard,
@@ -8,6 +8,11 @@ import {
   requireProductionSecrets,
   securityHeaders,
 } from './security/security.middleware';
+import { IST_TIME_ZONE } from './common/ist-date-time';
+
+// Keep Date parsing for legacy PostgreSQL timestamp columns deterministic.
+// API payloads still use ISO instants; customer-facing scheduling uses IST.
+process.env.TZ = IST_TIME_ZONE;
 
 async function bootstrap() {
   requireProductionSecrets();
@@ -22,7 +27,7 @@ async function bootstrap() {
     .filter(Boolean);
   const allowedOrigins = new Set(clientOrigins);
 
-  const expressApp = app.getHttpAdapter().getInstance();
+  const expressApp = app.getHttpAdapter().getInstance() as Application;
   expressApp.disable('x-powered-by');
 
   if (process.env.TRUST_PROXY === 'true') {

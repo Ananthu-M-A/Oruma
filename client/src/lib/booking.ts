@@ -1,5 +1,7 @@
 import { API_BASE_URL } from "./auth";
 
+export const PATIENT_CANCELLATION_WINDOW_MS = 60 * 60 * 1000;
+
 export interface BookingData {
   slotId: string;
   sessionCount?: number;
@@ -53,6 +55,28 @@ export interface QuickBookingResponse {
     role: "PATIENT";
     createdAt: string;
   };
+}
+
+export function canPatientCancelAppointment(
+  appointment: BookingResponse,
+  now = Date.now(),
+) {
+  if (
+    appointment.status === "CANCELLED" ||
+    appointment.status === "COMPLETED"
+  ) {
+    return false;
+  }
+
+  const bookedAt = new Date(appointment.createdAt).getTime();
+  const startsAt = new Date(appointment.slot?.startTime).getTime();
+  if (!Number.isFinite(bookedAt) || !Number.isFinite(startsAt)) return false;
+
+  return (
+    now >= bookedAt &&
+    now <= bookedAt + PATIENT_CANCELLATION_WINDOW_MS &&
+    now < startsAt
+  );
 }
 
 function cleanBookingData(bookingData: BookingData) {
@@ -164,7 +188,7 @@ export async function getAppointment(
 export async function cancelAppointment(
   appointmentId: string,
   accessToken: string,
-): Promise<void> {
+): Promise<BookingResponse> {
   const response = await fetch(
     `${API_BASE_URL}/appointments/${appointmentId}`,
     {
@@ -179,6 +203,8 @@ export async function cancelAppointment(
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.message || "Failed to cancel appointment");
   }
+
+  return response.json();
 }
 
 export async function updateAppointmentStatus(
