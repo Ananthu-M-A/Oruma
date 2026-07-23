@@ -1,13 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { IsNull } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Appointment } from '../appointment/entities/appointment.entity';
 import { AvailabilitySlot } from '../availability/entities/availability-slot.entity';
-import { MailService } from '../mail/mail.service';
 import { NotificationService } from '../notification/notification.service';
 import { UserService } from '../user/user.service';
 import { Therapist } from './entities/therapist.entity';
 import { TherapistService } from './therapist.service';
+import { ProviderJobService } from '../reliability/provider-job.service';
 
 describe('TherapistService', () => {
   let service: TherapistService;
@@ -27,14 +28,14 @@ describe('TherapistService', () => {
     updateEmail: jest.fn(),
     remove: jest.fn(),
   };
-  const mailService = {
-    send: jest.fn(),
-  };
   const configService = {
     get: jest.fn(),
   };
   const notificationService = {
     create: jest.fn(),
+  };
+  const providerJobService = {
+    enqueueEmail: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -59,16 +60,16 @@ describe('TherapistService', () => {
           useValue: userService,
         },
         {
-          provide: MailService,
-          useValue: mailService,
-        },
-        {
           provide: ConfigService,
           useValue: configService,
         },
         {
           provide: NotificationService,
           useValue: notificationService,
+        },
+        {
+          provide: ProviderJobService,
+          useValue: providerJobService,
         },
       ],
     }).compile();
@@ -136,7 +137,11 @@ describe('TherapistService', () => {
     const result = await service.findOne('therapist-1');
 
     expect(therapistRepository.findOne).toHaveBeenCalledWith({
-      where: { id: 'therapist-1', isActive: true },
+      where: {
+        id: 'therapist-1',
+        isActive: true,
+        archivedAt: IsNull(),
+      },
     });
     expect(result.nextAvailableSlot).toEqual(new Date('2026-07-22T04:30:00Z'));
     expect(result).not.toHaveProperty('email');

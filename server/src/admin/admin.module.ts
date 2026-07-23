@@ -9,6 +9,7 @@ import { TicketModule } from '../ticket/ticket.module';
 import { UserModule } from '../user/user.module';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
+import { ReliabilityModule } from '../reliability/reliability.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AdminService } from './admin.service';
     PaymentModule,
     TicketModule,
     CaseSheetModule,
+    ReliabilityModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

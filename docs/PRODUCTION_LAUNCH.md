@@ -1,6 +1,6 @@
 # ORUMA Production Launch Checklist
 
-Use this checklist only after the coding tasks marked as release-blocking in `PROJECT_AUDIT.md` are accepted or completed.
+The application coding closeout is complete. Use this checklist to finish the infrastructure, provider, policy, data, and live-validation work required for launch.
 
 ## 1. Infrastructure
 
@@ -37,6 +37,13 @@ Provider groups to configure:
 - `CLOUDINARY_*`
 - `ORUMA_*` billing identity
 
+Reliability and privacy policy values to approve:
+
+- `UNPAID_RESERVATION_TTL_MINUTES`, `RESERVATION_CLEANUP_ENABLED`
+- `PROVIDER_WORKER_ENABLED`, `PROVIDER_WORKER_BATCH_SIZE`
+- `PRIVACY_AUTO_ERASURE_ENABLED`, `ACCOUNT_ERASURE_GRACE_DAYS`
+- `DATA_RETENTION_WORKER_ENABLED` and every `*_RETENTION_DAYS` value
+
 ## 3. Database release
 
 From a controlled release environment pointed at staging first:
@@ -64,8 +71,11 @@ Run locally/CI:
 
 ```powershell
 cd client
+npm.cmd run lint
 npm.cmd run typecheck
+npm.cmd test -- --run
 npm.cmd run build
+npm.cmd run test:browser
 
 cd ..\server
 npm.cmd run lint:check
@@ -74,11 +84,14 @@ npm.cmd run build
 npm.cmd run test:e2e
 ```
 
+The six full-module database scenarios run when `RUN_DATABASE_E2E=true` and must point only to a disposable PostgreSQL database. The repository CI provisions that database, runs every migration from empty state, and then runs the suite automatically.
+
 Then execute the controlled production flow listed in `PROJECT_AUDIT.md`, confirm dashboards and role isolation, and record evidence for every external integration.
 
 ## 6. Operations
 
-- Monitor `/health`, application errors, provider failures, database capacity, and certificate expiry.
+- Monitor `/health`, `/ready`, structured application errors, provider/webhook dead-letter items, database capacity, and certificate expiry.
+- Assign an administrator to review the reliability, privacy-request, and audit-event panels.
 - Enable daily backups and complete a restore drill before public traffic.
 - Keep previous frontend/backend releases available for rollback.
 - Assign owners for incidents, refunds, clinical escalation, privacy requests, and customer support.

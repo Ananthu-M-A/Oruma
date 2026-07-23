@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, MoreThanOrEqual, Repository } from 'typeorm';
+import { In, IsNull, MoreThanOrEqual, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { ConfigService } from '@nestjs/config';
@@ -14,7 +14,6 @@ import { Appointment } from '../appointment/entities/appointment.entity';
 import { AppointmentStatus } from '../appointment/entities/appointment-status.enum';
 import { AvailabilitySlot } from '../availability/entities/availability-slot.entity';
 import { SlotStatus } from '../availability/entities/slot-status.enum';
-import { MailService } from '../mail/mail.service';
 import { Role } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
 import { NotificationType } from '../notification/entities/notification.entity';
@@ -23,6 +22,7 @@ import { Therapist } from './entities/therapist.entity';
 import { CreateTherapistDto } from './dto/create-therapist.dto';
 import { UpdateTherapistDto } from './dto/update-therapist.dto';
 import { getEarliestBookableStartTime } from '../appointment/booking-lead-time';
+import { ProviderJobService } from '../reliability/provider-job.service';
 
 type TherapistPerformance = {
   therapistId: string;
@@ -67,9 +67,9 @@ export class TherapistService {
     @InjectRepository(AvailabilitySlot)
     private readonly slotRepo: Repository<AvailabilitySlot>,
     private readonly userService: UserService,
-    private readonly mailService: MailService,
     private readonly configService: ConfigService,
     private readonly notificationService: NotificationService,
+    private readonly providerJobService: ProviderJobService,
   ) {}
 
   async create(
@@ -128,6 +128,7 @@ export class TherapistService {
     const therapists = await this.therapistRepo.find({
       where: {
         isActive: true,
+        archivedAt: IsNull(),
       },
       order: {
         createdAt: 'DESC',
@@ -152,7 +153,7 @@ export class TherapistService {
 
   async findOne(id: string): Promise<PublicTherapist> {
     const therapist = await this.therapistRepo.findOne({
-      where: { id, isActive: true },
+      where: { id, isActive: true, archivedAt: IsNull() },
     });
 
     if (!therapist) {
@@ -289,16 +290,37 @@ export class TherapistService {
 
   async remove(id: string): Promise<{ message: string }> {
     const therapist = await this.findOneWithAccount(id);
-    const accountId = therapist.account?.id;
-
-    await this.therapistRepo.remove(therapist);
-    if (accountId) {
-      await this.userService.remove(accountId);
+    therapist.archivedAt = therapist.archivedAt ?? new Date();
+    therapist.isActive = false;
+    therapist.pendingProfileChanges = null;
+    therapist.pendingProfileSubmittedAt = null;
+    await this.therapistRepo.save(therapist);
+    if (therapist.account?.id) {
+      await this.userService.setDisabled(therapist.account.id, true);
     }
+    await this.slotRepo
+      .createQueryBuilder()
+      .update(AvailabilitySlot)
+      .set({ status: SlotStatus.BLOCKED })
+      .where('"therapistId" = :id', { id })
+      .andWhere('status = :status', { status: SlotStatus.AVAILABLE })
+      .andWhere('"startTime" >= :now', { now: new Date() })
+      .execute();
 
     return {
-      message: 'Therapist deleted successfully',
+      message: 'Therapist archived successfully',
     };
+  }
+
+  async restore(id: string): Promise<Therapist> {
+    const therapist = await this.findOneWithAccount(id);
+    therapist.archivedAt = null;
+    therapist.isActive = false;
+    const restored = await this.therapistRepo.save(therapist);
+    if (restored.account?.id) {
+      await this.userService.setDisabled(restored.account.id, false);
+    }
+    return restored;
   }
 
   async getPerformance(): Promise<TherapistPerformance[]> {
@@ -428,7 +450,7 @@ export class TherapistService {
     return therapist;
   }
 
-  private sendTherapistCredentials(
+  private async sendTherapistCredentials(
     therapist: Therapist,
     temporaryPassword: string,
   ) {
@@ -448,11 +470,12 @@ export class TherapistService {
       'Please sign in and keep these credentials secure.',
     ].join('\n');
 
-    return this.mailService.send({
-      to: therapist.email ?? '',
-      subject,
-      text,
-      html: `
+    await this.providerJobService.enqueueEmail(
+      {
+        to: therapist.email ?? '',
+        subject,
+        text,
+        html: `
         <p>Hello ${therapist.name},</p>
         <p>Your Oruma therapist account has been created.</p>
         <p><strong>Login:</strong> <a href="${loginUrl}">${loginUrl}</a></p>
@@ -460,6 +483,9 @@ export class TherapistService {
         <p><strong>Temporary password:</strong> ${temporaryPassword}</p>
         <p>Please sign in and keep these credentials secure.</p>
       `,
-    });
+      },
+      { deduplicationKey: `therapist:${therapist.id}:credentials` },
+    );
+    return true;
   }
 }

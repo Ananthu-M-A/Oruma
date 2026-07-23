@@ -48,7 +48,7 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "/api";
 const ACCESS_TOKEN_KEY = "oruma_access_token";
 export const AUTH_CHANGED_EVENT = "oruma-auth-changed";
 
-async function requestAuth(path: string, payload: Record<string, unknown>) {
+async function requestAuth<T = AuthResponse>(path: string, payload: Record<string, unknown>) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
     headers: {
@@ -68,7 +68,7 @@ async function requestAuth(path: string, payload: Record<string, unknown>) {
     throw new Error(message);
   }
 
-  return data;
+  return data as T;
 }
 
 async function requestWithAuth<T>(path: string) {
@@ -129,6 +129,22 @@ export function requestLoginOtp(payload: { identifier: string }) {
 
 export function verifyLoginOtp(payload: { identifier: string; code: string }) {
   return requestAuth("/auth/login/otp/verify", payload);
+}
+
+export function requestBookingOtp(payload: { identifier: string }) {
+  return requestAuth<{ message: string; devCode?: string }>("/auth/booking/otp/request", payload);
+}
+
+export function verifyBookingOtp(payload: { identifier: string; code: string }) {
+  return requestAuth<{ verificationToken: string; expiresInSeconds: number }>("/auth/booking/otp/verify", payload);
+}
+
+export function exportMyData() {
+  return requestWithAuth<Record<string, unknown>>("/privacy/me/export");
+}
+
+export function createPrivacyRequest(type: "EXPORT" | "ERASURE" | "CORRECTION", reason?: string) {
+  return writeWithAuth("/privacy/me/requests", { type, reason }, "POST");
 }
 
 export function register(payload: RegisterPayload) {

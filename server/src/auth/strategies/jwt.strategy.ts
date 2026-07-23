@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Role } from '../../user/entities/user.entity';
+import { UserService } from '../../user/user.service';
 
 export type JwtPayload = {
   userId: string;
@@ -12,7 +13,10 @@ export type JwtPayload = {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(configService: ConfigService) {
+  constructor(
+    configService: ConfigService,
+    private readonly userService: UserService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -20,11 +24,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: JwtPayload) {
+  async validate(payload: Partial<JwtPayload>) {
+    if (!payload.userId) {
+      throw new UnauthorizedException('Invalid access token');
+    }
+    const account = await this.userService.findById(payload.userId);
+    if (!account || account.disabledAt || account.anonymizedAt) {
+      throw new UnauthorizedException('Account is unavailable');
+    }
     return {
-      userId: payload.userId,
-      email: payload.email,
-      role: payload.role,
+      userId: account.id,
+      email: account.email,
+      role: account.role,
     };
   }
 }

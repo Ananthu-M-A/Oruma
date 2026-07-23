@@ -8,7 +8,7 @@ on:
 
 jobs:
   client:
-    name: Client build
+    name: Client quality and browser tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -30,12 +30,50 @@ jobs:
       - name: Type-check
         run: npm run typecheck
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit and accessibility tests
+        run: npm test -- --run
+
       - name: Build
         run: npm run build
 
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser tests
+        run: npm run test:browser
+
   server:
-    name: Server build and test
+    name: Server, migrations, and PostgreSQL tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: oruma
+          POSTGRES_PASSWORD: oruma_test
+          POSTGRES_DB: oruma_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U oruma -d oruma_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://oruma:oruma_test@localhost:5432/oruma_test
+      DATABASE_SSL: "false"
+      DATABASE_SYNC: "false"
+      JWT_SECRET: ci-database-e2e-secret
+      RUN_DATABASE_E2E: "true"
+      PROVIDER_WORKER_ENABLED: "false"
+      RESERVATION_CLEANUP_ENABLED: "false"
+      DATA_RETENTION_WORKER_ENABLED: "false"
+      PAYMENT_BYPASS_ENABLED: "true"
+      BOOKING_LEAD_TIME_BYPASS_ENABLED: "true"
     defaults:
       run:
         working-directory: server
@@ -55,6 +93,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Run migrations on clean PostgreSQL
+        run: npm run migration:run
 
       - name: Lint
         run: npm run lint:check

@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html { scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; font-family: Inter, sans-serif; }
+*:focus-visible { outline: 3px solid #0a7f7a; outline-offset: 3px; }

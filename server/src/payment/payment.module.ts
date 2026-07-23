@@ -7,10 +7,11 @@ import { Payment } from './entities/payment.entity';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { NotificationModule } from '../notification/notification.module';
+import { PaymentWebhookEvent } from './entities/payment-webhook-event.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Payment, Appointment]),
+    TypeOrmModule.forFeature([Payment, Appointment, PaymentWebhookEvent]),
     AuthModule,
     NotificationModule,
     AppointmentModule,

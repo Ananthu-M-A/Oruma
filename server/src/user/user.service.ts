@@ -20,7 +20,15 @@ export class UserService {
       where: {
         email,
       },
-      select: ['id', 'email', 'password', 'role', 'createdAt'],
+      select: [
+        'id',
+        'email',
+        'password',
+        'role',
+        'disabledAt',
+        'anonymizedAt',
+        'createdAt',
+      ],
     });
   }
 
@@ -29,7 +37,9 @@ export class UserService {
     const phone = identifier.replace(/\D/g, '');
     const query = this.userRepository
       .createQueryBuilder('user')
-      .where('user.role = :role', { role: Role.PATIENT });
+      .where('user.role = :role', { role: Role.PATIENT })
+      .andWhere('user.disabledAt IS NULL')
+      .andWhere('user.anonymizedAt IS NULL');
 
     if (email.includes('@')) {
       query.andWhere('user.email = :email', { email });
@@ -124,5 +134,11 @@ export class UserService {
 
   async remove(id: string): Promise<void> {
     await this.userRepository.delete(id);
+  }
+
+  async setDisabled(id: string, disabled: boolean): Promise<void> {
+    await this.userRepository.update(id, {
+      disabledAt: disabled ? new Date() : null,
+    });
   }
 }

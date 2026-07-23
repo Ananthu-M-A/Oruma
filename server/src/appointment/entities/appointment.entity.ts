@@ -47,7 +47,7 @@ export class Appointment {
   status: AppointmentStatus;
 
   @Column({ type: 'text', nullable: true })
-  notes: string;
+  notes: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   contactName: string | null;
@@ -81,6 +81,15 @@ export class Appointment {
 
   @Column({ type: 'text', nullable: true })
   meetingLink: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  reservationExpiresAt: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  cancelledAt: Date | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  cancellationReason: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

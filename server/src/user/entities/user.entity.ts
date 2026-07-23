@@ -42,6 +42,12 @@ export class User {
   @Column({ type: 'jsonb', nullable: true })
   healthInfo: Record<string, unknown> | null;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  anonymizedAt: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  disabledAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

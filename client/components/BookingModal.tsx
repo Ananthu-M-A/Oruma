@@ -18,6 +18,8 @@ import {
   getCurrentUser,
   getMyAccount,
   saveAccessToken,
+  requestBookingOtp,
+  verifyBookingOtp,
 } from "../src/lib/auth";
 import {
   completeDevelopmentPayment,
@@ -87,6 +89,11 @@ export default function BookingModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [bookingOtp, setBookingOtp] = useState("");
+  const [bookingVerificationToken, setBookingVerificationToken] = useState("");
+  const [bookingOtpRequested, setBookingOtpRequested] = useState(false);
+  const [bookingOtpLoading, setBookingOtpLoading] = useState(false);
+  const [bookingDevCode, setBookingDevCode] = useState("");
   const dialogRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     service: "Individual Therapy",
@@ -118,6 +125,10 @@ export default function BookingModal({
     setStep(1);
     setSubmitError("");
     setSubmitSuccess(false);
+    setBookingOtp("");
+    setBookingVerificationToken("");
+    setBookingOtpRequested(false);
+    setBookingDevCode("");
     setFormData((prev) => ({
       ...prev,
       service: "Individual Therapy",
@@ -217,9 +228,8 @@ export default function BookingModal({
     if (step === 1) return Boolean(formData.service);
     if (step === 2) return Boolean(formData.slotId);
     if (step === 3) {
-      return Boolean(
-        formData.name.trim() && formData.phone.trim() && formData.mode,
-      );
+      const detailsComplete = Boolean(formData.name.trim() && formData.phone.trim() && formData.mode);
+      return detailsComplete && (Boolean(getCurrentUser()) || Boolean(bookingVerificationToken));
     }
     return true;
   };
@@ -236,6 +246,28 @@ export default function BookingModal({
   };
 
   const prevStep = () => setStep(step - 1);
+
+  const bookingIdentifier = formData.email.trim() || formData.phone.trim();
+
+  const sendBookingOtp = async () => {
+    if (!bookingIdentifier) return setSubmitError("Enter an email or WhatsApp number to verify.");
+    setBookingOtpLoading(true); setSubmitError("");
+    try {
+      const result = await requestBookingOtp({ identifier: bookingIdentifier });
+      setBookingOtpRequested(true);
+      setBookingDevCode(result.devCode ?? "");
+    } catch (error) { setSubmitError(error instanceof Error ? error.message : "Unable to send code."); }
+    finally { setBookingOtpLoading(false); }
+  };
+
+  const confirmBookingOtp = async () => {
+    setBookingOtpLoading(true); setSubmitError("");
+    try {
+      const result = await verifyBookingOtp({ identifier: bookingIdentifier, code: bookingOtp });
+      setBookingVerificationToken(result.verificationToken);
+    } catch (error) { setSubmitError(error instanceof Error ? error.message : "Unable to verify code."); }
+    finally { setBookingOtpLoading(false); }
+  };
 
   async function handleBooking() {
     let appointmentId: string | null = null;
@@ -276,6 +308,7 @@ export default function BookingModal({
         service: formData.service,
         mode: formData.mode,
         notes: `Service: ${formData.service}\nPackage: ${packagePricing.label}\nMode: ${formData.mode}\nName: ${formData.name}\nEmail: ${formData.email || "Not shared"}\nPhone: ${formData.phone}`,
+        ...(isQuickBooking ? { verificationToken: bookingVerificationToken } : {}),
       };
 
       if (!isQuickBooking) {
@@ -715,6 +748,19 @@ export default function BookingModal({
                   ))}
                 </div>
               </fieldset>
+              {!getCurrentUser() && (
+                <div className="rounded-xl border border-[#B7C8A3] bg-[#F5F8F7] p-4">
+                  <p className="text-sm font-black text-[#064F4B]">Verify your booking contact</p>
+                  <p className="mt-1 text-xs text-[#5F7F7A]">We will send a six-digit code to {bookingIdentifier || "your email or WhatsApp number"}.</p>
+                  {!bookingVerificationToken && !bookingOtpRequested && <button type="button" disabled={bookingOtpLoading} onClick={sendBookingOtp} className="mt-3 rounded-full bg-[#064F4B] px-5 py-3 text-xs font-black text-white disabled:opacity-50">Send verification code</button>}
+                  {!bookingVerificationToken && bookingOtpRequested && <div className="mt-3 flex flex-wrap gap-2">
+                    <input aria-label="Booking verification code" inputMode="numeric" maxLength={6} value={bookingOtp} onChange={(event) => setBookingOtp(event.target.value.replace(/\D/g, ""))} className="min-h-11 flex-1 rounded-xl border border-gray-200 bg-white px-4" placeholder="6-digit code" />
+                    <button type="button" disabled={bookingOtpLoading || bookingOtp.length !== 6} onClick={confirmBookingOtp} className="rounded-full bg-[#064F4B] px-5 py-3 text-xs font-black text-white disabled:opacity-50">Verify</button>
+                  </div>}
+                  {bookingDevCode && !bookingVerificationToken && <p className="mt-2 text-xs font-bold text-[#0A7F7A]">Development code: {bookingDevCode}</p>}
+                  {bookingVerificationToken && <p className="mt-3 text-sm font-black text-[#0A7F7A]">Contact verified</p>}
+                </div>
+              )}
             </div>
           )}
 

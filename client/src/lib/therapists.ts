@@ -27,6 +27,7 @@ export type Therapist = {
   pendingProfileSubmittedAt?: string | null;
   nextAvailableSlot: string | null;
   isActive: boolean;
+  archivedAt?: string | null;
   createdAt: string;
   credentialsSent?: boolean;
 };
@@ -264,9 +265,13 @@ export async function deleteTherapist(accessToken: string, id: string) {
   if (!response.ok) {
     const message = Array.isArray(data.message)
       ? data.message.join(" ")
-      : (data.message ?? "Unable to delete therapist.");
+      : (data.message ?? "Unable to archive therapist.");
     throw new Error(message);
   }
+}
+
+export function restoreTherapist(accessToken: string, id: string) {
+  return writeTherapist(`/therapists/${id}/restore`, accessToken, "PATCH", {});
 }
 
 export async function getTherapist(id: string) {

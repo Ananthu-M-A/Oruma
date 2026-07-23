@@ -7,6 +7,8 @@ import ProfileTabs from "../components/ProfileTabs";
 import { LucideIcon } from "@site-builder/icons";
 import {
   AuthAccount,
+  createPrivacyRequest,
+  exportMyData,
   getAccessToken,
   getCurrentUser,
   getMyAccount,
@@ -207,6 +209,28 @@ export default function PatientProfilePage() {
   const [notice, setNotice] = useState("");
   const [activeTab, setActiveTab] = useState("appointments");
   const [policyNow, setPolicyNow] = useState(Date.now());
+
+  const downloadDataExport = async () => {
+    setError(""); setNotice("");
+    try {
+      const data = await exportMyData();
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `oruma-data-export-${new Date().toISOString().slice(0, 10)}.json`;
+      anchor.click(); URL.revokeObjectURL(url);
+      setNotice("Your data export was downloaded.");
+    } catch (error) { setError(error instanceof Error ? error.message : "Unable to export data."); }
+  };
+
+  const requestAccountErasure = async () => {
+    if (!window.confirm("Submit an account erasure request for administrative review?")) return;
+    setError(""); setNotice("");
+    try {
+      await createPrivacyRequest("ERASURE", "Patient requested account erasure from the profile page.");
+      setNotice("Your account erasure request was submitted for review.");
+    } catch (error) { setError(error instanceof Error ? error.message : "Unable to submit the request."); }
+  };
 
   useEffect(() => {
     const interval = window.setInterval(() => setPolicyNow(Date.now()), 15_000);
@@ -895,7 +919,18 @@ export default function PatientProfilePage() {
                   </section>
                 )}
 
-                {activeTab === "account" && <PasswordChangeForm />}
+                {activeTab === "account" && <div className="space-y-6">
+                  <PasswordChangeForm />
+                  <section className="rounded-[2rem] border border-[#E2E8E6] bg-white p-6 shadow-sm md:p-8">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">Privacy controls</p>
+                    <h3 className="mt-2 text-2xl font-heading font-black text-[#064F4B]">Your information</h3>
+                    <p className="mt-3 text-sm font-medium text-[#5F7F7A]">Download a machine-readable copy of your data or submit an erasure request for review against clinical and financial retention requirements.</p>
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <button type="button" onClick={downloadDataExport} className="rounded-full bg-[#064F4B] px-6 py-3 text-xs font-black uppercase tracking-widest text-white">Download my data</button>
+                      <button type="button" onClick={requestAccountErasure} className="rounded-full border border-red-200 px-6 py-3 text-xs font-black uppercase tracking-widest text-red-700">Request account erasure</button>
+                    </div>
+                  </section>
+                </div>}
               </div>
             </section>
           </div>

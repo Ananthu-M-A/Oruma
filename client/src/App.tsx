@@ -1,181 +1,82 @@
-import React, { useEffect } from "react";
-import { BrowserRouter, Navigate, Routes, Route, useLocation } from "react-router-dom";
-
-// Routes
-import Index from "../routes/index";
-import About from "../routes/about";
-import Articles from "../routes/articles";
-import Careers from "../routes/careers";
-import Concerns from "../routes/concerns";
-import AllConcerns from "../routes/concerns/all-concerns";
-import Consultation from "../routes/consultation";
-import Contact from "../routes/contact";
-import Login from "../routes/login";
-import OnlineCounselling from "../routes/online-counselling";
-import PrivacyPolicy, { meta as privacyPolicyMeta } from "../routes/privacy-policy";
-import RefundPolicy, { meta as refundPolicyMeta } from "../routes/refund-policy";
-import CancellationPolicy, { meta as cancellationPolicyMeta } from "../routes/cancellation-policy";
-import Register from "../routes/register";
-import Services from "../routes/services";
-import CoupleTherapy from "../routes/services/couple-therapy";
-import FollowUp from "../routes/services/follow-up";
-import IndividualTherapy from "../routes/services/individual-therapy";
-import SexualWellness from "../routes/services/sexual-wellness";
-import TherapistDetail, { meta as therapistDetailMeta } from "../routes/therapist-detail";
-import Therapists from "../routes/therapists";
-import Terms, { meta as termsMeta } from "../routes/terms";
-import PatientProfile, { meta as patientProfileMeta } from "../routes/profile-patient";
-import TherapistProfile, { meta as therapistProfileMeta } from "../routes/profile-therapist";
-import AdminProfile, { meta as adminProfileMeta } from "../routes/profile-admin";
-import AdminTherapists, { meta as adminTherapistsMeta } from "../routes/admin-therapists";
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Route meta for document title
-import { meta as indexMeta } from "../routes/index";
-import { meta as aboutMeta } from "../routes/about";
-import { meta as articlesMeta } from "../routes/articles";
-import { meta as careersMeta } from "../routes/careers";
-import { meta as concernsMeta } from "../routes/concerns";
-import { meta as allConcernsMeta } from "../routes/concerns/all-concerns";
-import { meta as consultationMeta } from "../routes/consultation";
-import { meta as contactMeta } from "../routes/contact";
-import { meta as loginMeta } from "../routes/login";
-import { meta as onlineCounsellingMeta } from "../routes/online-counselling";
-import { meta as registerMeta } from "../routes/register";
-import { meta as servicesMeta } from "../routes/services";
-import { meta as coupleTherapyMeta } from "../routes/services/couple-therapy";
-import { meta as followUpMeta } from "../routes/services/follow-up";
-import { meta as individualTherapyMeta } from "../routes/services/individual-therapy";
-import { meta as sexualWellnessMeta } from "../routes/services/sexual-wellness";
-import { meta as therapistsMeta } from "../routes/therapists";
+const Index = lazy(() => import("../routes/index"));
+const About = lazy(() => import("../routes/about"));
+const Articles = lazy(() => import("../routes/articles"));
+const Careers = lazy(() => import("../routes/careers"));
+const Concerns = lazy(() => import("../routes/concerns"));
+const AllConcerns = lazy(() => import("../routes/concerns/all-concerns"));
+const Consultation = lazy(() => import("../routes/consultation"));
+const Contact = lazy(() => import("../routes/contact"));
+const Login = lazy(() => import("../routes/login"));
+const OnlineCounselling = lazy(() => import("../routes/online-counselling"));
+const PrivacyPolicy = lazy(() => import("../routes/privacy-policy"));
+const RefundPolicy = lazy(() => import("../routes/refund-policy"));
+const CancellationPolicy = lazy(() => import("../routes/cancellation-policy"));
+const Register = lazy(() => import("../routes/register"));
+const Services = lazy(() => import("../routes/services"));
+const CoupleTherapy = lazy(() => import("../routes/services/couple-therapy"));
+const FollowUp = lazy(() => import("../routes/services/follow-up"));
+const IndividualTherapy = lazy(() => import("../routes/services/individual-therapy"));
+const SexualWellness = lazy(() => import("../routes/services/sexual-wellness"));
+const TherapistDetail = lazy(() => import("../routes/therapist-detail"));
+const Therapists = lazy(() => import("../routes/therapists"));
+const Terms = lazy(() => import("../routes/terms"));
+const PatientProfile = lazy(() => import("../routes/profile-patient"));
+const TherapistProfile = lazy(() => import("../routes/profile-therapist"));
+const AdminProfile = lazy(() => import("../routes/profile-admin"));
+const AdminTherapists = lazy(() => import("../routes/admin-therapists"));
 
-declare const lucide: { createIcons: () => void } | undefined;
-
-const routeMeta: Record<string, { title?: string; description?: string }> = {
-  "/": indexMeta,
-  "/about": aboutMeta,
-  "/articles": articlesMeta,
-  "/careers": careersMeta,
-  "/concerns": concernsMeta,
-  "/concerns/all-concerns": allConcernsMeta,
-  "/consultation": consultationMeta,
-  "/contact": contactMeta,
-  "/login": loginMeta,
-  "/online-counselling": onlineCounsellingMeta,
-  "/privacy-policy": privacyPolicyMeta,
-  "/refund-policy": refundPolicyMeta,
-  "/cancellation-policy": cancellationPolicyMeta,
-  "/register": registerMeta,
-  "/profile/patient": patientProfileMeta,
-  "/profile/therapist": therapistProfileMeta,
-  "/profile/admin": adminProfileMeta,
-  "/profile/admin/therapists": adminTherapistsMeta,
-  "/services": servicesMeta,
-  "/services/couple-therapy": coupleTherapyMeta,
-  "/services/follow-up": followUpMeta,
-  "/services/individual-therapy": individualTherapyMeta,
-  "/services/sexual-wellness": sexualWellnessMeta,
-  "/therapists/:id": therapistDetailMeta,
-  "/therapists": therapistsMeta,
-  "/terms": termsMeta,
-  "/terms-and-conditions": termsMeta,
+const routeTitles: Record<string, string> = {
+  "/": "oruma.me | Together, Gently", "/about": "Our Change Makers | ORUMA Wellness",
+  "/articles": "Mental Health Articles | oruma.me", "/careers": "Therapist Careers | oruma.me",
+  "/concerns": "Mental Health Concerns | oruma.me", "/concerns/all-concerns": "Mental Health Concerns | oruma.me",
+  "/consultation": "Global Consultation | ORUMA", "/contact": "Contact Us | oruma.me",
+  "/login": "Login | Oruma", "/online-counselling": "Online Counselling | ORUMA",
+  "/privacy-policy": "Privacy Policy | ORUMA Wellness", "/refund-policy": "Refund Policy | ORUMA Wellness",
+  "/cancellation-policy": "Cancellation Policy | ORUMA Wellness", "/register": "Register | Oruma",
+  "/profile/patient": "Patient Profile | Oruma", "/profile/therapist": "Therapist Profile | Oruma",
+  "/profile/admin": "Admin Profile | Oruma", "/profile/admin/therapists": "Manage Therapists | Oruma",
+  "/services": "Services | ORUMA", "/services/couple-therapy": "Couple Therapy | oruma.me",
+  "/services/follow-up": "Follow Up Sessions | oruma.me", "/services/individual-therapy": "Individual Therapy | ORUMA Wellness",
+  "/services/sexual-wellness": "Sexual Wellness & Intimacy | oruma.me", "/therapists": "Find Your Therapist | ORUMA Wellness",
+  "/terms": "Terms and Conditions | ORUMA Wellness", "/terms-and-conditions": "Terms and Conditions | ORUMA Wellness",
 };
 
-function MetaUpdater() {
-  const location = useLocation();
-
-  useEffect(() => {
-    const meta = routeMeta[location.pathname];
-    const dynamicMeta = location.pathname.startsWith("/therapists/") ? routeMeta["/therapists/:id"] : undefined;
-    const activeMeta = meta ?? dynamicMeta;
-    if (activeMeta?.title) document.title = activeMeta.title;
-
-    const descTag = document.querySelector('meta[name="description"]');
-    if (descTag && activeMeta?.description) {
-      descTag.setAttribute("content", activeMeta.description);
-    }
-
-    // Re-init lucide icons after route change
-    setTimeout(() => {
-      if (typeof lucide !== "undefined") lucide.createIcons();
-    }, 50);
-  }, [location.pathname]);
-
-  return null;
-}
-
-function ScrollToTop() {
+function RouteEffects() {
   const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
+    document.title = routeTitles[pathname] ?? (pathname.startsWith("/therapists/") ? "Therapist Profile | ORUMA Wellness" : "ORUMA Wellness");
   }, [pathname]);
   return null;
 }
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <MetaUpdater />
-      <ScrollToTop />
+  return <BrowserRouter>
+    <RouteEffects />
+    <Suspense fallback={<div className="min-h-screen bg-[#F5F8F7]" aria-label="Loading page" />}>
       <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/articles" element={<Articles />} />
-        <Route path="/careers" element={<Careers />} />
-        <Route path="/concerns" element={<Concerns />} />
-        <Route path="/concerns/all-concerns" element={<AllConcerns />} />
-        <Route path="/consultation" element={<Consultation />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/online-counselling" element={<OnlineCounselling />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/refund-policy" element={<RefundPolicy />} />
-        <Route path="/cancellation-policy" element={<CancellationPolicy />} />
-        <Route
-          path="/profile/patient"
-          element={
-            <ProtectedRoute allowedRoles={["PATIENT"]}>
-              <PatientProfile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile/therapist"
-          element={
-            <ProtectedRoute allowedRoles={["THERAPIST"]}>
-              <TherapistProfile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile/admin"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminProfile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile/admin/therapists"
-          element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <AdminTherapists />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/register" element={<Register />} />
-        <Route path="/services" element={<Services />} />
-        <Route path="/services/couple-therapy" element={<CoupleTherapy />} />
-        <Route path="/services/follow-up" element={<FollowUp />} />
-        <Route path="/services/individual-therapy" element={<IndividualTherapy />} />
-        <Route path="/services/sexual-wellness" element={<SexualWellness />} />
-        <Route path="/team" element={<Navigate to="/therapists" replace />} />
-        <Route path="/therapists" element={<Therapists />} />
-        <Route path="/therapists/:id" element={<TherapistDetail />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/terms-and-conditions" element={<Terms />} />
+        <Route path="/" element={<Index />} /><Route path="/about" element={<About />} />
+        <Route path="/articles" element={<Articles />} /><Route path="/careers" element={<Careers />} />
+        <Route path="/concerns" element={<Concerns />} /><Route path="/concerns/all-concerns" element={<AllConcerns />} />
+        <Route path="/consultation" element={<Consultation />} /><Route path="/contact" element={<Contact />} />
+        <Route path="/login" element={<Login />} /><Route path="/online-counselling" element={<OnlineCounselling />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} /><Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route path="/cancellation-policy" element={<CancellationPolicy />} /><Route path="/register" element={<Register />} />
+        <Route path="/profile/patient" element={<ProtectedRoute allowedRoles={["PATIENT"]}><PatientProfile /></ProtectedRoute>} />
+        <Route path="/profile/therapist" element={<ProtectedRoute allowedRoles={["THERAPIST"]}><TherapistProfile /></ProtectedRoute>} />
+        <Route path="/profile/admin" element={<ProtectedRoute allowedRoles={["ADMIN"]}><AdminProfile /></ProtectedRoute>} />
+        <Route path="/profile/admin/therapists" element={<ProtectedRoute allowedRoles={["ADMIN"]}><AdminTherapists /></ProtectedRoute>} />
+        <Route path="/services" element={<Services />} /><Route path="/services/couple-therapy" element={<CoupleTherapy />} />
+        <Route path="/services/follow-up" element={<FollowUp />} /><Route path="/services/individual-therapy" element={<IndividualTherapy />} />
+        <Route path="/services/sexual-wellness" element={<SexualWellness />} /><Route path="/therapists" element={<Therapists />} />
+        <Route path="/therapists/:id" element={<TherapistDetail />} /><Route path="/team" element={<Navigate to="/therapists" replace />} />
+        <Route path="/terms" element={<Terms />} /><Route path="/terms-and-conditions" element={<Terms />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
-  );
+    </Suspense>
+  </BrowserRouter>;
 }

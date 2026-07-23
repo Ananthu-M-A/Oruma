@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -17,9 +18,6 @@ import { AvailabilitySlot } from '../availability/entities/availability-slot.ent
 import { SlotStatus } from '../availability/entities/slot-status.enum';
 
 import { Role, User } from '../user/entities/user.entity';
-import { MailService } from '../mail/mail.service';
-import { WhatsAppService } from '../whatsapp/whatsapp.service';
-import { ZoomService } from '../zoom/zoom.service';
 import { NotificationType } from '../notification/entities/notification.entity';
 import { NotificationService } from '../notification/notification.service';
 import { Therapist } from '../therapist/entities/therapist.entity';
@@ -34,21 +32,24 @@ import {
 } from './appointment-policy';
 import { formatIstSlotRange } from '../common/ist-date-time';
 import { isStartTimeBookable } from './booking-lead-time';
+import { AuthService } from '../auth/auth.service';
+import { ConfigService } from '@nestjs/config';
+import { ProviderJobService } from '../reliability/provider-job.service';
 
 @Injectable()
 export class AppointmentService {
   private readonly quickBookingEmailDomain = 'quick-booking.oruma.local';
+  private readonly logger = new Logger(AppointmentService.name);
 
   constructor(
     @InjectRepository(Appointment)
     private readonly appointmentRepo: Repository<Appointment>,
-
-    private readonly mailService: MailService,
-    private readonly whatsAppService: WhatsAppService,
     private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
-    private readonly zoomService: ZoomService,
     private readonly notificationService: NotificationService,
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+    private readonly providerJobService: ProviderJobService,
   ) {}
 
   async create(
@@ -76,6 +77,22 @@ export class AppointmentService {
     user: Pick<User, 'id' | 'email' | 'role' | 'createdAt'>;
     createdAccount: boolean;
   }> {
+    if (!dto.verificationToken) {
+      throw new BadRequestException(
+        'Verify your email or phone before booking',
+      );
+    }
+    const verifiedIdentifier = this.authService.verifyQuickBookingToken(
+      dto.verificationToken,
+    );
+    const email = this.normalizeEmail(dto.contactEmail);
+    const phone = this.normalizePhone(dto.contactPhone);
+    if (verifiedIdentifier !== email && verifiedIdentifier !== phone) {
+      throw new BadRequestException(
+        'Booking contact does not match the verified contact',
+      );
+    }
+
     const result = await this.dataSource.transaction(async (manager) => {
       const patientResult = await this.resolveQuickBookingPatient(dto, manager);
       const appointment = await this.createForPatient(
@@ -147,6 +164,10 @@ export class AppointmentService {
       throw new NotFoundException('Slot not found');
     }
 
+    if (slot.status === SlotStatus.BOOKED) {
+      throw new ConflictException('Selected slot has already been booked');
+    }
+
     if (slot.status !== SlotStatus.AVAILABLE) {
       throw new BadRequestException('Selected slot is unavailable');
     }
@@ -167,7 +188,7 @@ export class AppointmentService {
     });
 
     if (existingAppointment) {
-      throw new BadRequestException('Slot already booked');
+      throw new ConflictException('Selected slot has already been booked');
     }
 
     slot.status = SlotStatus.BOOKED;
@@ -193,6 +214,9 @@ export class AppointmentService {
       packageOriginalAmount: packagePricing.originalAmount,
       packageOfferAmount: packagePricing.offerAmount,
       packageDiscountPercent: packagePricing.discountPercent,
+      reservationExpiresAt: new Date(
+        Date.now() + this.getReservationTtlMinutes() * 60_000,
+      ),
     });
 
     return appointmentRepo.save(appointment);
@@ -296,13 +320,64 @@ export class AppointmentService {
     appointment: Appointment,
     email?: string | null,
   ) {
-    await this.sendBookingNotifications(
-      appointment,
-      this.normalizeEmail(
-        email ?? appointment.contactEmail ?? appointment.patient?.email,
-      ) ?? null,
-    );
-    await this.sendBookingInAppNotifications(appointment);
+    try {
+      const hydratedAppointment =
+        appointment.slot && appointment.therapist && appointment.patient
+          ? appointment
+          : ((await this.appointmentRepo.findOne({
+              where: { id: appointment.id },
+              relations: {
+                slot: true,
+                therapist: true,
+                patient: true,
+              },
+            })) ?? appointment);
+      if (!hydratedAppointment.slot || !hydratedAppointment.therapist) {
+        this.logger.error(
+          JSON.stringify({
+            event: 'booking_notification_relations_missing',
+            appointmentId: appointment.id,
+          }),
+        );
+        return;
+      }
+      const results = await Promise.allSettled([
+        this.sendBookingNotifications(
+          hydratedAppointment,
+          this.normalizeEmail(
+            email ??
+              hydratedAppointment.contactEmail ??
+              hydratedAppointment.patient?.email,
+          ) ?? null,
+        ),
+        this.sendBookingInAppNotifications(hydratedAppointment),
+      ]);
+      const failures = results.filter(
+        (result): result is PromiseRejectedResult =>
+          result.status === 'rejected',
+      );
+      if (failures.length) {
+        this.logger.error(
+          JSON.stringify({
+            event: 'booking_notification_enqueue_failed',
+            appointmentId: hydratedAppointment.id,
+            failures: failures.map((result) =>
+              result.reason instanceof Error
+                ? result.reason.message
+                : 'Unknown notification error',
+            ),
+          }),
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        JSON.stringify({
+          event: 'booking_notification_failed',
+          appointmentId: appointment.id,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }),
+      );
+    }
   }
 
   private async sendBookingNotifications(
@@ -316,24 +391,27 @@ export class AppointmentService {
     const service = appointment.service ?? 'Therapy session';
 
     if (email) {
-      await this.mailService.send({
-        to: email,
-        subject: 'Your Oruma appointment request is received',
-        text: [
-          'Your Oruma appointment request has been received.',
-          `Service: ${service}`,
-          `Therapist: ${appointment.therapist.name}`,
-          `Slot: ${slotRange}`,
-          'We will keep you updated on the confirmation status.',
-        ].join('\n'),
-        html: `
+      await this.providerJobService.enqueueEmail(
+        {
+          to: email,
+          subject: 'Your Oruma appointment request is received',
+          text: [
+            'Your Oruma appointment request has been received.',
+            `Service: ${service}`,
+            `Therapist: ${appointment.therapist.name}`,
+            `Slot: ${slotRange}`,
+            'We will keep you updated on the confirmation status.',
+          ].join('\n'),
+          html: `
           <p>Your Oruma appointment request has been received.</p>
           <p><strong>Service:</strong> ${service}</p>
           <p><strong>Therapist:</strong> ${appointment.therapist.name}</p>
           <p><strong>Slot:</strong> ${slotRange}</p>
           <p>We will keep you updated on the confirmation status.</p>
         `,
-      });
+        },
+        { deduplicationKey: `appointment:${appointment.id}:request:email` },
+      );
     }
 
     const whatsAppText = [
@@ -344,11 +422,15 @@ export class AppointmentService {
       'We will keep you updated on the confirmation status.',
     ].join('\n');
 
-    await this.whatsAppService.send({
-      to: appointment.contactPhone,
-      text: whatsAppText,
-      templateParameters: [service, appointment.therapist.name, slotRange],
-    });
+    if (appointment.contactPhone)
+      await this.providerJobService.enqueueWhatsApp(
+        {
+          to: appointment.contactPhone,
+          text: whatsAppText,
+          templateParameters: [service, appointment.therapist.name, slotRange],
+        },
+        { deduplicationKey: `appointment:${appointment.id}:request:whatsapp` },
+      );
   }
 
   private async sendBookingInAppNotifications(appointment: Appointment) {
@@ -523,19 +605,10 @@ export class AppointmentService {
     const shouldCreateMeeting =
       dto.status === AppointmentStatus.CONFIRMED && !appointment.meetingLink;
 
-    if (shouldCreateMeeting) {
-      const meetingLink =
-        await this.zoomService.createAppointmentMeeting(appointment);
-
-      if (meetingLink) {
-        appointment.meetingLink = meetingLink;
-      }
-    }
-
     const savedAppointment = await this.appointmentRepo.save(appointment);
 
-    if (shouldCreateMeeting && savedAppointment.meetingLink) {
-      await this.sendMeetingLinkNotifications(savedAppointment);
+    if (shouldCreateMeeting) {
+      await this.providerJobService.enqueueZoomMeeting(savedAppointment.id);
     }
     await this.sendAppointmentStatusInAppNotifications(savedAppointment, user);
 
@@ -583,7 +656,7 @@ export class AppointmentService {
         const slot = await manager
           .getRepository(AvailabilitySlot)
           .createQueryBuilder('slot')
-          .setLock('pessimistic_write')
+          .setLock('pessimistic_write', undefined, ['slot'])
           .where('slot.id = :slotId', { slotId: appointment.slot.id })
           .getOne();
 
@@ -595,73 +668,10 @@ export class AppointmentService {
 
       appointment.status = AppointmentStatus.CANCELLED;
       appointment.meetingLink = null;
+      appointment.reservationExpiresAt = null;
+      appointment.cancelledAt = new Date();
+      appointment.cancellationReason = 'Cancelled by user or administrator';
       return manager.getRepository(Appointment).save(appointment);
-    });
-  }
-
-  private async sendMeetingLinkNotifications(appointment: Appointment) {
-    const meetingLink = appointment.meetingLink;
-    if (!meetingLink) return;
-
-    const slotRange = formatIstSlotRange(
-      appointment.slot.startTime,
-      appointment.slot.endTime,
-    );
-    const service = appointment.service ?? 'Therapy session';
-    const patientEmail = appointment.contactEmail ?? appointment.patient?.email;
-    const patientName =
-      appointment.contactName ??
-      appointment.patient?.fullName ??
-      appointment.patient?.email ??
-      'Patient';
-
-    const messageLines = [
-      'Your Oruma appointment has been confirmed.',
-      `Service: ${service}`,
-      `Therapist: ${appointment.therapist.name}`,
-      `Slot: ${slotRange}`,
-      `Join Zoom session: ${meetingLink}`,
-    ];
-
-    if (patientEmail) {
-      await this.mailService.send({
-        to: patientEmail,
-        subject: 'Your Oruma Zoom session link',
-        text: messageLines.join('\n'),
-        html: `
-          <p>Your Oruma appointment has been confirmed.</p>
-          <p><strong>Service:</strong> ${service}</p>
-          <p><strong>Therapist:</strong> ${appointment.therapist.name}</p>
-          <p><strong>Slot:</strong> ${slotRange}</p>
-          <p><a href="${meetingLink}">Join Zoom session</a></p>
-        `,
-      });
-    }
-
-    if (appointment.therapist.email) {
-      await this.mailService.send({
-        to: appointment.therapist.email,
-        subject: 'Confirmed Oruma appointment Zoom link',
-        text: [
-          'An Oruma appointment has been confirmed.',
-          `Patient: ${patientName}`,
-          `Service: ${service}`,
-          `Slot: ${slotRange}`,
-          `Join Zoom session: ${meetingLink}`,
-        ].join('\n'),
-        html: `
-          <p>An Oruma appointment has been confirmed.</p>
-          <p><strong>Patient:</strong> ${patientName}</p>
-          <p><strong>Service:</strong> ${service}</p>
-          <p><strong>Slot:</strong> ${slotRange}</p>
-          <p><a href="${meetingLink}">Join Zoom session</a></p>
-        `,
-      });
-    }
-
-    await this.whatsAppService.send({
-      to: appointment.contactPhone,
-      text: messageLines.join('\n'),
     });
   }
 
@@ -734,5 +744,12 @@ export class AppointmentService {
       appointment.slot.startTime,
       appointment.slot.endTime,
     );
+  }
+
+  private getReservationTtlMinutes() {
+    const configured = Number(
+      this.configService.get<string>('UNPAID_RESERVATION_TTL_MINUTES', '15'),
+    );
+    return Number.isFinite(configured) && configured > 0 ? configured : 15;
   }
 }

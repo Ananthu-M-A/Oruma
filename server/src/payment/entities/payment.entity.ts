@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -11,6 +12,18 @@ import { User } from '../../user/entities/user.entity';
 import { PaymentStatus } from './payment-status.enum';
 
 @Entity()
+@Index('IDX_payment_provider_order_unique', ['providerOrderId'], {
+  unique: true,
+  where: '"providerOrderId" IS NOT NULL',
+})
+@Index('IDX_payment_provider_payment_unique', ['providerPaymentId'], {
+  unique: true,
+  where: '"providerPaymentId" IS NOT NULL',
+})
+@Index('IDX_payment_appointment_active_unique', ['appointment'], {
+  unique: true,
+  where: `"status" = 'PENDING'`,
+})
 export class Payment {
   @PrimaryGeneratedColumn('uuid')
   id: string;

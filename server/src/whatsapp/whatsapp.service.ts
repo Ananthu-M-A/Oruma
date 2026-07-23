@@ -9,7 +9,7 @@ type TemplateComponent = {
   }>;
 };
 
-type SendWhatsAppInput = {
+export type SendWhatsAppInput = {
   to?: string | null;
   text: string;
   templateParameters?: string[];

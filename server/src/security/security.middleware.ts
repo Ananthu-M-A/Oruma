@@ -26,6 +26,7 @@ setInterval(() => {
 export function securityHeaders() {
   return (req: Request, res: Response, next: NextFunction) => {
     const requestId = getRequestId(req);
+    (req as Request & { requestId?: string }).requestId = requestId;
 
     res.setHeader('X-Request-Id', requestId);
     res.setHeader('X-Content-Type-Options', 'nosniff');

@@ -1,6 +1,6 @@
 # ORUMA Project Audit
 
-Audit date: 19 July 2026
+Audit date: 22 July 2026
 
 Sources reviewed:
 
@@ -10,9 +10,9 @@ Sources reviewed:
 
 ## Overall result
 
-The project is **feature-complete at the core application-code level, but not production-complete**. Role dashboards, authentication, therapist discovery, scheduling, payment workflows, Zoom meeting creation, case sheets, notifications, tickets, and legal routes are present. Local client type-check/build, server lint/build, 46 unit tests, and two controller-level end-to-end smoke tests pass.
+The project is **complete at the agreed application-code level, but is not yet operationally launched**. Role dashboards, authentication, verified quick booking, therapist discovery, scheduling, payment workflows, Zoom meeting creation, case sheets, notifications, tickets, privacy operations, audit logging, and legal routes are present. Local client lint/type-check/build, five unit/accessibility tests, desktop/mobile browser workflows, server lint/build, 51 unit tests, and two controller smoke tests pass. Six full-application PostgreSQL scenarios are configured to run in CI against a disposable database.
 
-Production completion still depends on deeper end-to-end coverage, a few reliability improvements, real infrastructure/provider setup, verified content and legal details, production data, and live smoke testing.
+Production completion now depends on infrastructure/provider setup, approved policy values and content, production data, release execution, and live acceptance testing rather than unfinished feature coding.
 
 Deployment observation on 19 July 2026: `https://oruma.me` returned HTTP 200 with HTTPS, and `https://www.oruma.me` redirected to the apex domain. `api.oruma.me` did not resolve, so the production API/full-stack workflow was not available at audit time. Local changes from this audit are not deployed by this document.
 
@@ -29,15 +29,15 @@ Masked local configuration observation: the ignored development `.env` has non-e
 | Therapist dashboard | Implemented | Approved profile workflow, image/audio upload, fees, availability, appointments, Zoom links, and therapist-only case-sheet editing. |
 | Patient dashboard | Implemented | Profile/health information, appointments, cancellation, payments/invoices, support tickets, and notifications. |
 | Therapist discovery | Implemented | Search/filter UI, public profiles, voice intros, fees, and current next-available slots. Real profile data remains operational work. |
-| Booking and scheduling | Implemented with reliability work pending | Transactional slot locking, overlap checks, unique active slot booking, 24-hour lead time, lifecycle validation, and cancellation are present. Expiry of abandoned unpaid reservations is not automated. |
-| Razorpay payment | Implemented in code | Order creation, signature verification, webhook handling, invoices, refunds, and admin monitoring exist. Live payment/refund verification is external work. |
+| Booking and scheduling | Implemented | Transactional slot locking, overlap checks, unique active slot booking, verified quick booking, configurable unpaid-reservation expiry, lifecycle validation, and cancellation are present. |
+| Razorpay payment | Implemented in code | Locked/idempotent order and verification flows, durable signed webhook processing, invoices, refunds, uniqueness constraints, and admin monitoring exist. Live payment/refund verification is external work. |
 | Zoom consultation | Implemented in code | Server-to-Server OAuth and automatic meeting creation on confirmation exist. Live host/scopes and callback behaviour require provider validation. |
 | Case sheets | Implemented | Assigned therapists can edit; administrators can monitor/read; patients are denied. |
-| Communication | Implemented in code | In-app, Resend email, and WhatsApp Cloud API paths exist. Provider setup and delivery validation remain. |
+| Communication | Implemented in code | In-app notifications plus durable, retryable Resend/WhatsApp/Zoom jobs and admin delivery monitoring exist. Provider setup and live delivery validation remain. |
 | Support tickets | Implemented | Authenticated ticket creation, admin updates/resolution, and notifications exist. |
-| Legal and security | Partially verified | Privacy, terms, refund, and cancellation routes exist; HTTPS/HSTS is deployment-dependent. Final legal review and data-retention procedures are outside the code audit. |
-| UI/UX fixes | Implemented at build level | Navigation, concern anchors, logo assets, WhatsApp actions, fallback routing, and responsive layouts are present. Device/accessibility testing remains. |
-| Deployment and documentation | Partially complete | Docker, migrations, env examples, CI, and launch instructions exist. The frontend domain responds, but the expected production API domain did not resolve during the audit. |
+| Legal and security | Implemented at code boundary | Privacy export/request/approved-erasure workflows, retention workers, audit events, correlation IDs, readiness checks, security headers, and legal routes exist. Final policy/legal approval and HTTPS are operational boundaries. |
+| UI/UX fixes | Implemented and automated | Local Tailwind/Lucide assets, route splitting, navigation, fallback routing, responsive layouts, keyboard checks, component accessibility checks, and desktop/mobile workflow tests are present. |
+| Deployment and documentation | Code complete | Docker, production migration, env examples, PostgreSQL-backed CI, browser CI, and launch instructions exist. The frontend domain responds, but the expected production API domain did not resolve during the audit. |
 | 30-day post-launch support | Not started | Begins only after a real production launch and is an operational/contractual activity. |
 | AI recommendations, subscriptions, multilingual UI, mobile app | Future scope | Explicitly excluded from current completion assessment by the feature document. |
 
@@ -53,20 +53,22 @@ Masked local configuration observation: the ignored development `.env` has non-e
 - Repaired the inconsistent displayed contact phone number, dead calls to action, article `#` links, contact map placeholder, missing route fallback, and base meta description.
 - Replaced README links to deleted documents with the current audit and launch documentation.
 
+## Coding closeout completed on 22 July 2026
+
+- Added verified email/phone OTP ownership and a short-lived, booking-only token before quick booking can create a patient account.
+- Added configurable unpaid-reservation expiry with locked reconciliation and automatic slot release.
+- Added payment-row locking, idempotent order/payment handling, provider identifiers and pending-payment uniqueness, signed durable webhook storage, retry/dead-letter behaviour, and admin recovery controls.
+- Added a database-backed provider queue for email, WhatsApp, and Zoom with deduplication, exponential retry, stale-lock recovery, payload redaction, and admin monitoring.
+- Replaced therapist hard deletion with archive/restore, account disabling, and future-slot blocking while preserving historical records.
+- Added patient data export, reviewed erasure requests, account anonymization, configurable clinical/operational retention, and privacy administration UI.
+- Added structured request/error logs, request correlation IDs, mutation audit events, database readiness, and live-account JWT validation.
+- Removed runtime Tailwind/Lucide CDNs, added compiled local assets and route-level code splitting, and added frontend lint, unit, accessibility, responsive, keyboard, registration/login, dashboard, and booking-dialog tests.
+- Added a production-hardening migration and disposable-PostgreSQL CI coverage for roles, booking/payment concurrency, verified quick booking, webhook deduplication, cancellation, clinical access, privacy export, and readiness.
+- Removed obsolete synchronous provider-delivery code so all active email, WhatsApp, and Zoom delivery flows use the durable queue.
+
 ## Pending coding tasks
 
-These are the remaining engineering tasks recommended before declaring the software production-complete:
-
-1. Add full application end-to-end tests against an isolated PostgreSQL database. The current `test:e2e` suite covers only root/health controllers and does not exercise authentication, booking, payment, case-sheet, or role boundaries through the real app module.
-2. Require OTP/contact ownership before creating a persistent quick-booking patient account, or issue a narrowly scoped temporary booking token. The audit prevents takeover of an existing account, but a new contact is not yet verified before its guest account is created.
-3. Add an expiry/reconciliation job for abandoned unpaid appointments so a user who closes the browser or loses connectivity cannot leave a slot reserved indefinitely.
-4. Add database-backed idempotency/uniqueness for provider order/payment events and concurrency tests for simultaneous payment-order creation and webhook delivery.
-5. Add durable provider retry/queue handling and delivery status tracking for email, WhatsApp, Zoom, and payment webhooks. Current network calls are synchronous and mostly log failures.
-6. Replace runtime Tailwind and Lucide CDN dependencies with locally built, versioned production assets; add frontend lint/unit tests and run them in CI. Type-checking and production builds are already enforced in CI.
-7. Add automated browser tests for registration/login, each dashboard, booking/payment cancellation paths, responsive layouts, keyboard use, and accessibility.
-8. Define archival behaviour for therapists with historical appointments. Hard deletion can conflict with retained clinical/appointment records; production should use an explicit archive/deactivate policy.
-9. Add production-grade observability: structured logs with correlation IDs, error reporting, audit events for clinical/admin actions, and health checks that include dependency readiness without exposing secrets.
-10. Review and implement the approved retention/deletion/export rules once legal/clinical policy owners define them.
+No unfinished coding task from the audit remains. The retention durations, erasure grace period, provider templates, and production credentials are deliberately configuration/policy inputs; owners must approve and set them during launch. The PostgreSQL full-app suite is committed to CI but could not be executed locally because this workstation has no isolated PostgreSQL or Docker runtime, and the configured development database was intentionally not touched.
 
 ## Pending work outside coding
 

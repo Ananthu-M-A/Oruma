@@ -40,6 +40,20 @@ export class PaymentController {
     return this.paymentService.findAll();
   }
 
+  @Get('admin/webhooks')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  findWebhookEvents() {
+    return this.paymentService.findWebhookEvents();
+  }
+
+  @Patch('admin/webhooks/:id/retry')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  retryWebhookEvent(@Param('id') id: string) {
+    return this.paymentService.retryWebhookEvent(id);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.PATIENT)

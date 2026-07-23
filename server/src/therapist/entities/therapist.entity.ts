@@ -75,6 +75,9 @@ export class Therapist {
   })
   isActive: boolean;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  archivedAt: Date | null;
+
   @OneToOne(() => User, {
     nullable: true,
     onDelete: 'SET NULL',

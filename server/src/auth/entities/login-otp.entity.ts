@@ -18,6 +18,12 @@ export class LoginOtp {
   @Column('varchar')
   codeHash: string;
 
+  @Column({ type: 'varchar', default: 'LOGIN' })
+  purpose: 'LOGIN' | 'QUICK_BOOKING';
+
+  @Column({ default: 0 })
+  failedAttempts: number;
+
   @Column('timestamptz')
   expiresAt: Date;
 

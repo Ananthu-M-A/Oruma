@@ -14,44 +14,9 @@
       rel="stylesheet"
     />
 
-    <!-- Tailwind CSS (CDN) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              heading: ['"Playfair Display"', 'serif'],
-              body: ['"Inter"', 'sans-serif'],
-            },
-          },
-        },
-      };
-    </script>
-
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      // Initialize lucide icons after React renders + on DOM mutations
-      window.addEventListener('DOMContentLoaded', function () {
-        if (typeof lucide !== 'undefined') {
-          lucide.createIcons();
-          var debounce = null;
-          new MutationObserver(function () {
-            clearTimeout(debounce);
-            debounce = setTimeout(function () {
-              lucide.createIcons();
-            }, 100);
-          }).observe(document.getElementById('root'), {
-            childList: true,
-            subtree: true,
-          });
-        }
-      });
-    </script>
   </body>
 </html>

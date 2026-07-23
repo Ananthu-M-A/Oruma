@@ -122,4 +122,11 @@ export class TherapistController {
   remove(@Param('id') id: string) {
     return this.therapistService.remove(id);
   }
+
+  @Patch(':id/restore')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  restore(@Param('id') id: string) {
+    return this.therapistService.restore(id);
+  }
 }

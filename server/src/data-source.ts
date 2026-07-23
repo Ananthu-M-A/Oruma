@@ -12,6 +12,10 @@ import { Ticket } from './ticket/entities/ticket.entity';
 import { User } from './user/entities/user.entity';
 import { getDatabaseConnectionOptions } from './database/database-options';
 import { IST_TIME_ZONE } from './common/ist-date-time';
+import { AuditEvent } from './audit/entities/audit-event.entity';
+import { PaymentWebhookEvent } from './payment/entities/payment-webhook-event.entity';
+import { PrivacyRequest } from './privacy/entities/privacy-request.entity';
+import { ProviderJob } from './reliability/entities/provider-job.entity';
 
 function loadEnvFile() {
   const envPath = resolve(process.cwd(), '.env');
@@ -50,6 +54,10 @@ export default new DataSource({
     Therapist,
     Ticket,
     User,
+    AuditEvent,
+    PaymentWebhookEvent,
+    PrivacyRequest,
+    ProviderJob,
   ],
   migrations: [resolve(__dirname, 'migrations/*{.ts,.js}')],
   synchronize: false,

@@ -7,7 +7,12 @@ import PasswordChangeForm from "../components/PasswordChangeForm";
 import ProfileTabs from "../components/ProfileTabs";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
-import { AdminSummary, getAdminSummary } from "../src/lib/admin";
+import {
+  AdminSummary, AuditEvent, executePrivacyRequest, getAdminSummary,
+  getAuditEvents, getPaymentWebhookEvents, getPrivacyRequests,
+  getProviderDeliveries, PaymentWebhookEvent, PrivacyRequest, ProviderDelivery,
+  retryPaymentWebhook, retryProviderDelivery, reviewPrivacyRequest,
+} from "../src/lib/admin";
 import { BookingResponse, getAppointments } from "../src/lib/booking";
 import {
   createTherapist,
@@ -40,6 +45,10 @@ export default function AdminProfilePage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [caseSheets, setCaseSheets] = useState<CaseSheet[]>([]);
+  const [providerDeliveries, setProviderDeliveries] = useState<ProviderDelivery[]>([]);
+  const [webhookEvents, setWebhookEvents] = useState<PaymentWebhookEvent[]>([]);
+  const [privacyRequests, setPrivacyRequests] = useState<PrivacyRequest[]>([]);
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [summary, setSummary] = useState<AdminSummary | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -70,6 +79,10 @@ export default function AdminProfilePage() {
       paymentData,
       ticketData,
       caseSheetData,
+      providerData,
+      webhookData,
+      privacyData,
+      auditData,
     ] = await Promise.all([
       getAppointments(token),
       getAdminTherapists(token),
@@ -77,6 +90,10 @@ export default function AdminProfilePage() {
       getPayments(token),
       getTickets(token),
       getCaseSheets(token),
+      getProviderDeliveries(token),
+      getPaymentWebhookEvents(token),
+      getPrivacyRequests(token),
+      getAuditEvents(token),
     ]);
     setAppointments(appointmentData);
     setTherapists(therapistData);
@@ -89,6 +106,28 @@ export default function AdminProfilePage() {
       ),
     );
     setCaseSheets(caseSheetData);
+    setProviderDeliveries(providerData);
+    setWebhookEvents(webhookData);
+    setPrivacyRequests(privacyData);
+    setAuditEvents(auditData);
+  };
+
+  const retryReliabilityItem = async (type: "delivery" | "webhook", id: string) => {
+    const token = getAccessToken(); if (!token) return;
+    try { if (type === "delivery") await retryProviderDelivery(token, id); else await retryPaymentWebhook(token, id); setNotice("Retry queued."); await loadAdminData(); }
+    catch (error) { setError(error instanceof Error ? error.message : "Unable to retry item."); }
+  };
+
+  const reviewPrivacy = async (id: string, status: "APPROVED" | "REJECTED") => {
+    const token = getAccessToken(); if (!token) return;
+    try { await reviewPrivacyRequest(token, id, status); setNotice(`Privacy request ${status.toLowerCase()}.`); await loadAdminData(); }
+    catch (error) { setError(error instanceof Error ? error.message : "Unable to review request."); }
+  };
+
+  const executePrivacy = async (id: string) => {
+    const token = getAccessToken(); if (!token || !window.confirm("Execute this approved erasure now?")) return;
+    try { await executePrivacyRequest(token, id); setNotice("Approved erasure completed."); await loadAdminData(); }
+    catch (error) { setError(error instanceof Error ? error.message : "Unable to execute request."); }
   };
 
   const handleRecordPayment = async (event: FormEvent) => {
@@ -261,6 +300,7 @@ export default function AdminProfilePage() {
               { id: "payments", label: "Payments" },
               { id: "cases", label: "Case sheets" },
               { id: "tickets", label: "Tickets" },
+              { id: "reliability", label: "Reliability & privacy" },
               { id: "account", label: "Account" },
             ]}
             activeTab={activeTab}
@@ -705,6 +745,24 @@ export default function AdminProfilePage() {
             )}
 
             {activeTab === "account" && <PasswordChangeForm />}
+            {activeTab === "reliability" && <section className="grid gap-6 lg:grid-cols-2">
+              <div className="rounded-lg border border-[#E2E8E6] bg-white p-6">
+                <h2 className="text-2xl font-black text-[#064F4B]">Provider delivery jobs</h2>
+                <div className="mt-4 space-y-3">{providerDeliveries.slice(0, 20).map((job) => <div key={job.id} className="rounded-lg bg-[#F5F8F7] p-4"><p className="font-black">{job.kind} · {job.status}</p><p className="text-xs">Attempts {job.attempts}/{job.maxAttempts}{job.lastError ? ` · ${job.lastError}` : ""}</p>{job.status === "DEAD" && <button onClick={() => retryReliabilityItem("delivery", job.id)} className="mt-2 text-xs font-black text-[#0A7F7A]">Retry</button>}</div>)}</div>
+              </div>
+              <div className="rounded-lg border border-[#E2E8E6] bg-white p-6">
+                <h2 className="text-2xl font-black text-[#064F4B]">Payment webhooks</h2>
+                <div className="mt-4 space-y-3">{webhookEvents.slice(0, 20).map((event) => <div key={event.id} className="rounded-lg bg-[#F5F8F7] p-4"><p className="font-black">{event.eventType ?? "Unknown"} · {event.status}</p>{event.status === "DEAD" && <button onClick={() => retryReliabilityItem("webhook", event.id)} className="mt-2 text-xs font-black text-[#0A7F7A]">Retry</button>}</div>)}</div>
+              </div>
+              <div className="rounded-lg border border-[#E2E8E6] bg-white p-6">
+                <h2 className="text-2xl font-black text-[#064F4B]">Privacy requests</h2>
+                <div className="mt-4 space-y-3">{privacyRequests.map((request) => <div key={request.id} className="rounded-lg bg-[#F5F8F7] p-4"><p className="font-black">{request.type} · {request.requester?.email ?? "Anonymized"}</p><p className="text-xs">{request.status}</p>{request.status === "PENDING" && <div className="mt-2 flex gap-2"><button onClick={() => reviewPrivacy(request.id, "APPROVED")} className="text-xs font-black text-[#0A7F7A]">Approve</button><button onClick={() => reviewPrivacy(request.id, "REJECTED")} className="text-xs font-black text-red-700">Reject</button></div>}{request.status === "APPROVED" && request.type === "ERASURE" && <button onClick={() => executePrivacy(request.id)} className="mt-2 text-xs font-black text-red-700">Execute erasure</button>}</div>)}</div>
+              </div>
+              <div className="rounded-lg border border-[#E2E8E6] bg-white p-6">
+                <h2 className="text-2xl font-black text-[#064F4B]">Audit events</h2>
+                <div className="mt-4 space-y-3">{auditEvents.slice(0, 30).map((event) => <div key={event.id} className="rounded-lg bg-[#F5F8F7] p-4"><p className="font-black">{event.action} {event.resource}</p><p className="text-xs">{event.actorRole ?? "SYSTEM"} · {event.metadata?.outcome ?? "recorded"} · {event.requestId}</p></div>)}</div>
+              </div>
+            </section>}
           </div>
         </div>
       </section>

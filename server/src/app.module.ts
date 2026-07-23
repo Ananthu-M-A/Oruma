@@ -15,9 +15,13 @@ import { TicketModule } from './ticket/ticket.module';
 import { CaseSheetModule } from './case-sheet/case-sheet.module';
 import { MediaModule } from './media/media.module';
 import { NotificationModule } from './notification/notification.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { AuditModule } from './audit/audit.module';
+import { PrivacyModule } from './privacy/privacy.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       envFilePath: ['.env'],
       isGlobal: true,
@@ -35,6 +39,8 @@ import { NotificationModule } from './notification/notification.module';
     MediaModule,
     NotificationModule,
     AdminModule,
+    AuditModule,
+    PrivacyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

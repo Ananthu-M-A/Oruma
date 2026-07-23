@@ -25,6 +25,7 @@ export interface BookingData {
   service?: string;
   mode?: string;
   notes?: string;
+  verificationToken?: string;
 }
 
 export interface BookingResponse {

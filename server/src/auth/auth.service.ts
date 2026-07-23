@@ -16,8 +16,7 @@ import { LoginDto } from './dto/login.dto';
 import { RequestLoginOtpDto } from './dto/request-login-otp.dto';
 import { VerifyLoginOtpDto } from './dto/verify-login-otp.dto';
 import { LoginOtp } from './entities/login-otp.entity';
-import { MailService } from '../mail/mail.service';
-import { WhatsAppService } from '../whatsapp/whatsapp.service';
+import { ProviderJobService } from '../reliability/provider-job.service';
 
 type RegisteredUser = Pick<User, 'id' | 'email' | 'role' | 'createdAt'>;
 type AuthenticatedUser = {
@@ -31,8 +30,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly mailService: MailService,
-    private readonly whatsAppService: WhatsAppService,
+    private readonly providerJobService: ProviderJobService,
     @InjectRepository(LoginOtp)
     private readonly loginOtpRepository: Repository<LoginOtp>,
   ) {}
@@ -69,7 +67,7 @@ export class AuthService {
     const email = dto.email.trim().toLowerCase();
     const user = await this.userService.findByEmail(email);
 
-    if (!user) {
+    if (!user || user.disabledAt || user.anonymizedAt) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -86,100 +84,139 @@ export class AuthService {
     message: string;
     devCode?: string;
   }> {
+    return this.requestOtp(dto, 'LOGIN', true);
+  }
+
+  async verifyLoginOtp(dto: VerifyLoginOtpDto): Promise<AuthenticatedUser> {
     const normalized = this.normalizeIdentifier(dto.identifier);
+    await this.verifyOtp(normalized, dto.code, 'LOGIN');
+
     const user = await this.userService.findPatientByEmailOrPhone(normalized);
 
     if (!user) {
-      return {
-        message:
-          'If a patient account exists for this contact, a login code has been sent.',
-      };
+      throw new UnauthorizedException('Invalid or expired login code');
     }
 
-    const code = String(randomInt(100000, 1000000));
-    const codeHash = await bcrypt.hash(code, 10);
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    return this.createAuthResponse(user);
+  }
 
+  requestQuickBookingOtp(dto: RequestLoginOtpDto) {
+    return this.requestOtp(dto, 'QUICK_BOOKING', false);
+  }
+
+  async verifyQuickBookingOtp(dto: VerifyLoginOtpDto) {
+    const identifier = this.normalizeIdentifier(dto.identifier);
+    await this.verifyOtp(identifier, dto.code, 'QUICK_BOOKING');
+    return {
+      verificationToken: this.jwtService.sign(
+        { purpose: 'QUICK_BOOKING', identifier },
+        { expiresIn: '10m' },
+      ),
+      expiresInSeconds: 600,
+    };
+  }
+
+  verifyQuickBookingToken(token: string) {
+    try {
+      const payload = this.jwtService.verify<{
+        purpose: string;
+        identifier: string;
+      }>(token);
+      if (payload.purpose !== 'QUICK_BOOKING' || !payload.identifier) {
+        throw new Error('Invalid purpose');
+      }
+      return payload.identifier;
+    } catch {
+      throw new UnauthorizedException(
+        'Invalid or expired booking verification',
+      );
+    }
+  }
+
+  private async requestOtp(
+    dto: RequestLoginOtpDto,
+    purpose: 'LOGIN' | 'QUICK_BOOKING',
+    requireAccount: boolean,
+  ): Promise<{ message: string; devCode?: string }> {
+    const normalized = this.normalizeIdentifier(dto.identifier);
+    if (requireAccount) {
+      const user = await this.userService.findPatientByEmailOrPhone(normalized);
+      if (!user)
+        return {
+          message: 'If an eligible account exists, a code has been sent.',
+        };
+    }
+    const code = String(randomInt(100000, 1000000));
     await this.loginOtpRepository.update(
-      { identifier: normalized, used: false },
+      { identifier: normalized, purpose, used: false },
       { used: true },
     );
-
-    await this.loginOtpRepository.save(
+    const saved = await this.loginOtpRepository.save(
       this.loginOtpRepository.create({
         identifier: normalized,
-        codeHash,
-        expiresAt,
+        purpose,
+        codeHash: await bcrypt.hash(code, 10),
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        failedAttempts: 0,
       }),
     );
-
-    const message = `Your Oruma login code is ${code}. It expires in 10 minutes.`;
-
+    const label = purpose === 'LOGIN' ? 'login' : 'booking verification';
+    const message = `Your Oruma ${label} code is ${code}. It expires in 10 minutes.`;
     if (this.isEmail(normalized)) {
-      await this.mailService.send({
-        to: normalized,
-        subject: 'Your Oruma login code',
-        text: message,
-        html: `<p>${message}</p>`,
-      });
+      await this.providerJobService.enqueueEmail(
+        {
+          to: normalized,
+          subject: `Your Oruma ${label} code`,
+          text: message,
+          html: `<p>${message}</p>`,
+        },
+        { deduplicationKey: `otp:${saved.id}:email` },
+      );
     } else {
-      const otpTemplateName = this.configService.get<string>(
+      const templateName = this.configService.get<string>(
         'WHATSAPP_OTP_TEMPLATE_NAME',
       );
-
-      await this.whatsAppService.send({
-        to: normalized,
-        text: message,
-        ...(otpTemplateName
-          ? {
-              templateName: otpTemplateName,
-              templateParameters: [code],
-            }
-          : {}),
-      });
+      await this.providerJobService.enqueueWhatsApp(
+        {
+          to: normalized,
+          text: message,
+          ...(templateName ? { templateName, templateParameters: [code] } : {}),
+        },
+        { deduplicationKey: `otp:${saved.id}:whatsapp` },
+      );
     }
-
     return {
-      message:
-        'If a patient account exists for this contact, a login code has been sent.',
+      message: 'If the contact is eligible, a code has been sent.',
       ...(this.configService.get<string>('NODE_ENV') === 'production'
         ? {}
         : { devCode: code }),
     };
   }
 
-  async verifyLoginOtp(dto: VerifyLoginOtpDto): Promise<AuthenticatedUser> {
-    const normalized = this.normalizeIdentifier(dto.identifier);
-    const loginOtp = await this.loginOtpRepository.findOne({
-      where: {
-        identifier: normalized,
-        used: false,
-      },
-      order: {
-        createdAt: 'DESC',
-      },
+  private async verifyOtp(
+    identifier: string,
+    code: string,
+    purpose: 'LOGIN' | 'QUICK_BOOKING',
+  ) {
+    const otp = await this.loginOtpRepository.findOne({
+      where: { identifier, purpose, used: false },
+      order: { createdAt: 'DESC' },
     });
-
-    if (!loginOtp || loginOtp.expiresAt.getTime() < Date.now()) {
-      throw new UnauthorizedException('Invalid or expired login code');
+    if (
+      !otp ||
+      otp.expiresAt.getTime() < Date.now() ||
+      otp.failedAttempts >= 5
+    ) {
+      throw new UnauthorizedException('Invalid or expired code');
     }
-
-    const isMatch = await bcrypt.compare(dto.code, loginOtp.codeHash);
-
-    if (!isMatch) {
-      throw new UnauthorizedException('Invalid or expired login code');
+    if (!(await bcrypt.compare(code, otp.codeHash))) {
+      otp.failedAttempts += 1;
+      if (otp.failedAttempts >= 5) otp.used = true;
+      await this.loginOtpRepository.save(otp);
+      throw new UnauthorizedException('Invalid or expired code');
     }
-
-    const user = await this.userService.findPatientByEmailOrPhone(normalized);
-
-    if (!user) {
-      throw new UnauthorizedException('Invalid or expired login code');
-    }
-
-    loginOtp.used = true;
-    await this.loginOtpRepository.save(loginOtp);
-
-    return this.createAuthResponse(user);
+    otp.used = true;
+    await this.loginOtpRepository.save(otp);
   }
 
   private createAuthResponse(user: User): AuthenticatedUser {

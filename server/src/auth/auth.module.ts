@@ -10,8 +10,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoginOtp } from './entities/login-otp.entity';
-import { MailModule } from '../mail/mail.module';
-import { WhatsAppModule } from '../whatsapp/whatsapp.module';
+import { ReliabilityModule } from '../reliability/reliability.module';
 
 @Module({
   imports: [
@@ -28,11 +27,10 @@ import { WhatsAppModule } from '../whatsapp/whatsapp.module';
     }),
     UserModule,
     TypeOrmModule.forFeature([LoginOtp]),
-    MailModule,
-    WhatsAppModule,
+    ReliabilityModule,
   ],
   providers: [AuthService, JwtStrategy, RolesGuard],
   controllers: [AuthController],
-  exports: [JwtModule, RolesGuard],
+  exports: [JwtModule, RolesGuard, AuthService],
 })
 export class AuthModule {}

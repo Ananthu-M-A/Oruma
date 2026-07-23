@@ -4,9 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AuthService } from './auth.service';
 import { UserService } from '../user/user.service';
-import { MailService } from '../mail/mail.service';
-import { WhatsAppService } from '../whatsapp/whatsapp.service';
 import { LoginOtp } from './entities/login-otp.entity';
+import { ProviderJobService } from '../reliability/provider-job.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -21,11 +20,9 @@ describe('AuthService', () => {
   const configService = {
     get: jest.fn(),
   };
-  const mailService = {
-    send: jest.fn(),
-  };
-  const whatsAppService = {
-    send: jest.fn(),
+  const providerJobService = {
+    enqueueEmail: jest.fn(),
+    enqueueWhatsApp: jest.fn(),
   };
   const loginOtpRepository = {
     update: jest.fn(),
@@ -51,12 +48,8 @@ describe('AuthService', () => {
           useValue: configService,
         },
         {
-          provide: MailService,
-          useValue: mailService,
-        },
-        {
-          provide: WhatsAppService,
-          useValue: whatsAppService,
+          provide: ProviderJobService,
+          useValue: providerJobService,
         },
         {
           provide: getRepositoryToken(LoginOtp),

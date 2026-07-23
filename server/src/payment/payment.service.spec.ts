@@ -3,6 +3,7 @@ import { createHmac } from 'crypto';
 import { PaymentService } from './payment.service';
 import { PaymentStatus } from './entities/payment-status.enum';
 import { Role } from '../user/entities/user.entity';
+import { Payment } from './entities/payment.entity';
 
 describe('PaymentService', () => {
   const secret = 'test_razorpay_secret';
@@ -20,10 +21,32 @@ describe('PaymentService', () => {
         .mockImplementation((value: unknown) => Promise.resolve(value)),
       find: jest.fn(),
       create: jest.fn(),
+      createQueryBuilder: jest.fn(),
     };
     const appointmentRepo = {
       findOne: jest.fn(),
+      save: jest.fn().mockImplementation((value: unknown) => value),
     };
+    const paymentQueryBuilder = {
+      setLock: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(payment),
+    };
+    paymentRepo.createQueryBuilder.mockReturnValue(paymentQueryBuilder);
+    const manager = {
+      getRepository: jest.fn((entity: unknown) =>
+        entity === Payment ? paymentRepo : appointmentRepo,
+      ),
+    };
+    const dataSource = {
+      transaction: jest.fn(
+        (callback: (value: typeof manager) => Promise<unknown>) =>
+          callback(manager),
+      ),
+    };
+    const webhookEventRepo = {};
     const configService = {
       get: jest.fn((key: string) =>
         key === 'RAZORPAY_KEY_SECRET' ? secret : undefined,
@@ -40,6 +63,8 @@ describe('PaymentService', () => {
     const service = new PaymentService(
       paymentRepo as never,
       appointmentRepo as never,
+      webhookEventRepo as never,
+      dataSource as never,
       configService as never,
       notificationService as never,
       appointmentService as never,
@@ -49,6 +74,7 @@ describe('PaymentService', () => {
       service,
       paymentRepo,
       appointmentService,
+      paymentQueryBuilder,
     };
   };
 
@@ -71,7 +97,8 @@ describe('PaymentService', () => {
       },
       notes: null,
     };
-    const { service, paymentRepo, appointmentService } = createService(payment);
+    const { service, paymentRepo, appointmentService, paymentQueryBuilder } =
+      createService(payment);
 
     const result = await service.verifyRazorpayPayment(
       {
@@ -83,6 +110,11 @@ describe('PaymentService', () => {
     );
 
     expect(result.status).toBe(PaymentStatus.PAID);
+    expect(paymentQueryBuilder.setLock).toHaveBeenCalledWith(
+      'pessimistic_write',
+      undefined,
+      ['payment'],
+    );
     expect(paymentRepo.save).toHaveBeenCalledWith(
       expect.objectContaining({
         providerPaymentId: 'pay_123',
@@ -169,6 +201,28 @@ describe('PaymentService', () => {
     };
     const appointmentRepo = {
       findOne: jest.fn().mockResolvedValue(appointment),
+      save: jest.fn().mockImplementation((value: unknown) => value),
+    };
+    const appointmentQueryBuilder = {
+      setLock: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(appointment),
+    };
+    Object.assign(appointmentRepo, {
+      createQueryBuilder: jest.fn(() => appointmentQueryBuilder),
+    });
+    const manager = {
+      getRepository: jest.fn((entity: unknown) =>
+        entity === Payment ? paymentRepo : appointmentRepo,
+      ),
+    };
+    const dataSource = {
+      transaction: jest.fn(
+        (callback: (value: typeof manager) => Promise<unknown>) =>
+          callback(manager),
+      ),
     };
     const configService = {
       get: jest.fn((key: string) => {
@@ -187,6 +241,8 @@ describe('PaymentService', () => {
     const service = new PaymentService(
       paymentRepo as never,
       appointmentRepo as never,
+      {} as never,
+      dataSource as never,
       configService as never,
       notificationService as never,
       appointmentService as never,
@@ -204,12 +260,18 @@ describe('PaymentService', () => {
         provider: 'development-bypass',
       }),
     );
-    expect(appointmentRepo.findOne).toHaveBeenCalledWith({
-      where: {
-        id: appointment.id,
-        patient: { id: patient.userId },
-      },
-    });
+    expect(appointmentRepo.createQueryBuilder).toHaveBeenCalledWith(
+      'appointment',
+    );
+    expect(appointmentQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+      'appointment.slot',
+      'slot',
+    );
+    expect(appointmentQueryBuilder.setLock).toHaveBeenCalledWith(
+      'pessimistic_write',
+      undefined,
+      ['appointment'],
+    );
     expect(appointmentService.notifyBookingAfterPayment).toHaveBeenCalledWith(
       appointment,
       'patient@example.com',
@@ -223,6 +285,8 @@ describe('PaymentService', () => {
       ),
     };
     const service = new PaymentService(
+      {} as never,
+      {} as never,
       {} as never,
       {} as never,
       configService as never,

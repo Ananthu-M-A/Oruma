@@ -46,6 +46,16 @@ export class AuthController {
     return this.authService.verifyLoginOtp(dto);
   }
 
+  @Post('booking/otp/request')
+  requestBookingOtp(@Body() dto: RequestLoginOtpDto) {
+    return this.authService.requestQuickBookingOtp(dto);
+  }
+
+  @Post('booking/otp/verify')
+  verifyBookingOtp(@Body() dto: VerifyLoginOtpDto) {
+    return this.authService.verifyQuickBookingOtp(dto);
+  }
+
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);

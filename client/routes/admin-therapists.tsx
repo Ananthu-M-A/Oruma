@@ -9,6 +9,7 @@ import {
   getAdminTherapists,
   getTherapistPerformance,
   rejectTherapistProfileChanges,
+  restoreTherapist,
   Therapist,
   TherapistPerformance,
   updateTherapist,
@@ -133,19 +134,25 @@ export default function AdminTherapistsPage() {
 
   const removeTherapist = async (therapist: Therapist) => {
     const token = getAccessToken();
-    if (!token || !window.confirm(`Delete ${therapist.name}?`)) return;
+    if (!token || !window.confirm(`Archive ${therapist.name}? Historical records will be retained.`)) return;
 
     setError("");
     setNotice("");
     try {
       await deleteTherapist(token, therapist.id);
-      setNotice("Therapist deleted.");
+      setNotice("Therapist archived.");
       await loadData();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Unable to delete therapist.",
+        err instanceof Error ? err.message : "Unable to archive therapist.",
       );
     }
+  };
+
+  const restoreArchivedTherapist = async (therapist: Therapist) => {
+    const token = getAccessToken(); if (!token) return;
+    try { await restoreTherapist(token, therapist.id); setNotice("Therapist restored. Activate the profile when it is ready to return publicly."); await loadData(); }
+    catch (error) { setError(error instanceof Error ? error.message : "Unable to restore therapist."); }
   };
 
   const verifyChanges = async (
@@ -404,6 +411,7 @@ export default function AdminTherapistsPage() {
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
+                        {therapist.archivedAt ? <button onClick={() => restoreArchivedTherapist(therapist)} className="rounded-full bg-[#064F4B] px-4 py-3 text-[10px] font-black uppercase text-white">Restore</button> : <>
                         <button
                           onClick={() => openEditor(therapist)}
                           className="inline-flex items-center gap-2 rounded-full border border-[#DDE8E5] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#064F4B]"
@@ -411,8 +419,10 @@ export default function AdminTherapistsPage() {
                           <LucideIcon name="pencil" size={16} />
                           Edit
                         </button>
+                        </>}
                         <button
                           onClick={() => toggleActive(therapist)}
+                          disabled={Boolean(therapist.archivedAt)}
                           className="inline-flex items-center gap-2 rounded-full border border-[#DDE8E5] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#064F4B]"
                         >
                           <LucideIcon
@@ -423,8 +433,9 @@ export default function AdminTherapistsPage() {
                         </button>
                         <button
                           onClick={() => removeTherapist(therapist)}
+                          disabled={Boolean(therapist.archivedAt)}
                           className="inline-flex items-center justify-center rounded-full border border-red-100 p-3 text-red-600"
-                          title="Delete therapist"
+                          title="Archive therapist"
                         >
                           <LucideIcon name="trash-2" size={16} />
                         </button>

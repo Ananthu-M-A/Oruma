@@ -29,10 +29,14 @@ describe('AppointmentService quick booking', () => {
     };
     const service = new AppointmentService(
       {} as never,
-      {} as never,
-      {} as never,
       dataSource as never,
       {} as never,
+      {} as never,
+      {
+        verifyQuickBookingToken: jest
+          .fn()
+          .mockReturnValue('patient@example.com'),
+      } as never,
       {} as never,
       {} as never,
     );
@@ -42,6 +46,7 @@ describe('AppointmentService quick booking', () => {
         slotId: '00000000-0000-4000-8000-000000000000',
         contactEmail: 'patient@example.com',
         contactPhone: '+91 81570 39987',
+        verificationToken: 'verified-booking-token',
       }),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(userRepository.save).not.toHaveBeenCalled();

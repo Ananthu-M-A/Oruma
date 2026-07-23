@@ -15,8 +15,11 @@ ORUMA is a full-stack digital wellness platform for patients, therapists, and ad
 ```powershell
 cd client
 npm.cmd ci
+npm.cmd run lint
 npm.cmd run typecheck
+npm.cmd test -- --run
 npm.cmd run build
+npm.cmd run test:browser
 
 cd ..\server
 npm.cmd ci
@@ -30,4 +33,4 @@ Copy each `.env.example` to `.env` before running the applications. The server r
 
 ## Current status
 
-The core proposal features are implemented in code and the local build/test baseline passes. The project is not yet verified as production-complete: real provider credentials, production infrastructure, migrations, operational data, and live end-to-end smoke testing are still required. See the project audit for the exact boundary.
+The agreed proposal scope and audit coding backlog are implemented, and the local build/test baseline passes. Production launch still requires real provider credentials, infrastructure, approved policy/content values, migrations, operational data, and live acceptance testing. See the project audit for the exact boundary.
