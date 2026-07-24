@@ -14,6 +14,10 @@ export class MailService {
 
   constructor(private readonly configService: ConfigService) {}
 
+  isConfigured(): boolean {
+    return Boolean(this.configService.get<string>('RESEND_API_KEY'));
+  }
+
   async send(input: SendMailInput): Promise<boolean> {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
     const from = this.configService.get<string>(

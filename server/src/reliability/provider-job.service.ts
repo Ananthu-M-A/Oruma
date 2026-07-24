@@ -20,6 +20,13 @@ import {
 
 type EnqueueOptions = { deduplicationKey?: string; maxAttempts?: number };
 
+class ProviderConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = ProviderConfigurationError.name;
+  }
+}
+
 @Injectable()
 export class ProviderJobService {
   private readonly logger = new Logger(ProviderJobService.name);
@@ -131,6 +138,7 @@ export class ProviderJobService {
     this.workerActive = true;
     try {
       await this.recoverStaleJobs();
+      await this.deadLetterUnconfiguredJobs();
       const jobs = await this.claimDueJobs();
       await Promise.all(jobs.map((job) => this.processClaimedJob(job)));
     } finally {
@@ -151,6 +159,32 @@ export class ProviderJobService {
         lastError: 'Recovered after a stale worker lock.',
       },
     );
+  }
+
+  private async deadLetterUnconfiguredJobs() {
+    for (const kind of Object.values(ProviderJobKind)) {
+      const message = this.getProviderConfigurationError(kind);
+      if (!message) continue;
+
+      const result = await this.jobRepository.update(
+        { kind, status: ProviderJobStatus.PENDING },
+        {
+          status: ProviderJobStatus.DEAD,
+          lockedAt: null,
+          lastError: message,
+        },
+      );
+      if (result.affected)
+        this.logger.warn(
+          JSON.stringify({
+            event: 'provider_jobs_configuration_missing',
+            kind,
+            affected: result.affected,
+            retryable: false,
+            error: message,
+          }),
+        );
+    }
   }
 
   private claimDueJobs() {
@@ -196,7 +230,8 @@ export class ProviderJobService {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unknown provider error';
-      const dead = job.attempts >= job.maxAttempts;
+      const configurationFailure = error instanceof ProviderConfigurationError;
+      const dead = configurationFailure || job.attempts >= job.maxAttempts;
       await this.jobRepository.update(job.id, {
         status: dead ? ProviderJobStatus.DEAD : ProviderJobStatus.PENDING,
         attempts: job.attempts,
@@ -204,20 +239,27 @@ export class ProviderJobService {
         lastError: message.slice(0, 4000),
         nextAttemptAt: this.getNextAttemptAt(job.attempts),
       });
-      this.logger.error(
-        JSON.stringify({
-          event: 'provider_job_failed',
-          jobId: job.id,
-          kind: job.kind,
-          attempt: job.attempts,
-          dead,
-          error: message,
-        }),
-      );
+      const logEntry = JSON.stringify({
+        event: configurationFailure
+          ? 'provider_job_configuration_missing'
+          : 'provider_job_failed',
+        jobId: job.id,
+        kind: job.kind,
+        attempt: job.attempts,
+        dead,
+        retryable: !configurationFailure && !dead,
+        error: message,
+      });
+      if (configurationFailure) this.logger.warn(logEntry);
+      else this.logger.error(logEntry);
     }
   }
 
   private async dispatch(job: ProviderJob) {
+    const configurationError = this.getProviderConfigurationError(job.kind);
+    if (configurationError)
+      throw new ProviderConfigurationError(configurationError);
+
     if (job.kind === ProviderJobKind.EMAIL) {
       if (!(await this.mailService.send(job.payload as SendMailInput)))
         throw new Error('Email provider did not accept the message');
@@ -233,6 +275,22 @@ export class ProviderJobService {
       return;
     }
     throw new Error(`Unsupported provider job kind: ${String(job.kind)}`);
+  }
+
+  private getProviderConfigurationError(kind: ProviderJobKind): string | null {
+    if (kind === ProviderJobKind.EMAIL && !this.mailService.isConfigured())
+      return 'Email provider is not configured';
+    if (
+      kind === ProviderJobKind.WHATSAPP &&
+      !this.whatsAppService.isConfigured()
+    )
+      return 'WhatsApp provider is not configured';
+    if (
+      kind === ProviderJobKind.ZOOM_MEETING &&
+      !this.zoomService.isConfigured()
+    )
+      return 'Zoom provider is not configured';
+    return null;
   }
 
   private async createZoomMeeting(payload: Record<string, unknown>) {

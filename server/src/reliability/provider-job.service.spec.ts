@@ -77,14 +77,19 @@ describe('ProviderJobService', () => {
     const config = {
       get: jest.fn((_key: string, fallback?: string) => fallback),
     };
-    const mail = { send: jest.fn().mockResolvedValue(true) };
+    const mail = {
+      isConfigured: jest.fn().mockReturnValue(true),
+      send: jest.fn().mockResolvedValue(true),
+    };
+    const whatsApp = { isConfigured: jest.fn().mockReturnValue(true) };
+    const zoom = { isConfigured: jest.fn().mockReturnValue(true) };
     const service = new ProviderJobService(
       repository as never,
       dataSource as never,
       config as never,
       mail as never,
-      {} as never,
-      {} as never,
+      whatsApp as never,
+      zoom as never,
     );
 
     await service.processDueJobs();
@@ -96,6 +101,62 @@ describe('ProviderJobService', () => {
         status: ProviderJobStatus.SUCCEEDED,
         attempts: 1,
         payload: { redacted: true },
+      }),
+    );
+  });
+
+  it('dead-letters an unconfigured provider without sending or retrying', async () => {
+    const queryBuilder = {
+      setLock: jest.fn().mockReturnThis(),
+      setOnLocked: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([]),
+    };
+    const repository = {
+      update: jest.fn().mockResolvedValue({ affected: 1 }),
+      createQueryBuilder: jest.fn(() => queryBuilder),
+    };
+    const dataSource = {
+      transaction: jest.fn(
+        (
+          callback: (manager: {
+            getRepository: () => typeof repository;
+          }) => Promise<unknown>,
+        ) => callback({ getRepository: () => repository }),
+      ),
+    };
+    const config = {
+      get: jest.fn((_key: string, fallback?: string) => fallback),
+    };
+    const whatsApp = {
+      isConfigured: jest.fn().mockReturnValue(false),
+      send: jest.fn(),
+    };
+    const mail = { isConfigured: jest.fn().mockReturnValue(true) };
+    const zoom = { isConfigured: jest.fn().mockReturnValue(true) };
+    const service = new ProviderJobService(
+      repository as never,
+      dataSource as never,
+      config as never,
+      mail as never,
+      whatsApp as never,
+      zoom as never,
+    );
+
+    await service.processDueJobs();
+
+    expect(whatsApp.send).not.toHaveBeenCalled();
+    expect(repository.update).toHaveBeenCalledWith(
+      {
+        kind: ProviderJobKind.WHATSAPP,
+        status: ProviderJobStatus.PENDING,
+      },
+      expect.objectContaining({
+        status: ProviderJobStatus.DEAD,
+        lastError: 'WhatsApp provider is not configured',
       }),
     );
   });

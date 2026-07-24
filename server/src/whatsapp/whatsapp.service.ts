@@ -22,6 +22,13 @@ export class WhatsAppService {
 
   constructor(private readonly configService: ConfigService) {}
 
+  isConfigured(): boolean {
+    return Boolean(
+      this.configService.get<string>('WHATSAPP_ACCESS_TOKEN') &&
+      this.configService.get<string>('WHATSAPP_PHONE_NUMBER_ID'),
+    );
+  }
+
   async send(input: SendWhatsAppInput): Promise<boolean> {
     const to = this.normalizePhone(input.to);
     const accessToken = this.configService.get<string>('WHATSAPP_ACCESS_TOKEN');

@@ -178,11 +178,14 @@ WhatsApp delivery uses the Cloud API. Configure the provider credentials and an 
 ```env
 WHATSAPP_ACCESS_TOKEN=
 WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_APPOINTMENT_TEMPLATE_NAME=appointment_confirmation
 WHATSAPP_OTP_TEMPLATE_NAME=
-WHATSAPP_TEMPLATE_LANGUAGE=en_US
+WHATSAPP_TEMPLATE_LANGUAGE=en
+WHATSAPP_API_VERSION=v20.0
+WHATSAPP_DEFAULT_COUNTRY_CODE=91
 ```
 
-When `WHATSAPP_OTP_TEMPLATE_NAME` is unset, the service falls back to a free-form message, which is suitable only where the recipient's messaging window and provider policy allow it.
+Set `WHATSAPP_APPOINTMENT_TEMPLATE_NAME` and `WHATSAPP_OTP_TEMPLATE_NAME` to approved Meta template names. When a template name is unset, the service falls back to a free-form message, which is suitable only where the recipient's messaging window and provider policy allow it.
 
 ## Scripts
 

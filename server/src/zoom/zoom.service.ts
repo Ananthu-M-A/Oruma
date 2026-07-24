@@ -105,7 +105,7 @@ export class ZoomService {
     return data.join_url;
   }
 
-  private isConfigured() {
+  isConfigured(): boolean {
     return Boolean(
       this.configService.get<string>('ZOOM_ACCOUNT_ID') &&
       this.configService.get<string>('ZOOM_CLIENT_ID') &&
