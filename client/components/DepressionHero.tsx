@@ -33,6 +33,8 @@ export default function DepressionHero() {
           <img 
             src="/assets/depression-healing-support.webp" 
             alt="Even when everything feels heavy, you don’t have to carry it alone." 
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-[#064F4B]/20 mix-blend-multiply" />

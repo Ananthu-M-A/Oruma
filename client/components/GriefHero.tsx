@@ -22,6 +22,8 @@ export default function GriefHero() {
           <img 
             src="https://images.unsplash.com/photo-1516585427167-9f4af9627e6c?auto=format&fit=crop&q=80&w=1200" 
             alt="Person in a quiet moment" 
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black/5 mix-blend-multiply" />

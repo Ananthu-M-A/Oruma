@@ -33,6 +33,8 @@ export default function TraumaHero() {
           <img 
             src="/assets/trauma-healing-safe.webp" 
             alt="Finding safety after trauma and PTSD" 
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-[#064F4B]/20 mix-blend-multiply" />

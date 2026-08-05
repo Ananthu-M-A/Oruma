@@ -11,6 +11,8 @@ export default function IntroSection() {
               <img 
                 src="/assets/generated-6faa31cf.webp" 
                 alt="Gentle healing abstract illustration" 
+                loading="lazy"
+                decoding="async"
                 className="w-full h-auto"
               />
             </div>

@@ -33,6 +33,10 @@ export default function ConcernsVideoSection() {
                     <img 
                       src={`https://images.unsplash.com/photo-${1500000000000 + i*10000}?auto=format&fit=crop&q=80&w=100`} 
                       alt="User avatar" 
+                      width="100"
+                      height="100"
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -51,6 +55,7 @@ export default function ConcernsVideoSection() {
                 className="absolute inset-0 w-full h-full"
                 src={embedUrl}
                 title="ORUMA Wellness - Understanding Therapy"
+                loading="lazy"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen

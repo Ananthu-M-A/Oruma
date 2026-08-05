@@ -118,6 +118,8 @@ export default function NRIConsultationPage() {
                   <img 
                     src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
                     alt="Global Online Consultation" 
+                    loading="eager"
+                    decoding="async"
                     className="rounded-[4rem] w-full h-[500px] object-cover shadow-2xl grayscale hover:grayscale-0 transition-all duration-700"
                   />
                   <div className="absolute -bottom-10 -left-10 bg-[#B7C8A3] p-10 rounded-[3rem] shadow-3xl border-8 border-[#064F4B]">

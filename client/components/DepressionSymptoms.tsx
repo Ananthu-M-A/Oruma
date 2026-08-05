@@ -27,6 +27,8 @@ export default function DepressionSymptoms() {
                src="https://images.unsplash.com/photo-1516585427167-9f4af9627e6c?auto=format&fit=crop&q=80&w=800" 
                className="w-full h-full object-cover opacity-40 grayscale"
                alt="Depression visualization"
+               loading="lazy"
+               decoding="async"
              />
              <div className="absolute inset-0 flex items-center justify-center p-8">
                 <p className="text-white text-sm lg:text-base font-medium max-w-sm italic">

@@ -33,6 +33,8 @@ export default function StudentHero() {
           <img 
             src="/assets/student-wellness-v2-overwhelmed.webp" 
             alt="It’s okay to feel overwhelmed — support makes it lighter." 
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-[#064F4B]/10 mix-blend-multiply" />

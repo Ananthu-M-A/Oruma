@@ -38,6 +38,7 @@ export default function VideoStorySection() {
                   className="absolute inset-0 w-full h-full"
                   src={`https://www.youtube.com/embed/${video.id}?rel=0&modestbranding=1`}
                   title={video.title}
+                  loading="lazy"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen

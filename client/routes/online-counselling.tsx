@@ -54,6 +54,8 @@ export default function OnlineCounsellingPage() {
                 src="https://images.unsplash.com/photo-1573497620053-ea5300f94f21?auto=format&fit=crop&q=80&w=1000" 
                 className="absolute inset-0 w-full h-full object-cover" 
                 alt="Woman in a therapy session online"
+                loading="eager"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-[#064F4B]/10" />
             </div>

@@ -29,6 +29,8 @@ export default function PostpartumHero() {
           <img 
             src="/assets/postpartum-new.webp" 
             alt="Postpartum support - emotional care" 
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-[#064F4B]/10 mix-blend-multiply" />

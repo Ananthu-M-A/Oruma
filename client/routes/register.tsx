@@ -199,6 +199,8 @@ export default function RegisterPage() {
             <img
               src="/assets/hero-therapist-professional.webp"
               alt="Oruma therapist"
+              loading="lazy"
+              decoding="async"
               className="w-full max-h-[650px] object-cover rounded-[2rem] shadow-2xl shadow-[#064F4B]/10"
             />
           </div>

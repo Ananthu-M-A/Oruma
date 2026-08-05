@@ -22,6 +22,8 @@ export default function WorkStressHero() {
           <img 
             src="https://images.unsplash.com/photo-1541178735423-4f9c3d1f1103?auto=format&fit=crop&q=80&w=1200" 
             alt="Person feeling overwhelmed at work" 
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black/5 mix-blend-multiply" />

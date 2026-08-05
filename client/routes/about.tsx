@@ -38,11 +38,11 @@ export default function AboutPage() {
       <section className="pt-48 pb-24 bg-[#F5F8F7] text-center">
         <div className="max-w-4xl mx-auto px-6">
           <h1 className="text-4xl lg:text-6xl font-heading font-extrabold text-[#064F4B] mb-8 leading-tight">
-            Our <span className="text-[#0A7F7A]">Change Makers</span>
+            About ORUMA Wellness: <span className="text-[#0A7F7A]">Our Change Makers</span>
           </h1>
           <div className="w-20 h-1.5 bg-[#B7C8A3] mx-auto rounded-full mb-8" />
           <p className="text-xl text-[#5F7F7A] leading-relaxed">
-            The heart of Oruma is a dedicated group of professionals and visionaries working together to transform how mental health is perceived and treated.
+            ORUMA Wellness is a youth-led mental health initiative connecting people with empathetic, professional online counselling. Our team works to make mental healthcare more accessible in India and worldwide.
           </p>
         </div>
       </section>
@@ -82,6 +82,7 @@ export default function AboutPage() {
               className="absolute inset-0 w-full h-full"
               src="https://www.youtube.com/embed/R9m-SGecnVc"
               title="ORUMA Wellness Story"
+              loading="lazy"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

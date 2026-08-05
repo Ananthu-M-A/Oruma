@@ -10,6 +10,15 @@ The application coding closeout is complete. Use this checklist to finish the in
 - Set `oruma.me`, `www.oruma.me`, and `api.oruma.me` DNS and verify valid TLS certificates.
 - Keep `DATABASE_SYNC=false` in staging and production.
 
+Frontend SEO environment values:
+
+```env
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+VITE_GOOGLE_SITE_VERIFICATION=<optional HTML-tag verification content>
+```
+
+See `SEO_SETUP.md` for Search Console ownership, sitemap submission, Analytics validation, schema checks, and live PageSpeed work.
+
 ## 2. Required backend configuration
 
 Set strong production values for database, JWT, allowed client origins, and provider credentials. Use `server/.env.example` as the canonical variable list.
@@ -87,6 +96,8 @@ npm.cmd run test:e2e
 The six full-module database scenarios run when `RUN_DATABASE_E2E=true` and must point only to a disposable PostgreSQL database. The repository CI provisions that database, runs every migration from empty state, and then runs the suite automatically.
 
 Then execute the controlled production flow listed in `PROJECT_AUDIT.md`, confirm dashboards and role isolation, and record evidence for every external integration.
+
+For the frontend release, also verify `/robots.txt`, `/sitemap.xml`, route-specific canonical/meta tags, Organization/LocalBusiness schema, GA4 Realtime events, Search Console URL Inspection, apex/www redirects, TLS, and mobile/desktop PageSpeed results.
 
 ## 6. Operations
 

@@ -33,6 +33,8 @@ export default function RelationshipHero() {
           <img 
             src="/assets/relationship-healing-connection-v2.webp" 
             alt="Healing relationships begins with feeling safe to connect again." 
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-[#064F4B]/20 mix-blend-multiply" />

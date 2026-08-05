@@ -95,6 +95,8 @@ export default function LoginPage() {
             <img
               src="/assets/home-lady-striped-shirt-v2.webp"
               alt="Oruma counselling support"
+              loading="lazy"
+              decoding="async"
               className="w-full max-h-[620px] object-cover rounded-[2rem] shadow-2xl shadow-[#064F4B]/10"
             />
           </div>

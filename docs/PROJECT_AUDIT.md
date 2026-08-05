@@ -70,6 +70,8 @@ Masked local configuration observation: the ignored development `.env` has non-e
 
 No unfinished coding task from the audit remains. The retention durations, erasure grace period, provider templates, and production credentials are deliberately configuration/policy inputs; owners must approve and set them during launch. The PostgreSQL full-app suite is committed to CI but could not be executed locally because this workstation has no isolated PostgreSQL or Docker runtime, and the configured development database was intentionally not touched.
 
+SEO follow-up completed on 5 August 2026: canonical route metadata, crawler directives, Open Graph/Twitter metadata, Organization/LocalBusiness and page schema, XML sitemap, robots file, conditional GA4/Search Console integration, image loading improvements, and automated SEO/mobile checks were added. Search Console ownership, GA4 property values, sitemap submission, SSL/redirect confirmation, and production Core Web Vitals remain launch operations documented in `SEO_SETUP.md`.
+
 ## Pending work outside coding
 
 1. Provision/deploy the production API and managed PostgreSQL database, add `api.oruma.me` DNS/TLS, and configure backups, a restore procedure, and uptime monitoring. The frontend apex/www domains already respond but still need release smoke testing after the API is available.

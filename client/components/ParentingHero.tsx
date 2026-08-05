@@ -22,6 +22,8 @@ export default function ParentingHero() {
           <img 
             src="https://images.unsplash.com/photo-1536640712247-c45474d43988?auto=format&fit=crop&q=80&w=1200" 
             alt="Mother and child in a moment of connection" 
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black/5 mix-blend-multiply" />

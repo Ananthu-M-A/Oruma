@@ -102,7 +102,7 @@ export default function ConcernsPage() {
            </div>
            
            <div className="rounded-[4rem] overflow-hidden aspect-[4/5] shadow-2xl relative group border-8 border-[#F5F8F7]">
-              <img src="/assets/breakup-healing-hero.webp" alt="Reflective healing from breakup" className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110" />
+              <img src="/assets/breakup-healing-hero.webp" alt="Reflective healing from breakup" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110" />
               <div className="absolute inset-0 bg-[#064F4B]/20 mix-blend-multiply group-hover:bg-transparent transition-all duration-1000" />
               
               <div className="absolute top-8 inset-x-8 z-20">

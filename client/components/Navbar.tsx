@@ -89,7 +89,11 @@ export default function Navbar() {
           <a href="/" className="flex items-center gap-2 group h-full py-1.5">
              <img 
                src="/assets/oruma-main-logo.webp" 
-               alt="Oruma Logo" 
+               alt="ORUMA Wellness"
+               width="1000"
+               height="600"
+               loading="eager"
+               decoding="async"
                className="h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105" 
              />
              <div className="flex flex-col justify-center">

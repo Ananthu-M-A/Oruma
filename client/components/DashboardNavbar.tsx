@@ -111,8 +111,9 @@ export default function DashboardNavbar() {
           <img
             src="/assets/oruma-main-logo.webp"
             alt=""
-            width="104"
-            height="40"
+            width="1000"
+            height="600"
+            loading="eager"
             decoding="async"
             className="h-9 w-auto object-contain sm:h-10"
           />

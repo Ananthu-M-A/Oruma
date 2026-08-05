@@ -33,6 +33,8 @@ export default function AnxietyHero() {
           <img 
             src="/assets/anxiety-slow-down-healing.webp" 
             alt="Peace begins when you allow yourself to slow down." 
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-[#064F4B]/20 mix-blend-multiply" />

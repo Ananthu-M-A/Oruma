@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { applyDocumentSeo, trackPageView } from "./lib/seo";
 
 const Index = lazy(() => import("../routes/index"));
 const About = lazy(() => import("../routes/about"));
@@ -29,27 +30,12 @@ const TherapistProfile = lazy(() => import("../routes/profile-therapist"));
 const AdminProfile = lazy(() => import("../routes/profile-admin"));
 const AdminTherapists = lazy(() => import("../routes/admin-therapists"));
 
-const routeTitles: Record<string, string> = {
-  "/": "oruma.me | Together, Gently", "/about": "Our Change Makers | ORUMA Wellness",
-  "/articles": "Mental Health Articles | oruma.me", "/careers": "Therapist Careers | oruma.me",
-  "/concerns": "Mental Health Concerns | oruma.me", "/concerns/all-concerns": "Mental Health Concerns | oruma.me",
-  "/consultation": "Global Consultation | ORUMA", "/contact": "Contact Us | oruma.me",
-  "/login": "Login | Oruma", "/online-counselling": "Online Counselling | ORUMA",
-  "/privacy-policy": "Privacy Policy | ORUMA Wellness", "/refund-policy": "Refund Policy | ORUMA Wellness",
-  "/cancellation-policy": "Cancellation Policy | ORUMA Wellness", "/register": "Register | Oruma",
-  "/profile/patient": "Patient Profile | Oruma", "/profile/therapist": "Therapist Profile | Oruma",
-  "/profile/admin": "Admin Profile | Oruma", "/profile/admin/therapists": "Manage Therapists | Oruma",
-  "/services": "Services | ORUMA", "/services/couple-therapy": "Couple Therapy | oruma.me",
-  "/services/follow-up": "Follow Up Sessions | oruma.me", "/services/individual-therapy": "Individual Therapy | ORUMA Wellness",
-  "/services/sexual-wellness": "Sexual Wellness & Intimacy | oruma.me", "/therapists": "Find Your Therapist | ORUMA Wellness",
-  "/terms": "Terms and Conditions | ORUMA Wellness", "/terms-and-conditions": "Terms and Conditions | ORUMA Wellness",
-};
-
 function RouteEffects() {
   const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
-    document.title = routeTitles[pathname] ?? (pathname.startsWith("/therapists/") ? "Therapist Profile | ORUMA Wellness" : "ORUMA Wellness");
+    const seo = applyDocumentSeo(pathname);
+    trackPageView(pathname, seo);
   }, [pathname]);
   return null;
 }

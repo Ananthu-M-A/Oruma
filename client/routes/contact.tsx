@@ -21,7 +21,8 @@ export default function ContactPage() {
         <div className="max-w-7xl mx-auto px-6 text-center">
           <div className="inline-block bg-[#0A7F7A] text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-6">Reach Out</div>
           <h1 className="text-5xl md:text-7xl font-heading font-black text-[#064F4B] mb-8 leading-tight">
-            We're here to <span className="text-[#0A7F7A]">Listen</span>
+            Contact ORUMA Wellness<br />
+            <span className="text-[#0A7F7A]">We're here to Listen</span>
           </h1>
           <p className="text-xl text-[#5F7F7A] font-medium leading-relaxed max-w-2xl mx-auto">
             Your journey to healing doesn't have to be lonely. Reach out today and take the first step toward a gentler tomorrow.

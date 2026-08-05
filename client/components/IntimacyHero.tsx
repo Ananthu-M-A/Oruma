@@ -26,6 +26,8 @@ export default function IntimacyHero() {
             <img 
               src="/assets/porn-addiction-graphic.webp" 
               alt="Porn addiction and sexual wellness graphic" 
+              loading="eager"
+              decoding="async"
               className="w-full h-auto transition-transform duration-700 group-hover:scale-105"
             />
           </div>

@@ -27,6 +27,8 @@ export default function GriefSymptoms() {
                src="https://images.unsplash.com/photo-1499209974431-9dac3adaf471?auto=format&fit=crop&q=80&w=800" 
                className="w-full h-full object-cover opacity-30 grayscale"
                alt="Conceptual grief visualization"
+               loading="lazy"
+               decoding="async"
              />
              <div className="absolute inset-0 flex items-center justify-center p-8">
                 <p className="text-white text-sm lg:text-base font-medium max-w-sm italic">

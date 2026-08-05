@@ -59,7 +59,11 @@ export default function Footer() {
             <a href="/" className="flex flex-col items-start gap-4 mb-8 group">
               <img 
                 src="/assets/oruma-main-logo.webp" 
-                alt="Oruma Logo" 
+                alt="ORUMA Wellness"
+                width="1000"
+                height="600"
+                loading="lazy"
+                decoding="async"
                 className="h-14 w-auto object-contain transition-transform group-hover:scale-105" 
               />
             </a>

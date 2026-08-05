@@ -9,6 +9,7 @@ ORUMA is a full-stack digital wellness platform for patients, therapists, and ad
 - `.github/workflows/ci.yml` — client type-check/build plus server lint/build/test workflow.
 - [`docs/PROJECT_AUDIT.md`](docs/PROJECT_AUDIT.md) — proposal-to-code completion audit and pending coding/outside-coding work.
 - [`docs/PRODUCTION_LAUNCH.md`](docs/PRODUCTION_LAUNCH.md) — production deployment and provider setup checklist.
+- [`docs/SEO_SETUP.md`](docs/SEO_SETUP.md) — implemented SEO controls plus Search Console, GA4, sitemap, SSL, and live-validation steps.
 
 ## Local verification
 

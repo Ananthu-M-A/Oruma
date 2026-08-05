@@ -33,7 +33,12 @@ export default function HeroSection() {
           <div className="lg:w-2/5 relative h-[400px] lg:h-full overflow-hidden bg-[#064F4B]">
             <img 
               src="/assets/professional-portrait.webp" 
-              alt="Oruma Professional Support" 
+              alt="ORUMA Wellness mental health professional"
+              width="666"
+              height="1000"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
               className="w-full h-full object-cover lg:object-top transition-all duration-1000"
             />
             {/* Soft overlay to blend with the brand theme */}

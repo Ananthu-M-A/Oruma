@@ -27,6 +27,8 @@ export default function RelationshipSymptoms() {
                src="https://images.unsplash.com/photo-1687757660531-4b7a837ece8a?auto=format&fit=crop&q=80&w=1200" 
                className="absolute inset-0 w-full h-full object-cover opacity-60"
                alt="Young Indian woman feeling emotional in a relationship context"
+               loading="lazy"
+               decoding="async"
              />
              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-center p-8">
                 <p className="text-white text-lg lg:text-2xl font-medium max-w-2xl italic leading-relaxed">

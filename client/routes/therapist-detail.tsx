@@ -187,6 +187,7 @@ export default function TherapistDetailPage() {
                         alt={therapist.name}
                         width="420"
                         height="525"
+                        loading="eager"
                         decoding="async"
                         className="h-full w-full object-cover"
                       />

@@ -40,6 +40,10 @@ export default function CoupleTherapyVideo() {
                     <img 
                       src={url} 
                       alt="Therapist avatar" 
+                      width="100"
+                      height="100"
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -74,6 +78,8 @@ export default function CoupleTherapyVideo() {
               <img 
                 src={mainImage} 
                 alt="Ivade Relationship Wellness - Connecting Together" 
+                loading="lazy"
+                decoding="async"
                 className="w-full h-auto"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
