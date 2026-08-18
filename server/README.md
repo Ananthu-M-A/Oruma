@@ -155,37 +155,17 @@ ORUMA_BILLING_ADDRESS=ORUMA.ME Digital Wellness Platform
 ORUMA_GSTIN=
 ```
 
-## Zoom Meetings
+## Manual Zoom and WhatsApp Operations
 
-Appointment confirmation can auto-generate Zoom meeting links using a Zoom Server-to-Server OAuth app.
+The MVP does not connect to the Zoom or WhatsApp APIs. After a paid appointment is confirmed, an administrator creates a unique Zoom meeting and saves its official `https://*.zoom.us/...` link through:
 
-Required Zoom environment values:
-
-```env
-ZOOM_ACCOUNT_ID=
-ZOOM_CLIENT_ID=
-ZOOM_CLIENT_SECRET=
-ZOOM_USER_ID=me
-ZOOM_TIMEZONE=Asia/Kolkata
+```text
+PATCH /appointments/:id/operations
 ```
 
-Use `ZOOM_USER_ID=me` to create meetings under the app owner account, or set it to a specific Zoom user ID/email available to the account. The Zoom app needs meeting creation permission, such as `meeting:write:admin` or the equivalent meeting write scope available in the Zoom Marketplace app settings.
+The admin dashboard creates click-to-chat WhatsApp links with prepared messages. Staff sends each message from the official ORUMA WhatsApp Business account and records the booking confirmation, link delivery, and reminder timestamps in ORUMA. These timestamps are operational records; WhatsApp does not determine appointment status.
 
-## WhatsApp OTP
-
-WhatsApp delivery uses the Cloud API. Configure the provider credentials and an approved authentication template whose first body parameter is the OTP code:
-
-```env
-WHATSAPP_ACCESS_TOKEN=
-WHATSAPP_PHONE_NUMBER_ID=
-WHATSAPP_APPOINTMENT_TEMPLATE_NAME=appointment_confirmation
-WHATSAPP_OTP_TEMPLATE_NAME=
-WHATSAPP_TEMPLATE_LANGUAGE=en
-WHATSAPP_API_VERSION=v20.0
-WHATSAPP_DEFAULT_COUNTRY_CODE=91
-```
-
-Set `WHATSAPP_APPOINTMENT_TEMPLATE_NAME` and `WHATSAPP_OTP_TEMPLATE_NAME` to approved Meta template names. When a template name is unset, the service falls back to a free-form message, which is suitable only where the recipient's messaging window and provider policy allow it.
+OTP login and quick-booking verification use email only. Keep `RESEND_API_KEY` and `EMAIL_FROM` configured in production. See `../docs/MANUAL_APPOINTMENT_OPERATIONS.md` for the staff procedure.
 
 ## Scripts
 

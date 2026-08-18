@@ -57,8 +57,24 @@ export interface BookingResponse {
   packageOfferAmount: number;
   packageDiscountPercent: number;
   meetingLink?: string | null;
+  meetingLinkAddedAt?: string | null;
+  bookingConfirmationSentAt?: string | null;
+  meetingLinkSentAt?: string | null;
+  reminderSentAt?: string | null;
+  staffNotes?: string | null;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
   createdAt: string;
 }
+
+export type AppointmentOperationsUpdate = {
+  meetingLink?: string;
+  markBookingConfirmationSent?: boolean;
+  markMeetingLinkSent?: boolean;
+  markReminderSent?: boolean;
+  staffNotes?: string;
+};
 
 export interface QuickBookingResponse {
   appointment: BookingResponse;
@@ -245,4 +261,39 @@ export async function updateAppointmentStatus(
   }
 
   return response.json();
+}
+
+export async function updateAppointmentOperations(
+  appointmentId: string,
+  payload: AppointmentOperationsUpdate,
+  accessToken: string,
+): Promise<BookingResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/appointments/${appointmentId}/operations`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const message = Array.isArray(errorData.message)
+      ? errorData.message.join(" ")
+      : errorData.message;
+    throw new Error(message || "Failed to update staff handoff");
+  }
+
+  return response.json();
+}
+
+export function buildManualWhatsAppUrl(phone: string | null | undefined, text: string) {
+  const digits = phone?.replace(/\D/g, "") ?? "";
+  if (!digits) return null;
+  const internationalNumber = digits.length === 10 ? `91${digits}` : digits;
+  return `https://wa.me/${internationalNumber}?text=${encodeURIComponent(text)}`;
 }

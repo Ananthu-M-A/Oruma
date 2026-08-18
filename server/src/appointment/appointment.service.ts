@@ -24,6 +24,7 @@ import { Therapist } from '../therapist/entities/therapist.entity';
 
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
+import { UpdateAppointmentOperationsDto } from './dto/update-appointment-operations.dto';
 import { AppointmentStatus } from './entities/appointment-status.enum';
 import { calculateSessionPackagePricing } from './session-package-pricing';
 import {
@@ -35,10 +36,12 @@ import { isStartTimeBookable } from './booking-lead-time';
 import { AuthService } from '../auth/auth.service';
 import { ConfigService } from '@nestjs/config';
 import { ProviderJobService } from '../reliability/provider-job.service';
+import { Payment } from '../payment/entities/payment.entity';
+import { PaymentStatus } from '../payment/entities/payment-status.enum';
+import { normalizeManualZoomLink } from './appointment-operations';
 
 @Injectable()
 export class AppointmentService {
-  private readonly quickBookingEmailDomain = 'quick-booking.oruma.local';
   private readonly logger = new Logger(AppointmentService.name);
 
   constructor(
@@ -78,18 +81,15 @@ export class AppointmentService {
     createdAccount: boolean;
   }> {
     if (!dto.verificationToken) {
-      throw new BadRequestException(
-        'Verify your email or phone before booking',
-      );
+      throw new BadRequestException('Verify your email before booking');
     }
     const verifiedIdentifier = this.authService.verifyQuickBookingToken(
       dto.verificationToken,
     );
     const email = this.normalizeEmail(dto.contactEmail);
-    const phone = this.normalizePhone(dto.contactPhone);
-    if (verifiedIdentifier !== email && verifiedIdentifier !== phone) {
+    if (!email || verifiedIdentifier !== email) {
       throw new BadRequestException(
-        'Booking contact does not match the verified contact',
+        'Booking email does not match the verified email',
       );
     }
 
@@ -250,8 +250,8 @@ export class AppointmentService {
     const email = this.normalizeEmail(dto.contactEmail);
     const phone = this.normalizePhone(dto.contactPhone);
 
-    if (!email && !phone) {
-      throw new BadRequestException('Please enter an email or WhatsApp number');
+    if (!email) {
+      throw new BadRequestException('Please enter and verify your email');
     }
 
     const userRepo = manager.getRepository(User);
@@ -259,18 +259,13 @@ export class AppointmentService {
       .createQueryBuilder('user')
       .where('user.role = :role', { role: Role.PATIENT });
 
-    if (email && phone) {
+    if (phone) {
       query.andWhere(
         "(user.email = :email OR regexp_replace(COALESCE(user.phone, ''), '\\D', '', 'g') = :phone)",
         { email, phone },
       );
-    } else if (email) {
-      query.andWhere('user.email = :email', { email });
     } else {
-      query.andWhere(
-        "regexp_replace(COALESCE(user.phone, ''), '\\D', '', 'g') = :phone",
-        { phone },
-      );
+      query.andWhere('user.email = :email', { email });
     }
 
     const existingPatients = await query.getMany();
@@ -288,9 +283,8 @@ export class AppointmentService {
     }
 
     const password = await bcrypt.hash(randomBytes(24).toString('hex'), 10);
-    const patientEmail = email || `${phone}@${this.quickBookingEmailDomain}`;
     const createdPatient = userRepo.create({
-      email: patientEmail,
+      email,
       password,
       role: Role.PATIENT,
       fullName: dto.contactName?.trim() || null,
@@ -400,37 +394,19 @@ export class AppointmentService {
             `Service: ${service}`,
             `Therapist: ${appointment.therapist.name}`,
             `Slot: ${slotRange}`,
-            'We will keep you updated on the confirmation status.',
+            'Our care team will confirm the appointment and contact you with joining instructions.',
           ].join('\n'),
           html: `
           <p>Your Oruma appointment request has been received.</p>
           <p><strong>Service:</strong> ${service}</p>
           <p><strong>Therapist:</strong> ${appointment.therapist.name}</p>
           <p><strong>Slot:</strong> ${slotRange}</p>
-          <p>We will keep you updated on the confirmation status.</p>
+          <p>Our care team will confirm the appointment and contact you with joining instructions.</p>
         `,
         },
         { deduplicationKey: `appointment:${appointment.id}:request:email` },
       );
     }
-
-    const whatsAppText = [
-      'Your Oruma appointment request has been received.',
-      `Service: ${service}`,
-      `Therapist: ${appointment.therapist.name}`,
-      `Slot: ${slotRange}`,
-      'We will keep you updated on the confirmation status.',
-    ].join('\n');
-
-    if (appointment.contactPhone)
-      await this.providerJobService.enqueueWhatsApp(
-        {
-          to: appointment.contactPhone,
-          text: whatsAppText,
-          templateParameters: [service, appointment.therapist.name, slotRange],
-        },
-        { deduplicationKey: `appointment:${appointment.id}:request:whatsapp` },
-      );
   }
 
   private async sendBookingInAppNotifications(appointment: Appointment) {
@@ -451,7 +427,7 @@ export class AppointmentService {
                 recipientId: appointment.patient.id,
                 type: NotificationType.APPOINTMENT,
                 title: 'Appointment request received',
-                body: `${service} with ${appointment.therapist.name} is pending confirmation for ${slotRange}.`,
+                body: `${service} with ${appointment.therapist.name} is booked for ${slotRange}. Our care team will confirm it and share joining instructions.`,
                 actionUrl: '/profile/patient',
                 metadata: { appointmentId: appointment.id },
               }
@@ -482,11 +458,14 @@ export class AppointmentService {
   }
 
   async findAll(): Promise<Appointment[]> {
-    return this.appointmentRepo.find({
-      order: {
-        createdAt: 'DESC',
-      },
-    });
+    return this.appointmentRepo
+      .createQueryBuilder('appointment')
+      .addSelect('appointment.staffNotes')
+      .leftJoinAndSelect('appointment.patient', 'patient')
+      .leftJoinAndSelect('appointment.therapist', 'therapist')
+      .leftJoinAndSelect('appointment.slot', 'slot')
+      .orderBy('appointment.createdAt', 'DESC')
+      .getMany();
   }
 
   async findForUser(user: JwtPayload): Promise<Appointment[]> {
@@ -573,22 +552,23 @@ export class AppointmentService {
       ? await this.findOneForUser(id, user)
       : await this.findOne(id);
 
-    const shouldRetryMeetingCreation =
-      appointment.status === AppointmentStatus.CONFIRMED &&
-      dto.status === AppointmentStatus.CONFIRMED &&
-      !appointment.meetingLink;
-
-    if (
-      !shouldRetryMeetingCreation &&
-      !canTransitionAppointmentStatus(appointment.status, dto.status)
-    ) {
+    if (!canTransitionAppointmentStatus(appointment.status, dto.status)) {
       throw new BadRequestException(
         `Appointment status cannot change from ${appointment.status} to ${dto.status}`,
       );
     }
 
-    if (appointment.status === dto.status && !shouldRetryMeetingCreation) {
+    if (appointment.status === dto.status) {
       return appointment;
+    }
+
+    if (
+      dto.status === AppointmentStatus.CONFIRMED &&
+      !(await this.hasPaidPayment(appointment.id))
+    ) {
+      throw new BadRequestException(
+        'A paid appointment is required before confirmation',
+      );
     }
 
     if (dto.status === AppointmentStatus.CANCELLED) {
@@ -602,16 +582,86 @@ export class AppointmentService {
 
     appointment.status = dto.status;
 
-    const shouldCreateMeeting =
-      dto.status === AppointmentStatus.CONFIRMED && !appointment.meetingLink;
-
     const savedAppointment = await this.appointmentRepo.save(appointment);
-
-    if (shouldCreateMeeting) {
-      await this.providerJobService.enqueueZoomMeeting(savedAppointment.id);
-    }
     await this.sendAppointmentStatusInAppNotifications(savedAppointment, user);
 
+    return savedAppointment;
+  }
+
+  async updateOperations(
+    id: string,
+    dto: UpdateAppointmentOperationsDto,
+    user: JwtPayload,
+  ): Promise<Appointment> {
+    if (user.role !== Role.ADMIN) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    const appointment = await this.appointmentRepo
+      .createQueryBuilder('appointment')
+      .addSelect('appointment.staffNotes')
+      .leftJoinAndSelect('appointment.patient', 'patient')
+      .leftJoinAndSelect('appointment.therapist', 'therapist')
+      .leftJoinAndSelect('therapist.account', 'therapistAccount')
+      .leftJoinAndSelect('appointment.slot', 'slot')
+      .where('appointment.id = :id', { id })
+      .getOne();
+
+    if (!appointment) throw new NotFoundException('Appointment not found');
+    if (
+      appointment.status === AppointmentStatus.CANCELLED ||
+      appointment.status === AppointmentStatus.COMPLETED
+    ) {
+      throw new BadRequestException(
+        'Manual handoff cannot be changed for a closed appointment',
+      );
+    }
+
+    const now = new Date();
+    let meetingLinkChanged = false;
+    if (dto.meetingLink !== undefined) {
+      if (appointment.status !== AppointmentStatus.CONFIRMED) {
+        throw new BadRequestException(
+          'Confirm the paid appointment before adding a meeting link',
+        );
+      }
+      const meetingLink = this.validateManualZoomLink(dto.meetingLink);
+      meetingLinkChanged = meetingLink !== appointment.meetingLink;
+      if (meetingLinkChanged) {
+        appointment.meetingLink = meetingLink;
+        appointment.meetingLinkAddedAt = now;
+        appointment.meetingLinkSentAt = null;
+        appointment.reminderSentAt = null;
+      }
+    }
+
+    if (dto.markBookingConfirmationSent) {
+      appointment.bookingConfirmationSentAt = now;
+    }
+    if (dto.markMeetingLinkSent) {
+      if (!appointment.meetingLink) {
+        throw new BadRequestException(
+          'Add the meeting link before marking it as sent',
+        );
+      }
+      appointment.meetingLinkSentAt = now;
+    }
+    if (dto.markReminderSent) {
+      if (!appointment.meetingLink || !appointment.meetingLinkSentAt) {
+        throw new BadRequestException(
+          'Share the meeting link before recording a reminder',
+        );
+      }
+      appointment.reminderSentAt = now;
+    }
+    if (dto.staffNotes !== undefined) {
+      appointment.staffNotes = dto.staffNotes.trim() || null;
+    }
+
+    const savedAppointment = await this.appointmentRepo.save(appointment);
+    if (meetingLinkChanged) {
+      await this.sendMeetingLinkReadyNotifications(savedAppointment);
+    }
     return savedAppointment;
   }
 
@@ -668,6 +718,9 @@ export class AppointmentService {
 
       appointment.status = AppointmentStatus.CANCELLED;
       appointment.meetingLink = null;
+      appointment.meetingLinkAddedAt = null;
+      appointment.meetingLinkSentAt = null;
+      appointment.reminderSentAt = null;
       appointment.reservationExpiresAt = null;
       appointment.cancelledAt = new Date();
       appointment.cancellationReason = 'Cancelled by user or administrator';
@@ -682,11 +735,7 @@ export class AppointmentService {
     const therapistAccountId = await this.getTherapistAccountId(appointment);
     const service = appointment.service ?? 'Therapy session';
     const slotRange = this.formatSlotRange(appointment);
-    const actionUrl =
-      appointment.status === AppointmentStatus.CONFIRMED &&
-      appointment.meetingLink
-        ? '/profile/patient'
-        : '/profile/patient';
+    const actionUrl = '/profile/patient';
     const recipients = new Set<string>();
     if (appointment.patient?.id) recipients.add(appointment.patient.id);
     if (therapistAccountId && therapistAccountId !== actor?.userId) {
@@ -698,9 +747,8 @@ export class AppointmentService {
         ? 'Appointment confirmed'
         : `Appointment ${appointment.status.toLowerCase()}`;
     const body =
-      appointment.status === AppointmentStatus.CONFIRMED &&
-      appointment.meetingLink
-        ? `${service} for ${slotRange} is confirmed. The Zoom link is ready.`
+      appointment.status === AppointmentStatus.CONFIRMED
+        ? `${service} for ${slotRange} is confirmed. Our care team is preparing your secure session link.`
         : `${service} for ${slotRange} is now ${appointment.status.toLowerCase()}.`;
 
     await Promise.allSettled([
@@ -733,6 +781,59 @@ export class AppointmentService {
     });
 
     return therapist?.account?.id ?? null;
+  }
+
+  private async hasPaidPayment(appointmentId: string) {
+    return this.dataSource.getRepository(Payment).exists({
+      where: {
+        appointment: { id: appointmentId },
+        status: PaymentStatus.PAID,
+      },
+    });
+  }
+
+  private validateManualZoomLink(value: string) {
+    const link = normalizeManualZoomLink(value);
+    if (!link) {
+      throw new BadRequestException(
+        'Meeting links must use an official zoom.us address',
+      );
+    }
+    return link;
+  }
+
+  private async sendMeetingLinkReadyNotifications(appointment: Appointment) {
+    const therapistAccountId =
+      appointment.therapist?.account?.id ??
+      (await this.getTherapistAccountId(appointment));
+    const service = appointment.service ?? 'Therapy session';
+    const slotRange = this.formatSlotRange(appointment);
+    const notifications = [
+      appointment.patient?.id
+        ? {
+            recipientId: appointment.patient.id,
+            type: NotificationType.APPOINTMENT,
+            title: 'Your session link is ready',
+            body: `${service} for ${slotRange} now has a secure Zoom link in your appointment dashboard.`,
+            actionUrl: '/profile/patient',
+            metadata: { appointmentId: appointment.id },
+          }
+        : null,
+      therapistAccountId
+        ? {
+            recipientId: therapistAccountId,
+            type: NotificationType.APPOINTMENT,
+            title: 'Session link added by the care team',
+            body: `${service} for ${slotRange} is ready to join from your dashboard.`,
+            actionUrl: '/profile/therapist',
+            metadata: { appointmentId: appointment.id },
+          }
+        : null,
+    ].filter((notification): notification is NonNullable<typeof notification> =>
+      Boolean(notification),
+    );
+
+    await this.notificationService.createMany(notifications);
   }
 
   private formatSlotRange(appointment: Appointment) {

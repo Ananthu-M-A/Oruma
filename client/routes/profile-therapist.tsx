@@ -160,7 +160,14 @@ function TherapistAppointmentCard({
             </a>
           ) : (
             <span className="inline-flex min-h-11 w-fit items-center rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
-              No Zoom link
+              {appointment.status === "CONFIRMED"
+                ? "Care team preparing link"
+                : "Link after confirmation"}
+            </span>
+          )}
+          {appointment.meetingLinkSentAt && (
+            <span className="inline-flex min-h-11 w-fit items-center rounded-full bg-[#EAF7F2] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#075E59]">
+              Patient notified
             </span>
           )}
           <label className="sr-only" htmlFor={`status-${appointment.id}`}>

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -139,6 +140,11 @@ export class AuthService {
     requireAccount: boolean,
   ): Promise<{ message: string; devCode?: string }> {
     const normalized = this.normalizeIdentifier(dto.identifier);
+    if (!this.isEmail(normalized)) {
+      throw new BadRequestException(
+        'Use your email for verification. WhatsApp is handled manually by the care team.',
+      );
+    }
     if (requireAccount) {
       const user = await this.userService.findPatientByEmailOrPhone(normalized);
       if (!user)
@@ -162,29 +168,15 @@ export class AuthService {
     );
     const label = purpose === 'LOGIN' ? 'login' : 'booking verification';
     const message = `Your Oruma ${label} code is ${code}. It expires in 10 minutes.`;
-    if (this.isEmail(normalized)) {
-      await this.providerJobService.enqueueEmail(
-        {
-          to: normalized,
-          subject: `Your Oruma ${label} code`,
-          text: message,
-          html: `<p>${message}</p>`,
-        },
-        { deduplicationKey: `otp:${saved.id}:email` },
-      );
-    } else {
-      const templateName = this.configService.get<string>(
-        'WHATSAPP_OTP_TEMPLATE_NAME',
-      );
-      await this.providerJobService.enqueueWhatsApp(
-        {
-          to: normalized,
-          text: message,
-          ...(templateName ? { templateName, templateParameters: [code] } : {}),
-        },
-        { deduplicationKey: `otp:${saved.id}:whatsapp` },
-      );
-    }
+    await this.providerJobService.enqueueEmail(
+      {
+        to: normalized,
+        subject: `Your Oruma ${label} code`,
+        text: message,
+        html: `<p>${message}</p>`,
+      },
+      { deduplicationKey: `otp:${saved.id}:email` },
+    );
     return {
       message: 'If the contact is eligible, a code has been sent.',
       ...(this.configService.get<string>('NODE_ENV') === 'production'
@@ -198,6 +190,9 @@ export class AuthService {
     code: string,
     purpose: 'LOGIN' | 'QUICK_BOOKING',
   ) {
+    if (!this.isEmail(identifier)) {
+      throw new BadRequestException('Email verification is required');
+    }
     const otp = await this.loginOtpRepository.findOne({
       where: { identifier, purpose, used: false },
       order: { createdAt: 'DESC' },

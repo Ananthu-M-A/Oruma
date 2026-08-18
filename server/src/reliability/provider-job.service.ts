@@ -3,15 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Interval } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, LessThan, Repository } from 'typeorm';
-import { AppointmentStatus } from '../appointment/entities/appointment-status.enum';
-import { Appointment } from '../appointment/entities/appointment.entity';
-import { formatIstSlotRange } from '../common/ist-date-time';
 import { MailService, SendMailInput } from '../mail/mail.service';
-import {
-  SendWhatsAppInput,
-  WhatsAppService,
-} from '../whatsapp/whatsapp.service';
-import { ZoomService } from '../zoom/zoom.service';
 import {
   ProviderJob,
   ProviderJobKind,
@@ -38,24 +30,10 @@ export class ProviderJobService {
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
-    private readonly whatsAppService: WhatsAppService,
-    private readonly zoomService: ZoomService,
   ) {}
 
   enqueueEmail(input: SendMailInput, options: EnqueueOptions = {}) {
     return this.enqueue(ProviderJobKind.EMAIL, input, options);
-  }
-
-  enqueueWhatsApp(input: SendWhatsAppInput, options: EnqueueOptions = {}) {
-    return this.enqueue(ProviderJobKind.WHATSAPP, input, options);
-  }
-
-  enqueueZoomMeeting(appointmentId: string) {
-    return this.enqueue(
-      ProviderJobKind.ZOOM_MEETING,
-      { appointmentId },
-      { deduplicationKey: `zoom:appointment:${appointmentId}` },
-    );
   }
 
   async enqueue(
@@ -115,6 +93,11 @@ export class ProviderJobService {
     const job = await this.jobRepository.findOneByOrFail({ id });
     if (job.status !== ProviderJobStatus.DEAD) {
       throw new BadRequestException('Only dead provider jobs can be retried');
+    }
+    if (job.kind !== ProviderJobKind.EMAIL) {
+      throw new BadRequestException(
+        'This automated provider is disabled by the manual MVP workflow',
+      );
     }
     Object.assign(job, {
       status: ProviderJobStatus.PENDING,
@@ -265,112 +248,17 @@ export class ProviderJobService {
         throw new Error('Email provider did not accept the message');
       return;
     }
-    if (job.kind === ProviderJobKind.WHATSAPP) {
-      if (!(await this.whatsAppService.send(job.payload as SendWhatsAppInput)))
-        throw new Error('WhatsApp provider did not accept the message');
-      return;
-    }
-    if (job.kind === ProviderJobKind.ZOOM_MEETING) {
-      await this.createZoomMeeting(job.payload);
-      return;
-    }
     throw new Error(`Unsupported provider job kind: ${String(job.kind)}`);
   }
 
   private getProviderConfigurationError(kind: ProviderJobKind): string | null {
     if (kind === ProviderJobKind.EMAIL && !this.mailService.isConfigured())
       return 'Email provider is not configured';
-    if (
-      kind === ProviderJobKind.WHATSAPP &&
-      !this.whatsAppService.isConfigured()
-    )
-      return 'WhatsApp provider is not configured';
-    if (
-      kind === ProviderJobKind.ZOOM_MEETING &&
-      !this.zoomService.isConfigured()
-    )
-      return 'Zoom provider is not configured';
+    if (kind === ProviderJobKind.WHATSAPP)
+      return 'Automated WhatsApp delivery is disabled; staff handles messages manually';
+    if (kind === ProviderJobKind.ZOOM_MEETING)
+      return 'Automated Zoom creation is disabled; staff adds meeting links manually';
     return null;
-  }
-
-  private async createZoomMeeting(payload: Record<string, unknown>) {
-    const appointmentId = payload.appointmentId;
-    if (typeof appointmentId !== 'string' || !appointmentId)
-      throw new Error('Zoom job is missing appointmentId');
-    const repository = this.dataSource.getRepository(Appointment);
-    const appointment = await repository.findOne({
-      where: { id: appointmentId },
-      relations: ['therapist', 'therapist.account', 'slot', 'patient'],
-    });
-    if (!appointment) throw new Error('Appointment no longer exists');
-    if (appointment.status !== AppointmentStatus.CONFIRMED) return;
-    if (!appointment.meetingLink) {
-      appointment.meetingLink =
-        await this.zoomService.createAppointmentMeeting(appointment);
-      if (!appointment.meetingLink)
-        throw new Error('Zoom did not return a meeting link');
-      await repository.save(appointment);
-    }
-    await this.enqueueMeetingNotifications(appointment);
-  }
-
-  private async enqueueMeetingNotifications(appointment: Appointment) {
-    if (!appointment.meetingLink) return;
-    const slotRange = formatIstSlotRange(
-      appointment.slot.startTime,
-      appointment.slot.endTime,
-    );
-    const service = appointment.service ?? 'Therapy session';
-    const patientName =
-      appointment.contactName ??
-      appointment.patient?.fullName ??
-      appointment.patient?.email ??
-      'Patient';
-    const patientEmail = appointment.contactEmail ?? appointment.patient?.email;
-    const patientText = [
-      'Your Oruma appointment has been confirmed.',
-      `Service: ${service}`,
-      `Therapist: ${appointment.therapist.name}`,
-      `Slot: ${slotRange}`,
-      `Join Zoom session: ${appointment.meetingLink}`,
-    ].join('\n');
-    if (patientEmail)
-      await this.enqueueEmail(
-        {
-          to: patientEmail,
-          subject: 'Your Oruma Zoom session link',
-          text: patientText,
-          html: `<p>${patientText.replace(/\n/g, '<br />')}</p>`,
-        },
-        {
-          deduplicationKey: `appointment:${appointment.id}:zoom:patient-email`,
-        },
-      );
-    if (appointment.therapist.email) {
-      const therapistText = [
-        'An Oruma appointment has been confirmed.',
-        `Patient: ${patientName}`,
-        `Service: ${service}`,
-        `Slot: ${slotRange}`,
-        `Join Zoom session: ${appointment.meetingLink}`,
-      ].join('\n');
-      await this.enqueueEmail(
-        {
-          to: appointment.therapist.email,
-          subject: 'Confirmed Oruma appointment Zoom link',
-          text: therapistText,
-          html: `<p>${therapistText.replace(/\n/g, '<br />')}</p>`,
-        },
-        {
-          deduplicationKey: `appointment:${appointment.id}:zoom:therapist-email`,
-        },
-      );
-    }
-    if (appointment.contactPhone)
-      await this.enqueueWhatsApp(
-        { to: appointment.contactPhone, text: patientText },
-        { deduplicationKey: `appointment:${appointment.id}:zoom:whatsapp` },
-      );
   }
 
   private getNextAttemptAt(attempts: number) {

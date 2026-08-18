@@ -63,10 +63,6 @@ export class UpdateTherapistDto {
 
   @IsOptional()
   @IsString()
-  zoomUserId?: string;
-
-  @IsOptional()
-  @IsString()
   qualifications?: string;
 
   @IsOptional()

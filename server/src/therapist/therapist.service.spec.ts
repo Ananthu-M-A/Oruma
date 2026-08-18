@@ -117,7 +117,6 @@ describe('TherapistService', () => {
       couplePrice: null,
       image: null,
       voiceIntro: null,
-      zoomUserId: 'private-zoom-host',
       qualifications: 'MSc Psychology',
       specialization: 'Anxiety',
       bio: 'Profile',
@@ -145,7 +144,6 @@ describe('TherapistService', () => {
     });
     expect(result.nextAvailableSlot).toEqual(new Date('2026-07-22T04:30:00Z'));
     expect(result).not.toHaveProperty('email');
-    expect(result).not.toHaveProperty('zoomUserId');
     expect(result).not.toHaveProperty('pendingProfileChanges');
   });
 });

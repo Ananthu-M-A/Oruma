@@ -151,9 +151,10 @@ export default function LoginPage() {
                 <form className="space-y-5" onSubmit={handleRequestOtp}>
                   <label className="block">
                     <span className="block text-xs font-black text-[#064F4B] uppercase tracking-widest mb-2">
-                      Email or WhatsApp number
+                      Email address
                     </span>
                     <input
+                      type="email"
                       value={otpIdentifier}
                       onChange={(event) => setOtpIdentifier(event.target.value)}
                       className="w-full rounded-2xl border border-[#DDE8E2] bg-white px-5 py-4 outline-none transition focus:border-[#0A7F7A] focus:ring-4 focus:ring-[#0A7F7A]/10"

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { canPatientCancelAppointment, getEarliestBookableSlotTime } from "./booking";
+import {
+  buildManualWhatsAppUrl,
+  canPatientCancelAppointment,
+  getEarliestBookableSlotTime,
+} from "./booking";
 
 describe("booking policies", () => {
   it("rounds the earliest selectable booking time upward", () => {
@@ -11,5 +15,15 @@ describe("booking policies", () => {
     const appointment = { status: "PENDING", createdAt: new Date(now - 30 * 60_000).toISOString(), slot: { startTime: new Date(now + 2 * 60 * 60_000).toISOString() } } as never;
     expect(canPatientCancelAppointment(appointment, now)).toBe(true);
     expect(canPatientCancelAppointment(appointment, now + 31 * 60_000)).toBe(false);
+  });
+
+  it("builds a click-to-chat link without provider integration", () => {
+    expect(buildManualWhatsAppUrl("+91 98765 43210", "Hello & welcome")).toBe(
+      "https://wa.me/919876543210?text=Hello%20%26%20welcome",
+    );
+    expect(buildManualWhatsAppUrl("9876543210", "Hello")).toBe(
+      "https://wa.me/919876543210?text=Hello",
+    );
+    expect(buildManualWhatsAppUrl(null, "Hello")).toBeNull();
   });
 });

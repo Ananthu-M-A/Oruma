@@ -22,7 +22,6 @@ describe('AuthService', () => {
   };
   const providerJobService = {
     enqueueEmail: jest.fn(),
-    enqueueWhatsApp: jest.fn(),
   };
   const loginOtpRepository = {
     update: jest.fn(),

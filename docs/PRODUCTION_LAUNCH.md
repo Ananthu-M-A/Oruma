@@ -40,9 +40,7 @@ ALLOW_PRODUCTION_DATABASE_CLEAR=false
 Provider groups to configure:
 
 - `RAZORPAY_*`
-- `ZOOM_*`
 - `RESEND_API_KEY` and `EMAIL_FROM`
-- `WHATSAPP_*`, including an approved `WHATSAPP_OTP_TEMPLATE_NAME`
 - `CLOUDINARY_*`
 - `ORUMA_*` billing identity
 
@@ -69,10 +67,10 @@ Repeat against production only after staging validation and a backup. Seed the i
 ## 4. Provider dashboards
 
 - Razorpay: activate live mode, configure `https://api.oruma.me/payments/razorpay/webhook`, enable captured/failed/refund events, and test signature verification plus refunds.
-- Zoom: configure Server-to-Server OAuth meeting-write scopes and verify each configured therapist host can start/join meetings.
 - Resend: verify the sending domain and DKIM/SPF records, then test OTP and therapist credential delivery.
-- WhatsApp: connect the production number and approve appointment confirmation and OTP authentication templates with parameters matching the code.
 - Cloudinary: configure a restricted upload preset and validate image/audio type, size, access, and lifecycle rules.
+
+Zoom and WhatsApp are manual MVP operations, not API providers. Configure a licensed organisational Zoom account and an official WhatsApp Business number, then train staff using `MANUAL_APPOINTMENT_OPERATIONS.md`.
 
 ## 5. Release verification
 
@@ -106,3 +104,4 @@ For the frontend release, also verify `/robots.txt`, `/sitemap.xml`, route-speci
 - Enable daily backups and complete a restore drill before public traffic.
 - Keep previous frontend/backend releases available for rollback.
 - Assign owners for incidents, refunds, clinical escalation, privacy requests, and customer support.
+- Staff the paid-appointment queue during published operating hours, use unique Zoom meetings, and record every manual WhatsApp handoff in ORUMA.

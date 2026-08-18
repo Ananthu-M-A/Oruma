@@ -83,6 +83,21 @@ export class Appointment {
   meetingLink: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })
+  meetingLinkAddedAt: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  bookingConfirmationSentAt: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  meetingLinkSentAt: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  reminderSentAt: Date | null;
+
+  @Column({ type: 'text', nullable: true, select: false })
+  staffNotes: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
   reservationExpiresAt: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true })

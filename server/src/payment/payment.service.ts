@@ -151,6 +151,10 @@ export class PaymentService {
       'Payment recorded',
       'Your appointment payment has been recorded.',
     );
+    await this.appointmentService.notifyBookingAfterPayment(
+      appointment,
+      appointment.contactEmail ?? appointment.patient?.email,
+    );
 
     return savedPayment;
   }

@@ -19,7 +19,6 @@ export type Therapist = {
   couplePrice: number | null;
   image: string | null;
   voiceIntro: string | null;
-  zoomUserId?: string | null;
   qualifications: string | null;
   specialization: string | null;
   bio: string | null;
@@ -43,7 +42,6 @@ export type TherapistPayload = {
   couplePrice?: number | null;
   image?: string;
   voiceIntro?: string;
-  zoomUserId?: string | null;
   qualifications?: string;
   specialization?: string;
   bio?: string;

@@ -96,6 +96,19 @@ function AppointmentCard({
   const canOpenInvoice =
     payment?.status === "PAID" || payment?.status === "REFUNDED";
   const canCancel = canPatientCancelAppointment(appointment, policyNow);
+  const careTeamUpdate = (() => {
+    if (appointment.status === "PENDING") {
+      return "Payment received and booking recorded. Our care team is confirming the appointment and will contact you from the official ORUMA WhatsApp number.";
+    }
+    if (appointment.status !== "CONFIRMED") return null;
+    if (!appointment.meetingLink) {
+      return "Your appointment is confirmed. Our care team is creating a unique Zoom link and will share it before the session.";
+    }
+    if (appointment.meetingLinkSentAt) {
+      return `Your secure Zoom link is ready below and was shared by the care team on ${formatDate(appointment.meetingLinkSentAt)}.`;
+    }
+    return "Your secure Zoom link is ready below. The care team will also share it through the official ORUMA WhatsApp number.";
+  })();
 
   return (
     <article className="rounded-[1.5rem] border border-[#E2E8E6] bg-white p-5 shadow-sm">
@@ -156,9 +169,9 @@ function AppointmentCard({
           )}
         </div>
       </div>
-      {appointment.status === "CONFIRMED" && !appointment.meetingLink && (
+      {careTeamUpdate && (
         <p className="mt-4 rounded-lg bg-[#F5F8F7] px-4 py-3 text-xs font-bold text-[#5F7F7A]">
-          Zoom link will appear here once the session link is generated.
+          {careTeamUpdate}
         </p>
       )}
       {!canCancel &&

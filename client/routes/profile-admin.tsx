@@ -13,7 +13,14 @@ import {
   getProviderDeliveries, PaymentWebhookEvent, PrivacyRequest, ProviderDelivery,
   retryPaymentWebhook, retryProviderDelivery, reviewPrivacyRequest,
 } from "../src/lib/admin";
-import { BookingResponse, getAppointments } from "../src/lib/booking";
+import {
+  AppointmentOperationsUpdate,
+  BookingResponse,
+  buildManualWhatsAppUrl,
+  getAppointments,
+  updateAppointmentOperations,
+  updateAppointmentStatus,
+} from "../src/lib/booking";
 import {
   createTherapist,
   getAdminTherapists,
@@ -31,7 +38,7 @@ import {
   Ticket,
   updateTicket,
 } from "../src/lib/operations";
-import { formatIstDate, formatIstDateTime } from "../src/lib/dateTime";
+import { formatIstDateTime } from "../src/lib/dateTime";
 
 export const meta = {
   title: "Admin Profile | Oruma",
@@ -64,6 +71,10 @@ export default function AdminProfilePage() {
   });
   const [refundForm, setRefundForm] = useState<Record<string, string>>({});
   const [ticketNotes, setTicketNotes] = useState<Record<string, string>>({});
+  const [appointmentDrafts, setAppointmentDrafts] = useState<
+    Record<string, { meetingLink: string; staffNotes: string }>
+  >({});
+  const [savingAppointmentId, setSavingAppointmentId] = useState("");
 
   const loadAdminData = async () => {
     const token = getAccessToken();
@@ -96,6 +107,17 @@ export default function AdminProfilePage() {
       getAuditEvents(token),
     ]);
     setAppointments(appointmentData);
+    setAppointmentDrafts(
+      Object.fromEntries(
+        appointmentData.map((appointment) => [
+          appointment.id,
+          {
+            meetingLink: appointment.meetingLink ?? "",
+            staffNotes: appointment.staffNotes ?? "",
+          },
+        ]),
+      ),
+    );
     setTherapists(therapistData);
     setSummary(summaryData);
     setPayments(paymentData);
@@ -228,6 +250,108 @@ export default function AdminProfilePage() {
     () => therapists.filter((therapist) => !therapist.isActive).length,
     [therapists],
   );
+  const paidAppointmentIds = useMemo(
+    () =>
+      new Set(
+        payments
+          .filter((payment) => payment.status === "PAID")
+          .map((payment) => payment.appointment?.id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    [payments],
+  );
+
+  const updateAppointmentRecord = (updated: BookingResponse) => {
+    setAppointments((current) =>
+      current.map((appointment) =>
+        appointment.id === updated.id ? updated : appointment,
+      ),
+    );
+    setAppointmentDrafts((current) => ({
+      ...current,
+      [updated.id]: {
+        meetingLink: updated.meetingLink ?? "",
+        staffNotes: updated.staffNotes ?? current[updated.id]?.staffNotes ?? "",
+      },
+    }));
+  };
+
+  const changeAppointmentStatus = async (
+    appointment: BookingResponse,
+    status: BookingResponse["status"],
+  ) => {
+    const token = getAccessToken();
+    if (!token) return;
+    if (
+      status === "CANCELLED" &&
+      !window.confirm(
+        "Cancel this appointment and release its slot? Refunds remain a separate staff action.",
+      )
+    ) {
+      return;
+    }
+    setSavingAppointmentId(appointment.id);
+    setError("");
+    setNotice("");
+    try {
+      const updated = await updateAppointmentStatus(
+        appointment.id,
+        status,
+        token,
+      );
+      updateAppointmentRecord(updated);
+      setNotice(`Appointment marked ${status.toLowerCase()}.`);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Unable to update appointment.",
+      );
+    } finally {
+      setSavingAppointmentId("");
+    }
+  };
+
+  const saveAppointmentHandoff = async (
+    appointment: BookingResponse,
+    payload: AppointmentOperationsUpdate,
+    successMessage: string,
+  ) => {
+    const token = getAccessToken();
+    if (!token) return;
+    setSavingAppointmentId(appointment.id);
+    setError("");
+    setNotice("");
+    try {
+      const updated = await updateAppointmentOperations(
+        appointment.id,
+        payload,
+        token,
+      );
+      updateAppointmentRecord(updated);
+      setNotice(successMessage);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Unable to update staff handoff.",
+      );
+    } finally {
+      setSavingAppointmentId("");
+    }
+  };
+
+  const openManualWhatsApp = (
+    appointment: BookingResponse,
+    kind: ManualWhatsAppMessageKind,
+  ) => {
+    const url = buildManualWhatsAppUrl(
+      appointment.contactPhone ?? appointment.patient?.phone,
+      createManualWhatsAppMessage(appointment, kind),
+    );
+    if (!url) {
+      setError("This appointment does not have a WhatsApp number.");
+      return;
+    }
+    setError("");
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   const handleCreateTherapist = async (event: FormEvent) => {
     event.preventDefault();
@@ -390,66 +514,55 @@ export default function AdminProfilePage() {
             {activeTab === "appointments" && (
               <section className="rounded-lg bg-white p-6 shadow-sm border border-[#E2E8E6]">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
-                  Latest activity
+                  Manual care workflow
                 </p>
                 <h2 className="mt-2 text-3xl font-heading font-black text-[#064F4B]">
-                  Appointments
+                  Appointment handoffs
                 </h2>
-                <div className="mt-6 overflow-hidden rounded-lg border border-[#E2E8E6]">
+                <p className="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-[#5F7F7A]">
+                  ORUMA is the booking record. After payment, confirm the
+                  appointment, create one unique Zoom meeting, add its link,
+                  and use the prepared WhatsApp messages to contact the patient.
+                </p>
+                <div className="mt-6 grid gap-5">
                   {isLoading && (
-                    <p className="bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">
+                    <p className="rounded-lg bg-[#F5F8F7] p-5 font-bold text-[#5F7F7A]">
                       Loading admin data...
                     </p>
                   )}
                   {!isLoading && appointments.length === 0 && (
-                    <p className="bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">
+                    <p className="rounded-lg bg-[#F5F8F7] p-7 text-center font-black text-[#064F4B]">
                       No appointment data is available yet.
                     </p>
                   )}
-                  {appointments.slice(0, 10).map((appointment) => (
-                    <article
+                  {appointments.slice(0, 25).map((appointment) => (
+                    <AppointmentOperationsCard
                       key={appointment.id}
-                      className="grid gap-3 border-b border-[#E2E8E6] bg-white p-5 last:border-b-0 lg:grid-cols-[1fr_1fr_1fr_1fr_auto_auto] lg:items-center"
-                    >
-                      <ActivityItem
-                        label="Patient"
-                        value={appointment.patient?.email ?? "Patient"}
-                      />
-                      <ActivityItem
-                        label="Therapist"
-                        value={appointment.therapist?.name ?? "Therapist"}
-                      />
-                      <ActivityItem
-                        label="Package"
-                        value={
-                          appointment.packageName ??
-                          `${appointment.sessionCount} session`
+                      appointment={appointment}
+                      draft={
+                        appointmentDrafts[appointment.id] ?? {
+                          meetingLink: appointment.meetingLink ?? "",
+                          staffNotes: appointment.staffNotes ?? "",
                         }
-                      />
-                      <ActivityItem
-                        label="Created"
-                        value={formatIstDate(appointment.createdAt)}
-                      />
-                      <span className="w-fit rounded-full bg-[#0A7F7A]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
-                        {appointment.status}
-                      </span>
-                      {appointment.status === "CONFIRMED" &&
-                      appointment.meetingLink ? (
-                        <a
-                          href={appointment.meetingLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex w-fit items-center gap-2 rounded-full bg-[#0A7F7A] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white"
-                        >
-                          <LucideIcon name="video" size={14} />
-                          Join
-                        </a>
-                      ) : (
-                        <span className="w-fit rounded-full bg-[#F5F8F7] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
-                          No link
-                        </span>
-                      )}
-                    </article>
+                      }
+                      isPaid={paidAppointmentIds.has(appointment.id)}
+                      isSaving={savingAppointmentId === appointment.id}
+                      onDraftChange={(draft) =>
+                        setAppointmentDrafts((current) => ({
+                          ...current,
+                          [appointment.id]: draft,
+                        }))
+                      }
+                      onStatusChange={(status) =>
+                        changeAppointmentStatus(appointment, status)
+                      }
+                      onSave={(payload, message) =>
+                        saveAppointmentHandoff(appointment, payload, message)
+                      }
+                      onOpenWhatsApp={(kind) =>
+                        openManualWhatsApp(appointment, kind)
+                      }
+                    />
                   ))}
                 </div>
               </section>
@@ -748,7 +861,7 @@ export default function AdminProfilePage() {
             {activeTab === "reliability" && <section className="grid gap-6 lg:grid-cols-2">
               <div className="rounded-lg border border-[#E2E8E6] bg-white p-6">
                 <h2 className="text-2xl font-black text-[#064F4B]">Provider delivery jobs</h2>
-                <div className="mt-4 space-y-3">{providerDeliveries.slice(0, 20).map((job) => <div key={job.id} className="rounded-lg bg-[#F5F8F7] p-4"><p className="font-black">{job.kind} · {job.status}</p><p className="text-xs">Attempts {job.attempts}/{job.maxAttempts}{job.lastError ? ` · ${job.lastError}` : ""}</p>{job.status === "DEAD" && <button onClick={() => retryReliabilityItem("delivery", job.id)} className="mt-2 text-xs font-black text-[#0A7F7A]">Retry</button>}</div>)}</div>
+                <div className="mt-4 space-y-3">{providerDeliveries.slice(0, 20).map((job) => <div key={job.id} className="rounded-lg bg-[#F5F8F7] p-4"><p className="font-black">{job.kind} · {job.status}</p><p className="text-xs">Attempts {job.attempts}/{job.maxAttempts}{job.lastError ? ` · ${job.lastError}` : ""}</p>{job.status === "DEAD" && job.kind === "EMAIL" && <button onClick={() => retryReliabilityItem("delivery", job.id)} className="mt-2 text-xs font-black text-[#0A7F7A]">Retry</button>}</div>)}</div>
               </div>
               <div className="rounded-lg border border-[#E2E8E6] bg-white p-6">
                 <h2 className="text-2xl font-black text-[#064F4B]">Payment webhooks</h2>
@@ -816,6 +929,328 @@ export default function AdminProfilePage() {
 
       <Footer />
     </main>
+  );
+}
+
+type ManualWhatsAppMessageKind = "confirmation" | "meeting-link" | "reminder";
+
+function createManualWhatsAppMessage(
+  appointment: BookingResponse,
+  kind: ManualWhatsAppMessageKind,
+) {
+  const patientName =
+    appointment.contactName ?? appointment.patient?.fullName ?? "there";
+  const bookingId = appointment.id.slice(0, 8).toUpperCase();
+  const service = appointment.service ?? "Therapy session";
+  const therapist = appointment.therapist?.name ?? "your therapist";
+  const slot = formatIstDateTime(appointment.slot?.startTime, "the booked time");
+  const sharedDetails = [
+    `Booking ID: ${bookingId}`,
+    `Service: ${service}`,
+    `Therapist: ${therapist}`,
+    `Time: ${slot}`,
+  ];
+
+  if (kind === "meeting-link") {
+    return [
+      `Hello ${patientName},`,
+      "",
+      "Your secure ORUMA consultation link is ready.",
+      ...sharedDetails,
+      `Join Zoom: ${appointment.meetingLink ?? "Link pending"}`,
+      "",
+      "Please join a few minutes early. Use your ORUMA dashboard for the official appointment status.",
+    ].join("\n");
+  }
+
+  if (kind === "reminder") {
+    return [
+      `Hello ${patientName},`,
+      "",
+      "This is a reminder for your upcoming ORUMA consultation.",
+      ...sharedDetails,
+      `Join Zoom: ${appointment.meetingLink ?? "Link pending"}`,
+      "",
+      "If you need help, reply to this official ORUMA WhatsApp chat.",
+    ].join("\n");
+  }
+
+  return [
+    `Hello ${patientName},`,
+    "",
+    "Your ORUMA appointment is confirmed.",
+    ...sharedDetails,
+    "Our care team will share a unique Zoom link before the session.",
+    "For cancellations or support, please use your ORUMA dashboard.",
+  ].join("\n");
+}
+
+function AppointmentOperationsCard({
+  appointment,
+  draft,
+  isPaid,
+  isSaving,
+  onDraftChange,
+  onStatusChange,
+  onSave,
+  onOpenWhatsApp,
+}: {
+  appointment: BookingResponse;
+  draft: { meetingLink: string; staffNotes: string };
+  isPaid: boolean;
+  isSaving: boolean;
+  onDraftChange: (draft: { meetingLink: string; staffNotes: string }) => void;
+  onStatusChange: (status: BookingResponse["status"]) => void;
+  onSave: (payload: AppointmentOperationsUpdate, message: string) => void;
+  onOpenWhatsApp: (kind: ManualWhatsAppMessageKind) => void;
+}) {
+  const isClosed =
+    appointment.status === "CANCELLED" || appointment.status === "COMPLETED";
+  const isConfirmed = appointment.status === "CONFIRMED";
+  const phone = appointment.contactPhone ?? appointment.patient?.phone;
+  const patientName =
+    appointment.contactName ??
+    appointment.patient?.fullName ??
+    appointment.patient?.email ??
+    "Patient";
+  const statusButtonClass =
+    "inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-widest disabled:cursor-not-allowed disabled:opacity-50";
+
+  return (
+    <article className="rounded-[1.5rem] border border-[#DDE8E5] bg-[#FBFDFC] p-5 md:p-6">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-[#0A7F7A]/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+              {appointment.status}
+            </span>
+            <span
+              className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-widest ${
+                isPaid
+                  ? "bg-[#EAF7F2] text-[#075E59]"
+                  : "bg-amber-50 text-amber-700"
+              }`}
+            >
+              {isPaid ? "Paid" : "Awaiting payment"}
+            </span>
+          </div>
+          <h3 className="mt-3 text-xl font-black text-[#064F4B]">
+            {patientName} with {appointment.therapist?.name ?? "Therapist"}
+          </h3>
+          <p className="mt-1 text-sm font-bold text-[#5F7F7A]">
+            {formatIstDateTime(appointment.slot?.startTime)} · {appointment.service ?? "Therapy session"}
+          </p>
+          <p className="mt-1 text-xs font-bold text-[#5F7F7A]">
+            {phone || "No WhatsApp number"} · Booking {appointment.id.slice(0, 8).toUpperCase()}
+          </p>
+        </div>
+        {!isClosed && (
+          <div className="flex flex-wrap gap-2">
+            {appointment.status === "PENDING" && (
+              <button
+                type="button"
+                disabled={!isPaid || isSaving}
+                onClick={() => onStatusChange("CONFIRMED")}
+                className={`${statusButtonClass} bg-[#064F4B] text-white`}
+              >
+                Confirm paid appointment
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => onStatusChange("CANCELLED")}
+              className={`${statusButtonClass} border border-red-200 bg-white text-red-700`}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+
+      {isClosed ? (
+        <p className="mt-5 rounded-lg bg-white p-4 text-sm font-bold text-[#5F7F7A]">
+          This appointment is closed. Its manual communication record is kept
+          for operational history.
+        </p>
+      ) : (
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <section className="rounded-lg border border-[#E2E8E6] bg-white p-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+              1. Manual confirmation
+            </p>
+            <p className="mt-2 text-xs font-bold text-[#5F7F7A]">
+              {appointment.bookingConfirmationSentAt
+                ? `Recorded ${formatIstDateTime(appointment.bookingConfirmationSentAt)}`
+                : "Open the prepared message in WhatsApp, send it, then record completion."}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={!isConfirmed || !phone || isSaving}
+                onClick={() => onOpenWhatsApp("confirmation")}
+                className={`${statusButtonClass} bg-[#25D366] text-[#063E2A]`}
+              >
+                Open WhatsApp
+              </button>
+              <button
+                type="button"
+                disabled={!isConfirmed || !phone || isSaving}
+                onClick={() =>
+                  onSave(
+                    { markBookingConfirmationSent: true },
+                    "Manual booking confirmation recorded.",
+                  )
+                }
+                className={`${statusButtonClass} border border-[#DDE8E5] bg-white text-[#064F4B]`}
+              >
+                Mark confirmation sent
+              </button>
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-[#E2E8E6] bg-white p-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+              2. Unique Zoom link
+            </p>
+            <input
+              type="url"
+              value={draft.meetingLink}
+              disabled={!isConfirmed || isSaving}
+              placeholder="https://us06web.zoom.us/j/..."
+              onChange={(event) =>
+                onDraftChange({ ...draft, meetingLink: event.target.value })
+              }
+              className="mt-3 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 text-sm font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A] disabled:opacity-60"
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={!isConfirmed || !draft.meetingLink.trim() || isSaving}
+                onClick={() =>
+                  onSave(
+                    { meetingLink: draft.meetingLink.trim() },
+                    "Secure Zoom link saved to the appointment.",
+                  )
+                }
+                className={`${statusButtonClass} bg-[#064F4B] text-white`}
+              >
+                Save Zoom link
+              </button>
+              {appointment.meetingLink && (
+                <a
+                  href={appointment.meetingLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${statusButtonClass} border border-[#DDE8E5] bg-white text-[#064F4B]`}
+                >
+                  Check link
+                </a>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-[#E2E8E6] bg-white p-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+              3. Share link manually
+            </p>
+            <p className="mt-2 text-xs font-bold text-[#5F7F7A]">
+              {appointment.meetingLinkSentAt
+                ? `Recorded ${formatIstDateTime(appointment.meetingLinkSentAt)}`
+                : "Send the unique link to the patient from the official ORUMA WhatsApp number."}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={!appointment.meetingLink || !phone || isSaving}
+                onClick={() => onOpenWhatsApp("meeting-link")}
+                className={`${statusButtonClass} bg-[#25D366] text-[#063E2A]`}
+              >
+                Open link message
+              </button>
+              <button
+                type="button"
+                disabled={!appointment.meetingLink || !phone || isSaving}
+                onClick={() =>
+                  onSave(
+                    { markMeetingLinkSent: true },
+                    "Manual Zoom link delivery recorded.",
+                  )
+                }
+                className={`${statusButtonClass} border border-[#DDE8E5] bg-white text-[#064F4B]`}
+              >
+                Mark link sent
+              </button>
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-[#E2E8E6] bg-white p-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+              4. Session reminder
+            </p>
+            <p className="mt-2 text-xs font-bold text-[#5F7F7A]">
+              {appointment.reminderSentAt
+                ? `Last recorded ${formatIstDateTime(appointment.reminderSentAt)}`
+                : "Send a reminder before the session and record it here."}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={!appointment.meetingLinkSentAt || !phone || isSaving}
+                onClick={() => onOpenWhatsApp("reminder")}
+                className={`${statusButtonClass} bg-[#25D366] text-[#063E2A]`}
+              >
+                Open reminder
+              </button>
+              <button
+                type="button"
+                disabled={!appointment.meetingLinkSentAt || !phone || isSaving}
+                onClick={() =>
+                  onSave(
+                    { markReminderSent: true },
+                    "Manual session reminder recorded.",
+                  )
+                }
+                className={`${statusButtonClass} border border-[#DDE8E5] bg-white text-[#064F4B]`}
+              >
+                Mark reminder sent
+              </button>
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-[#E2E8E6] bg-white p-4 lg:col-span-2">
+            <label className="block">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
+                Private staff notes
+              </span>
+              <textarea
+                rows={3}
+                value={draft.staffNotes}
+                disabled={isSaving}
+                onChange={(event) =>
+                  onDraftChange({ ...draft, staffNotes: event.target.value })
+                }
+                placeholder="Operational notes only. Do not add clinical information or therapy notes here."
+                className="mt-3 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 text-sm font-medium text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() =>
+                onSave(
+                  { staffNotes: draft.staffNotes },
+                  "Private staff notes saved.",
+                )
+              }
+              className={`${statusButtonClass} mt-3 bg-[#064F4B] text-white`}
+            >
+              {isSaving ? "Saving..." : "Save staff notes"}
+            </button>
+          </section>
+        </div>
+      )}
+    </article>
   );
 }
 

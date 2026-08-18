@@ -9,6 +9,8 @@ import {
 
 export enum ProviderJobKind {
   EMAIL = 'EMAIL',
+  // Retained so existing database rows can be dead-lettered after the
+  // integrations are disabled by the manual MVP workflow.
   WHATSAPP = 'WHATSAPP',
   ZOOM_MEETING = 'ZOOM_MEETING',
 }

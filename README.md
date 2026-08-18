@@ -1,6 +1,6 @@
 # ORUMA Wellness
 
-ORUMA is a full-stack digital wellness platform for patients, therapists, and administrators. The repository contains a React/Vite client and a NestJS/PostgreSQL API with authentication, scheduling, Razorpay payments, Zoom meeting creation, case sheets, notifications, therapist administration, and support tickets.
+ORUMA is a full-stack digital wellness platform for patients, therapists, and administrators. The repository contains a React/Vite client and a NestJS/PostgreSQL API with authentication, scheduling, Razorpay payments, staff-managed Zoom and WhatsApp handoffs, case sheets, notifications, therapist administration, and support tickets.
 
 ## Repository
 
@@ -10,6 +10,8 @@ ORUMA is a full-stack digital wellness platform for patients, therapists, and ad
 - [`docs/PROJECT_AUDIT.md`](docs/PROJECT_AUDIT.md) — proposal-to-code completion audit and pending coding/outside-coding work.
 - [`docs/PRODUCTION_LAUNCH.md`](docs/PRODUCTION_LAUNCH.md) — production deployment and provider setup checklist.
 - [`docs/SEO_SETUP.md`](docs/SEO_SETUP.md) — implemented SEO controls plus Search Console, GA4, sitemap, SSL, and live-validation steps.
+
+- [`docs/MANUAL_APPOINTMENT_OPERATIONS.md`](docs/MANUAL_APPOINTMENT_OPERATIONS.md) — care-team procedure for appointment confirmation, Zoom links, WhatsApp contact, and reminders.
 
 ## Local verification
 
@@ -34,4 +36,4 @@ Copy each `.env.example` to `.env` before running the applications. The server r
 
 ## Current status
 
-The agreed proposal scope and audit coding backlog are implemented, and the local build/test baseline passes. Production launch still requires real provider credentials, infrastructure, approved policy/content values, migrations, operational data, and live acceptance testing. See the project audit for the exact boundary.
+The MVP uses no Zoom or WhatsApp API credentials. ORUMA remains the booking source of truth while administrators create unique Zoom meetings and contact patients from the official WhatsApp Business account. Production launch still requires payment/email/media provider credentials, infrastructure, approved policy/content values, migrations, operational staffing, and live acceptance testing.

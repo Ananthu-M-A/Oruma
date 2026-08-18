@@ -43,9 +43,6 @@ export class Therapist {
   @Column({ nullable: true })
   voiceIntro: string;
 
-  @Column('varchar', { nullable: true })
-  zoomUserId: string | null;
-
   @Column({ nullable: true })
   qualifications: string;
 

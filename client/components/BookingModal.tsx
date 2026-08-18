@@ -228,7 +228,12 @@ export default function BookingModal({
     if (step === 1) return Boolean(formData.service);
     if (step === 2) return Boolean(formData.slotId);
     if (step === 3) {
-      const detailsComplete = Boolean(formData.name.trim() && formData.phone.trim() && formData.mode);
+      const detailsComplete = Boolean(
+        formData.name.trim() &&
+          formData.email.trim() &&
+          formData.phone.trim() &&
+          formData.mode,
+      );
       return detailsComplete && (Boolean(getCurrentUser()) || Boolean(bookingVerificationToken));
     }
     return true;
@@ -247,10 +252,10 @@ export default function BookingModal({
 
   const prevStep = () => setStep(step - 1);
 
-  const bookingIdentifier = formData.email.trim() || formData.phone.trim();
+  const bookingIdentifier = formData.email.trim();
 
   const sendBookingOtp = async () => {
-    if (!bookingIdentifier) return setSubmitError("Enter an email or WhatsApp number to verify.");
+    if (!bookingIdentifier) return setSubmitError("Enter an email to verify.");
     setBookingOtpLoading(true); setSubmitError("");
     try {
       const result = await requestBookingOtp({ identifier: bookingIdentifier });
@@ -293,7 +298,7 @@ export default function BookingModal({
         return;
       }
 
-      if (!formData.name || !formData.phone) {
+      if (!formData.name || !formData.email || !formData.phone) {
         setSubmitError("Please fill in all required information");
         setIsSubmitting(false);
         return;
@@ -337,7 +342,7 @@ export default function BookingModal({
         setTimeout(() => {
           onClose();
           redirectToPatientProfile(
-            "Test booking completed with the development payment bypass.",
+            "Test booking completed. The care team will confirm the appointment and share joining instructions.",
           );
         }, 1000);
         return;
@@ -375,7 +380,7 @@ export default function BookingModal({
             setTimeout(() => {
               onClose();
               redirectToPatientProfile(
-                "Appointment booked and payment verified successfully.",
+                "Booking and payment received. The care team will confirm your appointment and contact you on WhatsApp with joining instructions.",
               );
             }, 1000);
           } catch (err) {
@@ -704,10 +709,11 @@ export default function BookingModal({
               </label>
               <label className="block space-y-1">
                 <span className="text-sm font-bold text-gray-700">
-                  Email (optional)
+                  Email
                 </span>
                 <input
                   type="email"
+                  required
                   placeholder="Enter your email"
                   className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#A3B899]"
                   value={formData.email}
@@ -718,7 +724,7 @@ export default function BookingModal({
               </label>
               <label className="block space-y-1">
                 <span className="text-sm font-bold text-gray-700">
-                  WhatsApp Number
+                  WhatsApp number for care-team contact
                 </span>
                 <input
                   type="tel"
@@ -751,7 +757,7 @@ export default function BookingModal({
               {!getCurrentUser() && (
                 <div className="rounded-xl border border-[#B7C8A3] bg-[#F5F8F7] p-4">
                   <p className="text-sm font-black text-[#064F4B]">Verify your booking contact</p>
-                  <p className="mt-1 text-xs text-[#5F7F7A]">We will send a six-digit code to {bookingIdentifier || "your email or WhatsApp number"}.</p>
+                  <p className="mt-1 text-xs text-[#5F7F7A]">We will send a six-digit verification code to {bookingIdentifier || "your email"}. Staff will use WhatsApp only for appointment support and joining instructions.</p>
                   {!bookingVerificationToken && !bookingOtpRequested && <button type="button" disabled={bookingOtpLoading} onClick={sendBookingOtp} className="mt-3 rounded-full bg-[#064F4B] px-5 py-3 text-xs font-black text-white disabled:opacity-50">Send verification code</button>}
                   {!bookingVerificationToken && bookingOtpRequested && <div className="mt-3 flex flex-wrap gap-2">
                     <input aria-label="Booking verification code" inputMode="numeric" maxLength={6} value={bookingOtp} onChange={(event) => setBookingOtp(event.target.value.replace(/\D/g, ""))} className="min-h-11 flex-1 rounded-xl border border-gray-200 bg-white px-4" placeholder="6-digit code" />
@@ -803,7 +809,7 @@ export default function BookingModal({
               <p className="text-center text-xs text-gray-400">
                 {isPaymentBypassEnabled
                   ? "Development testing is enabled. No money will be collected; the booking will continue through the post-payment flow."
-                  : "Clicking confirm will book your selected slot and start payment. Once payment succeeds, it will appear in your profile appointments."}
+                  : "Clicking confirm will reserve your selected slot and start payment. After payment, the care team will confirm the appointment and share joining instructions."}
               </p>
             </div>
           )}
@@ -820,8 +826,8 @@ export default function BookingModal({
                 Appointment booked successfully.
               </p>
               <p className="text-xs text-green-600 mt-1">
-                Confirmation notifications have been queued for email and
-                WhatsApp where configured.
+                Your booking is recorded on ORUMA. The care team will contact
+                you manually on WhatsApp with confirmation and joining details.
               </p>
             </div>
           )}

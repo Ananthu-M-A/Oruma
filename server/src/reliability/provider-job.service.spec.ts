@@ -36,8 +36,6 @@ describe('ProviderJobService', () => {
       {} as never,
       {} as never,
       {} as never,
-      {} as never,
-      {} as never,
     );
 
     await expect(
@@ -81,15 +79,11 @@ describe('ProviderJobService', () => {
       isConfigured: jest.fn().mockReturnValue(true),
       send: jest.fn().mockResolvedValue(true),
     };
-    const whatsApp = { isConfigured: jest.fn().mockReturnValue(true) };
-    const zoom = { isConfigured: jest.fn().mockReturnValue(true) };
     const service = new ProviderJobService(
       repository as never,
       dataSource as never,
       config as never,
       mail as never,
-      whatsApp as never,
-      zoom as never,
     );
 
     await service.processDueJobs();
@@ -105,7 +99,7 @@ describe('ProviderJobService', () => {
     );
   });
 
-  it('dead-letters an unconfigured provider without sending or retrying', async () => {
+  it('dead-letters legacy automated delivery jobs', async () => {
     const queryBuilder = {
       setLock: jest.fn().mockReturnThis(),
       setOnLocked: jest.fn().mockReturnThis(),
@@ -131,24 +125,16 @@ describe('ProviderJobService', () => {
     const config = {
       get: jest.fn((_key: string, fallback?: string) => fallback),
     };
-    const whatsApp = {
-      isConfigured: jest.fn().mockReturnValue(false),
-      send: jest.fn(),
-    };
     const mail = { isConfigured: jest.fn().mockReturnValue(true) };
-    const zoom = { isConfigured: jest.fn().mockReturnValue(true) };
     const service = new ProviderJobService(
       repository as never,
       dataSource as never,
       config as never,
       mail as never,
-      whatsApp as never,
-      zoom as never,
     );
 
     await service.processDueJobs();
 
-    expect(whatsApp.send).not.toHaveBeenCalled();
     expect(repository.update).toHaveBeenCalledWith(
       {
         kind: ProviderJobKind.WHATSAPP,
@@ -156,7 +142,8 @@ describe('ProviderJobService', () => {
       },
       expect.objectContaining({
         status: ProviderJobStatus.DEAD,
-        lastError: 'WhatsApp provider is not configured',
+        lastError:
+          'Automated WhatsApp delivery is disabled; staff handles messages manually',
       }),
     );
   });

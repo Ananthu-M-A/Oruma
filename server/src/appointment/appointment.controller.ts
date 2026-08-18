@@ -17,6 +17,7 @@ import { Role } from '../user/entities/user.entity';
 import { AppointmentService } from './appointment.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
+import { UpdateAppointmentOperationsDto } from './dto/update-appointment-operations.dto';
 
 type AuthenticatedRequest = {
   user: JwtPayload;
@@ -67,6 +68,17 @@ export class AppointmentController {
     @Req() req: AuthenticatedRequest,
   ) {
     return this.appointmentService.updateStatus(id, dto, req.user);
+  }
+
+  @Patch(':id/operations')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  updateOperations(
+    @Param('id') id: string,
+    @Body() dto: UpdateAppointmentOperationsDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.appointmentService.updateOperations(id, dto, req.user);
   }
 
   @Delete(':id')

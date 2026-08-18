@@ -43,7 +43,6 @@ export default function AdminTherapistsPage() {
     price: "",
     couplePrice: "",
     voiceIntro: "",
-    zoomUserId: "",
     bio: "",
   });
 
@@ -192,7 +191,6 @@ export default function AdminTherapistsPage() {
       price: String(therapist.price),
       couplePrice: therapist.couplePrice ? String(therapist.couplePrice) : "",
       voiceIntro: therapist.voiceIntro ?? "",
-      zoomUserId: therapist.zoomUserId ?? "",
       bio: therapist.bio ?? "",
     });
   };
@@ -213,7 +211,6 @@ export default function AdminTherapistsPage() {
         price: Number(editForm.price),
         couplePrice: editForm.couplePrice ? Number(editForm.couplePrice) : null,
         voiceIntro: editForm.voiceIntro.trim() || undefined,
-        zoomUserId: editForm.zoomUserId.trim() || null,
         bio: editForm.bio.trim() || undefined,
       });
       setEditing(null);
@@ -331,9 +328,6 @@ export default function AdminTherapistsPage() {
                         <p className="mt-1 text-sm font-bold text-[#5F7F7A]">
                           {therapist.specialization || "Specialization pending"}{" "}
                           · Rs.{therapist.price.toLocaleString("en-IN")}
-                        </p>
-                        <p className="mt-1 text-xs font-bold text-[#5F7F7A]">
-                          Zoom host: {therapist.zoomUserId || "Default account"}
                         </p>
                         <p className="mt-2 line-clamp-2 text-sm font-medium text-[#5F7F7A]">
                           {therapist.bio ||
@@ -520,13 +514,6 @@ export default function AdminTherapistsPage() {
                 value={editForm.voiceIntro}
                 onChange={(value) =>
                   setEditForm({ ...editForm, voiceIntro: value })
-                }
-              />
-              <EditField
-                label="Zoom host user id or email"
-                value={editForm.zoomUserId}
-                onChange={(value) =>
-                  setEditForm({ ...editForm, zoomUserId: value })
                 }
               />
               <label className="md:col-span-2">

@@ -10,13 +10,13 @@ Sources reviewed:
 
 ## Overall result
 
-The project is **complete at the agreed application-code level, but is not yet operationally launched**. Role dashboards, authentication, verified quick booking, therapist discovery, scheduling, payment workflows, Zoom meeting creation, case sheets, notifications, tickets, privacy operations, audit logging, and legal routes are present. Local client lint/type-check/build, five unit/accessibility tests, desktop/mobile browser workflows, server lint/build, 51 unit tests, and two controller smoke tests pass. Six full-application PostgreSQL scenarios are configured to run in CI against a disposable database.
+The project is **complete at the agreed application-code level, but is not yet operationally launched**. Role dashboards, authentication, verified quick booking, therapist discovery, scheduling, payment workflows, staff-managed Zoom/WhatsApp handoffs, case sheets, notifications, tickets, privacy operations, audit logging, and legal routes are present. The August 2026 MVP decision intentionally replaced the Zoom and WhatsApp API integrations with an administrator operations queue.
 
 Production completion now depends on infrastructure/provider setup, approved policy values and content, production data, release execution, and live acceptance testing rather than unfinished feature coding.
 
 Deployment observation on 19 July 2026: `https://oruma.me` returned HTTP 200 with HTTPS, and `https://www.oruma.me` redirected to the apex domain. `api.oruma.me` did not resolve, so the production API/full-stack workflow was not available at audit time. Local changes from this audit are not deployed by this document.
 
-Masked local configuration observation: the ignored development `.env` has non-empty database, JWT, Resend, Razorpay key, Cloudinary, and admin bootstrap values. WhatsApp access token/phone ID, Razorpay webhook secret, WhatsApp OTP template, and all Zoom credentials are missing. Development payment and booking-lead-time bypasses are enabled locally but are code-blocked when `NODE_ENV=production`. Local values do not prove that any production provider is activated or valid.
+Masked local configuration observation: the ignored development `.env` has non-empty database, JWT, Resend, Razorpay key, Cloudinary, and admin bootstrap values. Razorpay webhook configuration still requires production validation. Zoom and WhatsApp credentials are intentionally not used by the MVP. Development payment and booking-lead-time bypasses are enabled locally but are code-blocked when `NODE_ENV=production`. Local values do not prove that any production provider is activated or valid.
 
 ## Proposal mapping
 
@@ -24,16 +24,16 @@ Masked local configuration observation: the ignored development `.env` has non-e
 | --- | --- | --- |
 | Full-stack foundation | Implemented | React/Vite client, NestJS API, TypeORM/PostgreSQL, migrations, Dockerfile, health endpoint, CI. |
 | Patient, therapist, and admin roles | Implemented | JWT authentication, bcrypt passwords, role guards, protected routes, separate dashboards. |
-| OTP login | Implemented in code | Email and WhatsApp delivery hooks exist. Production WhatsApp requires an approved OTP template. Social login is explicitly future scope. |
+| OTP login | Implemented in code | OTP delivery is email-only for the manual MVP. Social login is explicitly future scope. |
 | Admin dashboard | Implemented | User/session metrics, therapist management and approval, appointments, payments/refunds, tickets, and case-sheet monitoring. |
-| Therapist dashboard | Implemented | Approved profile workflow, image/audio upload, fees, availability, appointments, Zoom links, and therapist-only case-sheet editing. |
+| Therapist dashboard | Implemented | Approved profile workflow, image/audio upload, fees, availability, appointments, staff-added Zoom links, and therapist-only case-sheet editing. |
 | Patient dashboard | Implemented | Profile/health information, appointments, cancellation, payments/invoices, support tickets, and notifications. |
 | Therapist discovery | Implemented | Search/filter UI, public profiles, voice intros, fees, and current next-available slots. Real profile data remains operational work. |
 | Booking and scheduling | Implemented | Transactional slot locking, overlap checks, unique active slot booking, verified quick booking, configurable unpaid-reservation expiry, lifecycle validation, and cancellation are present. |
 | Razorpay payment | Implemented in code | Locked/idempotent order and verification flows, durable signed webhook processing, invoices, refunds, uniqueness constraints, and admin monitoring exist. Live payment/refund verification is external work. |
-| Zoom consultation | Implemented in code | Server-to-Server OAuth and automatic meeting creation on confirmation exist. Live host/scopes and callback behaviour require provider validation. |
+| Zoom consultation | Manual MVP | Staff creates a unique Zoom meeting and stores the approved link in ORUMA after paid appointment confirmation. No Zoom API credentials are used. |
 | Case sheets | Implemented | Assigned therapists can edit; administrators can monitor/read; patients are denied. |
-| Communication | Implemented in code | In-app notifications plus durable, retryable Resend/WhatsApp/Zoom jobs and admin delivery monitoring exist. Provider setup and live delivery validation remain. |
+| Communication | Manual MVP | In-app notifications and durable email jobs remain. Staff uses prepared click-to-chat messages from the official WhatsApp Business account and records each handoff. |
 | Support tickets | Implemented | Authenticated ticket creation, admin updates/resolution, and notifications exist. |
 | Legal and security | Implemented at code boundary | Privacy export/request/approved-erasure workflows, retention workers, audit events, correlation IDs, readiness checks, security headers, and legal routes exist. Final policy/legal approval and HTTPS are operational boundaries. |
 | UI/UX fixes | Implemented and automated | Local Tailwind/Lucide assets, route splitting, navigation, fallback routing, responsive layouts, keyboard checks, component accessibility checks, and desktop/mobile workflow tests are present. |
@@ -46,10 +46,10 @@ Masked local configuration observation: the ignored development `.env` has non-e
 - Prevented public quick booking from issuing a patient JWT for a contact that already belongs to an account.
 - Restricted therapist availability writes so therapists can manage only their own slots; arbitrary-therapist creation is admin-only.
 - Removed private/unpublished therapist fields from public API responses and made profile availability current.
-- Enforced terminal appointment states and valid status transitions; confirmed appointments without a Zoom link can retry meeting creation.
+- Enforced terminal appointment states and valid status transitions; only paid appointments can be confirmed, and administrators add official Zoom links manually.
 - Restricted case-sheet edits to therapists while retaining administrator read access.
 - Prevented duplicate/refunded Razorpay payment flows from being restarted, added constant-time signature comparison, and corrected collected-revenue totals.
-- Added support for a dedicated approved WhatsApp OTP template.
+- Switched login and quick-booking OTP verification to email-only delivery.
 - Repaired the inconsistent displayed contact phone number, dead calls to action, article `#` links, contact map placeholder, missing route fallback, and base meta description.
 - Replaced README links to deleted documents with the current audit and launch documentation.
 
@@ -58,13 +58,13 @@ Masked local configuration observation: the ignored development `.env` has non-e
 - Added verified email/phone OTP ownership and a short-lived, booking-only token before quick booking can create a patient account.
 - Added configurable unpaid-reservation expiry with locked reconciliation and automatic slot release.
 - Added payment-row locking, idempotent order/payment handling, provider identifiers and pending-payment uniqueness, signed durable webhook storage, retry/dead-letter behaviour, and admin recovery controls.
-- Added a database-backed provider queue for email, WhatsApp, and Zoom with deduplication, exponential retry, stale-lock recovery, payload redaction, and admin monitoring.
+- Retained the database-backed provider queue for email with deduplication, exponential retry, stale-lock recovery, payload redaction, and admin monitoring. Legacy WhatsApp/Zoom jobs are dead-lettered as intentionally disabled.
 - Replaced therapist hard deletion with archive/restore, account disabling, and future-slot blocking while preserving historical records.
 - Added patient data export, reviewed erasure requests, account anonymization, configurable clinical/operational retention, and privacy administration UI.
 - Added structured request/error logs, request correlation IDs, mutation audit events, database readiness, and live-account JWT validation.
 - Removed runtime Tailwind/Lucide CDNs, added compiled local assets and route-level code splitting, and added frontend lint, unit, accessibility, responsive, keyboard, registration/login, dashboard, and booking-dialog tests.
 - Added a production-hardening migration and disposable-PostgreSQL CI coverage for roles, booking/payment concurrency, verified quick booking, webhook deduplication, cancellation, clinical access, privacy export, and readiness.
-- Removed obsolete synchronous provider-delivery code so all active email, WhatsApp, and Zoom delivery flows use the durable queue.
+- Removed the Zoom and WhatsApp provider integrations; manual operations are tracked directly on appointments.
 
 ## Pending coding tasks
 
@@ -75,10 +75,10 @@ SEO follow-up completed on 5 August 2026: canonical route metadata, crawler dire
 ## Pending work outside coding
 
 1. Provision/deploy the production API and managed PostgreSQL database, add `api.oruma.me` DNS/TLS, and configure backups, a restore procedure, and uptime monitoring. The frontend apex/www domains already respond but still need release smoke testing after the API is available.
-2. Configure production secrets and accounts: Razorpay live mode/KYC/webhook, Zoom Server-to-Server OAuth/scopes/hosts, Resend sending domain, WhatsApp Cloud API and approved appointment/OTP templates, and Cloudinary upload policy.
+2. Configure production secrets and accounts: Razorpay live mode/KYC/webhook, Resend sending domain, and Cloudinary upload policy. Provision the organisational Zoom account and official WhatsApp Business number for staff use without API credentials.
 3. Run migrations against staging first, then production; seed the first administrator and rotate/remove bootstrap credentials.
-4. Load and approve real therapist names, emails, qualifications, specializations, fees, Zoom hosts, images, voice intros, active status, and availability.
+4. Load and approve real therapist names, emails, qualifications, specializations, fees, images, voice intros, active status, and availability.
 5. Confirm the official phone number, general/support/legal email addresses, physical/business address, legal entity name, GSTIN, and all public copy. Obtain legal/clinical review of privacy, terms, cancellation, refund, consent, crisis, and record-retention wording.
-6. Perform a controlled live soft launch: registration, password and OTP login, therapist onboarding, booking, real payment, webhook, confirmation, Zoom join, invoice, cancellation/refund, support ticket, case sheet, and role-access checks.
+6. Perform a controlled live soft launch: registration, password and email OTP login, therapist onboarding, booking, real payment, webhook, staff confirmation, manual Zoom-link creation, WhatsApp handoff recording, Zoom join, invoice, cancellation/refund, support ticket, case sheet, and role-access checks.
 7. Complete security, privacy, accessibility, performance, and mobile-device acceptance testing with documented sign-off.
 8. Establish incident response, customer support ownership, backup restore drills, provider billing, refund operations, and the promised 30-day post-launch support window.
