@@ -31,6 +31,10 @@ import {
   formatINR,
   SESSION_PACKAGE_OPTIONS,
 } from "../src/lib/sessionPackages";
+import {
+  getRazorpayPaymentFailureMessage,
+  RAZORPAY_UPI_CHECKOUT_CONFIG,
+} from "../src/lib/razorpay";
 
 const isPaymentBypassEnabled =
   import.meta.env.DEV && import.meta.env.VITE_PAYMENT_BYPASS_ENABLED === "true";
@@ -366,6 +370,7 @@ export default function BookingModal({
           email: formData.email,
           contact: formData.phone,
         },
+        config: RAZORPAY_UPI_CHECKOUT_CONFIG,
         handler: async (response) => {
           paymentVerificationStarted = true;
           try {
@@ -408,6 +413,10 @@ export default function BookingModal({
             setIsSubmitting(false);
           },
         },
+      });
+
+      checkout.on("payment.failed", (response) => {
+        setSubmitError(getRazorpayPaymentFailureMessage(response));
       });
 
       checkout.open();

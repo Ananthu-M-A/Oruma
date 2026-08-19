@@ -62,6 +62,12 @@ type RazorpayWebhookPayload = {
         id?: string;
         order_id?: string;
         status?: string;
+        method?: string;
+        error_code?: string | null;
+        error_description?: string | null;
+        error_reason?: string | null;
+        error_source?: string | null;
+        error_step?: string | null;
       };
     };
     refund?: {
@@ -583,9 +589,22 @@ export class PaymentService {
         payment.status = PaymentStatus.FAILED;
         payment.reference = entity.id ?? payment.reference;
         payment.providerPaymentId = entity.id ?? payment.providerPaymentId;
+        const failureDetails = [
+          entity.method && `method=${entity.method}`,
+          entity.error_code && `code=${entity.error_code}`,
+          entity.error_reason && `reason=${entity.error_reason}`,
+          entity.error_source && `source=${entity.error_source}`,
+          entity.error_step && `step=${entity.error_step}`,
+          entity.error_description &&
+            `description=${entity.error_description.slice(0, 300)}`,
+        ]
+          .filter(Boolean)
+          .join(', ');
         payment.notes = [
           payment.notes,
-          'Razorpay webhook marked payment failed',
+          `Razorpay webhook marked payment failed${
+            failureDetails ? ` (${failureDetails})` : ''
+          }`,
         ]
           .filter(Boolean)
           .join('\n');

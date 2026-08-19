@@ -66,7 +66,8 @@ Repeat against production only after staging validation and a backup. Seed the i
 
 ## 4. Provider dashboards
 
-- Razorpay: activate live mode, configure `https://api.oruma.me/payments/razorpay/webhook`, enable captured/failed/refund events, and test signature verification plus refunds.
+- Razorpay: activate live mode and complete KYC. In Live Mode → Account & Settings → Payment Methods, confirm UPI is `Activated` and verify UPI Intent plus Dynamic QR are available. ORUMA's Standard Checkout hides the deprecated UPI Collect flow, so mobile checkout opens a UPI app and desktop checkout displays a one-time dynamic QR. A Razorpay `Rejected` payment-method request is an account/category decision; review its Dashboard comment and raise it with Razorpay Support because application code cannot activate a rejected method.
+- Configure `https://api.oruma.me/payments/razorpay/webhook`, enable `payment.captured`, `payment.failed`, `order.paid`, and refund events, and test signature verification plus refunds. Use matching Live Mode keys for a controlled Intent/QR acceptance payment; Razorpay Test Mode simulates UPI and does not prove that live Intent/QR activation is complete.
 - Resend: verify the sending domain and DKIM/SPF records, then test OTP and therapist credential delivery.
 - Cloudinary: configure a restricted upload preset and validate image/audio type, size, access, and lifecycle rules.
 
