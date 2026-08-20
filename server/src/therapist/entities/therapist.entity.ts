@@ -7,6 +7,7 @@ import {
   OneToOne,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
+import { TherapistVerificationStatus } from './therapist-verification-status.enum';
 
 @Entity()
 export class Therapist {
@@ -47,7 +48,35 @@ export class Therapist {
   qualifications: string;
 
   @Column({ nullable: true })
+  awardingInstitution: string;
+
+  @Column({ type: 'int', nullable: true })
+  verifiedExperienceHours: number | null;
+
+  @Column({ nullable: true })
+  professionalRegistrationNumber: string;
+
+  @Column({ nullable: true })
+  registrationAuthority: string;
+
+  @Column({ nullable: true })
   specialization: string;
+
+  @Column({ nullable: true })
+  consultationType: string;
+
+  @Column({ type: 'int', nullable: true })
+  sessionDurationMinutes: number | null;
+
+  @Column({ nullable: true })
+  engagementRelationship: string;
+
+  @Column({
+    type: 'enum',
+    enum: TherapistVerificationStatus,
+    default: TherapistVerificationStatus.UNVERIFIED,
+  })
+  verificationStatus: TherapistVerificationStatus;
 
   @Column({ nullable: true })
   bio: string;

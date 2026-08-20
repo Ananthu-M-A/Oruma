@@ -20,7 +20,15 @@ export type Therapist = {
   image: string | null;
   voiceIntro: string | null;
   qualifications: string | null;
+  awardingInstitution: string | null;
+  verifiedExperienceHours: number | null;
+  professionalRegistrationNumber: string | null;
+  registrationAuthority: string | null;
   specialization: string | null;
+  consultationType: string | null;
+  sessionDurationMinutes: number | null;
+  engagementRelationship: string | null;
+  verificationStatus: TherapistVerificationStatus;
   bio: string | null;
   pendingProfileChanges?: Partial<TherapistPayload> | null;
   pendingProfileSubmittedAt?: string | null;
@@ -30,6 +38,12 @@ export type Therapist = {
   createdAt: string;
   credentialsSent?: boolean;
 };
+
+export type TherapistVerificationStatus =
+  | "UNVERIFIED"
+  | "PENDING"
+  | "VERIFIED"
+  | "REJECTED";
 
 export type TherapistPayload = {
   name: string;
@@ -43,7 +57,15 @@ export type TherapistPayload = {
   image?: string;
   voiceIntro?: string;
   qualifications?: string;
+  awardingInstitution?: string;
+  verifiedExperienceHours?: number | null;
+  professionalRegistrationNumber?: string;
+  registrationAuthority?: string;
   specialization?: string;
+  consultationType?: string;
+  sessionDurationMinutes?: number | null;
+  engagementRelationship?: string;
+  verificationStatus?: TherapistVerificationStatus;
   bio?: string;
   nextAvailableSlot?: string | null;
   isActive?: boolean;
@@ -89,8 +111,7 @@ export async function getTherapists() {
   }
 
   return (data as Therapist[]).filter(
-    (therapist) =>
-      therapist.isActive && therapist.nextAvailableSlot !== null,
+    (therapist) => therapist.isActive && therapist.nextAvailableSlot !== null,
   );
 }
 

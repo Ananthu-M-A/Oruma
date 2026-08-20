@@ -1,6 +1,6 @@
 # ORUMA SEO Setup and Release Checklist
 
-Code status checked: 5 August 2026
+Code status checked: 19 August 2026
 
 ## Implemented in the repository
 
@@ -8,8 +8,8 @@ Code status checked: 5 August 2026
 - Duplicate public aliases use one canonical URL: `/concerns/all-concerns` points to `/concerns`, and `/terms-and-conditions` points to `/terms`.
 - Public therapist profile routes are indexable. Login, registration, patient, therapist, and admin account routes intentionally use `noindex, nofollow` because they are private or utility pages.
 - `client/public/robots.txt` allows public crawling and references the XML sitemap.
-- `client/public/sitemap.xml` contains the 18 canonical public landing, service, contact, policy, and therapist-directory URLs. Individual therapist profiles remain crawlable from the therapist directory and are not hard-coded because they are production data.
-- Organization, LocalBusiness, WebSite, WebPage, and therapist ProfilePage schema are included without inventing a street address that has not been approved.
+- `client/public/sitemap.xml` contains the 19 canonical public landing, service, contact, policy, and practitioner-directory URLs, including the Service Delivery Policy. Individual practitioner profiles remain crawlable from the directory and are not hard-coded because they are production data.
+- ProfessionalService, Brand, Person-operator, WebSite, WebPage, and practitioner ProfilePage schema use `config/business.json`. The schema identifies Oruma as the brand and RANJINI R as its individual operator; it does not claim an incorporated company or separate legal person.
 - GA4 is loaded only when `VITE_GA_MEASUREMENT_ID` contains a valid `G-...` measurement ID. SPA route changes send `page_view` events.
 - Search Console HTML-tag verification is injected into the built HTML when `VITE_GOOGLE_SITE_VERIFICATION` is set. A Search Console Domain property can instead be verified by DNS without this variable.
 - All 131 local images are WebP. Every image has alternative text and an explicit loading policy; below-the-fold images and YouTube frames are lazy-loaded, while critical hero media is prioritized.
@@ -34,7 +34,7 @@ VITE_GOOGLE_SITE_VERIFICATION=<Search Console HTML verification content>
 3. After deployment, submit `https://oruma.me/sitemap.xml` in Search Console. Inspect the home, About, Contact, Services, Concerns, Therapists, and one therapist-profile URL, then request indexing where appropriate.
 4. Verify that these live URLs return HTTP 200 and the correct content type: `/robots.txt`, `/sitemap.xml`, `/about`, and `/contact`. Confirm `http://oruma.me` and `https://www.oruma.me` redirect once to `https://oruma.me`.
 5. Run PageSpeed Insights for the home, therapist directory, one service page, About, and Contact on mobile and desktop after CDN caching is warm. Record Core Web Vitals and fix any production-only bottleneck.
-6. Validate the deployed schema with Schema Markup Validator and Google Rich Results Test. Replace the partial locality-level address only after the official street/postal address is approved for publication.
+6. Validate the deployed schema with Schema Markup Validator and Google Rich Results Test. Confirm the published operating address exactly matches the owner-approved KYC address evidence.
 7. Confirm the privacy/legal basis for GA4 and deploy a consent mechanism if required for the intended audiences and jurisdictions.
 
 ## Verification commands

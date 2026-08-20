@@ -26,26 +26,36 @@ describe("SEO metadata", () => {
   it("applies canonical, social, and crawler metadata to a public route", () => {
     applyDocumentSeo("/contact/");
 
-    expect(document.title).toContain("Contact ORUMA Wellness");
-    expect(document.querySelector('meta[name="description"]')?.getAttribute("content")).toContain(
-      "Thiruvananthapuram",
+    expect(document.title).toContain("Contact Oruma");
+    expect(
+      document
+        .querySelector('meta[name="description"]')
+        ?.getAttribute("content"),
+    ).toContain("practitioner selection");
+    expect(
+      document.querySelector('meta[name="robots"]')?.getAttribute("content"),
+    ).toContain("index, follow");
+    expect(
+      document
+        .querySelector('meta[property="og:url"]')
+        ?.getAttribute("content"),
+    ).toBe("https://oruma.me/contact");
+    expect(
+      document.querySelector('link[rel="canonical"]')?.getAttribute("href"),
+    ).toBe("https://oruma.me/contact");
+    expect(document.querySelector("#oruma-page-schema")?.textContent).toContain(
+      '"WebPage"',
     );
-    expect(document.querySelector('meta[name="robots"]')?.getAttribute("content")).toContain("index, follow");
-    expect(document.querySelector('meta[property="og:url"]')?.getAttribute("content")).toBe(
-      "https://oruma.me/contact",
-    );
-    expect(document.querySelector('link[rel="canonical"]')?.getAttribute("href")).toBe(
-      "https://oruma.me/contact",
-    );
-    expect(document.querySelector("#oruma-page-schema")?.textContent).toContain('"WebPage"');
   });
 
   it("canonicalizes duplicate routes and excludes account pages", () => {
-    expect(resolvePageSeo("/concerns/all-concerns").canonicalPath).toBe("/concerns");
+    expect(resolvePageSeo("/concerns/all-concerns").canonicalPath).toBe(
+      "/concerns",
+    );
     applyDocumentSeo("/profile/patient");
 
-    expect(document.querySelector('meta[name="robots"]')?.getAttribute("content")).toBe(
-      "noindex, nofollow",
-    );
+    expect(
+      document.querySelector('meta[name="robots"]')?.getAttribute("content"),
+    ).toBe("noindex, nofollow");
   });
 });

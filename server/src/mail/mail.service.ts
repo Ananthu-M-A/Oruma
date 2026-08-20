@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { businessConfig } from '../config/business.config';
 
 export type SendMailInput = {
   to: string;
@@ -22,7 +23,7 @@ export class MailService {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
     const from = this.configService.get<string>(
       'EMAIL_FROM',
-      'Oruma <no-reply@oruma.me>',
+      `${businessConfig.brandName} <${businessConfig.emails.support}>`,
     );
 
     if (!apiKey) {

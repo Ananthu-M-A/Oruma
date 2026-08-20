@@ -1,5 +1,7 @@
-const SITE_URL = "https://oruma.me";
-const SITE_NAME = "ORUMA Wellness";
+import { businessConfig } from "../config/business";
+
+const SITE_URL = businessConfig.website;
+const SITE_NAME = businessConfig.brandName;
 const DEFAULT_SOCIAL_IMAGE = `${SITE_URL}/assets/home-lady-striped-shirt-v2.webp`;
 
 export type PageSeo = {
@@ -12,138 +14,123 @@ export type PageSeo = {
 
 export const publicSeoRoutes: Record<string, PageSeo> = {
   "/": {
-    title: "Online Counselling & Therapy in India | ORUMA Wellness",
-    description:
-      "Connect with qualified psychologists for secure online counselling, individual therapy, couple therapy, and mental health support from ORUMA Wellness.",
+    title: `Online Counselling & Wellness Services | ${SITE_NAME}`,
+    description: `Book confidential online counselling and wellness services from verified practitioners through ${SITE_NAME}.`,
   },
   "/about": {
-    title: "About ORUMA Wellness | Mental Health Support Team",
-    description:
-      "Meet the ORUMA Wellness team and learn about our mission to make professional, empathetic mental health support accessible in India and worldwide.",
+    title: `About ${SITE_NAME} | Ownership and Online Services`,
+    description: `Learn who operates ${SITE_NAME}, how its online counselling and wellness services work, and how to contact the individual owner.`,
   },
   "/articles": {
-    title: "Mental Health Articles & Resources | ORUMA Wellness",
-    description:
-      "Read practical articles from ORUMA Wellness about mental health, therapy, emotional wellbeing, relationships, stress, and self-care.",
+    title: `Mental Wellness Articles & Resources | ${SITE_NAME}`,
+    description: `Read general educational articles from ${SITE_NAME} about emotional wellbeing, relationships, stress, and self-care.`,
   },
   "/careers": {
-    title: "Therapist Careers | Join ORUMA Wellness",
-    description:
-      "Explore therapist careers with ORUMA Wellness and help provide ethical, empathetic online counselling and mental health support.",
+    title: `Practitioner Applications | ${SITE_NAME}`,
+    description: `Review the ${SITE_NAME} practitioner verification and application process for online counselling and wellness services.`,
   },
   "/concerns": {
-    title: "Mental Health Concerns & Therapy Support | ORUMA Wellness",
-    description:
-      "Find professional support for anxiety, depression, relationships, breakup recovery, postpartum wellbeing, student wellness, trauma, and PTSD.",
+    title: `Counselling and Wellness Concerns | ${SITE_NAME}`,
+    description: `Explore general counselling and wellness topics and review verified practitioner profiles on ${SITE_NAME}.`,
   },
   "/concerns/all-concerns": {
-    title: "Mental Health Concerns & Therapy Support | ORUMA Wellness",
-    description:
-      "Find professional support for anxiety, depression, relationships, breakup recovery, postpartum wellbeing, student wellness, trauma, and PTSD.",
+    title: `Counselling and Wellness Concerns | ${SITE_NAME}`,
+    description: `Explore general counselling and wellness topics and review verified practitioner profiles on ${SITE_NAME}.`,
     canonicalPath: "/concerns",
   },
   "/consultation": {
-    title: "Online Mental Health Consultation Worldwide | ORUMA",
-    description:
-      "Book a private online mental health consultation with ORUMA Wellness from India or abroad and connect with professional support wherever you live.",
+    title: `Online Counselling and Wellness Consultations | ${SITE_NAME}`,
+    description: `Review availability, identity, booking, payment, and digital-delivery information for ${SITE_NAME} online consultations.`,
   },
   "/contact": {
-    title: "Contact ORUMA Wellness | Online Counselling Support",
-    description:
-      "Contact ORUMA Wellness in Thiruvananthapuram, Kerala by phone, WhatsApp, or email for online counselling, therapist guidance, and booking support.",
+    title: `Contact ${SITE_NAME} | Online Counselling Support`,
+    description: `Contact ${SITE_NAME} by phone, WhatsApp, or email for online counselling, practitioner selection, booking, payment, and refund support.`,
   },
   "/online-counselling": {
-    title: "Secure Online Counselling in India | ORUMA Wellness",
-    description:
-      "Access secure, professional online counselling from home with qualified ORUMA Wellness therapists supporting clients in India and worldwide.",
+    title: `Online Counselling in India | ${SITE_NAME}`,
+    description: `Access confidential online counselling from home, subject to verified practitioner scope and availability through ${SITE_NAME}.`,
   },
   "/privacy-policy": {
-    title: "Privacy Policy | ORUMA Wellness",
-    description:
-      "Read how ORUMA Wellness collects, uses, protects, and manages personal information for counselling, booking, payment, and support services.",
+    title: `Privacy Policy | ${SITE_NAME}`,
+    description: `Read how ${SITE_NAME} handles personal information for counselling, booking, payment, and support services.`,
   },
   "/refund-policy": {
-    title: "Refund Policy | ORUMA Wellness",
-    description:
-      "Read the ORUMA Wellness refund policy for counselling appointments, payment failures, duplicate payments, gateway timelines, and support requests.",
+    title: `Refund Policy | ${SITE_NAME}`,
+    description: `Read the ${SITE_NAME} refund policy for appointments, payment failures, duplicate payments, timelines, and support requests.`,
   },
   "/cancellation-policy": {
-    title: "Cancellation Policy | ORUMA Wellness",
-    description:
-      "Read the ORUMA Wellness cancellation policy for counselling appointments, rescheduling, no-shows, late joins, and therapist-initiated changes.",
+    title: `Cancellation Policy | ${SITE_NAME}`,
+    description: `Read the ${SITE_NAME} cancellation policy for appointments, rescheduling, no-shows, late joins, and practitioner-initiated changes.`,
+  },
+  "/service-delivery-policy": {
+    title: `Service Delivery Policy | ${SITE_NAME}`,
+    description: `Read how ${SITE_NAME} confirms and digitally delivers online counselling and wellness bookings, joining instructions, rescheduling, and support.`,
   },
   "/services": {
-    title: "Online Therapy & Counselling Services | ORUMA Wellness",
-    description:
-      "Explore ORUMA Wellness services including individual therapy, couple therapy, follow-up sessions, sexual wellness, and online consultations.",
+    title: `Online Counselling and Wellness Services | ${SITE_NAME}`,
+    description: `Explore ${SITE_NAME} individual, couple, follow-up, sexual-wellness, and online consultation categories and their booking information.`,
   },
   "/services/couple-therapy": {
-    title: "Online Couple Therapy & Relationship Counselling | ORUMA",
-    description:
-      "Reconnect, improve communication, and work through conflict with professional online couple therapy in a safe and supportive environment.",
+    title: `Online Couple and Relationship Counselling | ${SITE_NAME}`,
+    description: `Review verified practitioner profiles, fees, duration, availability, and policies for ${SITE_NAME} relationship counselling.`,
   },
   "/services/follow-up": {
-    title: "Therapy Follow-Up Sessions | ORUMA Wellness",
-    description:
-      "Continue your progress with an ORUMA Wellness therapy follow-up session and maintain consistent, professional mental health support.",
+    title: `Counselling Follow-Up Sessions | ${SITE_NAME}`,
+    description: `Review practitioner availability, session duration, fees, and policies for a ${SITE_NAME} follow-up booking.`,
   },
   "/services/individual-therapy": {
-    title: "Online Individual Therapy in India | ORUMA Wellness",
+    title: `Online Individual Counselling in India | ${SITE_NAME}`,
     description:
-      "Book confidential individual therapy with qualified psychologists for anxiety, depression, stress, relationships, trauma, and personal growth.",
+      "Book a confidential individual counselling or wellness session with a verified practitioner whose role and scope are shown on their profile.",
   },
   "/services/sexual-wellness": {
-    title: "Sexual Wellness & Intimacy Counselling | ORUMA",
-    description:
-      "Explore sexual wellness and intimacy concerns in a safe, confidential, non-judgmental space with professional guidance from ORUMA Wellness.",
+    title: `Sexual Wellness & Intimacy Counselling | ${SITE_NAME}`,
+    description: `Review confidential ${SITE_NAME} sexual-wellness service information and book only with a suitably verified practitioner.`,
   },
   "/therapists": {
-    title: "Find an Online Therapist | ORUMA Wellness",
-    description:
-      "Browse qualified ORUMA Wellness psychologists, compare specializations and fees, view availability, and book a secure online therapy session.",
+    title: `Find an Online Practitioner | ${SITE_NAME}`,
+    description: `Browse verified ${SITE_NAME} practitioner profiles, compare stated areas of practice and fees, view availability, and book an online session.`,
   },
   "/terms": {
-    title: "Terms and Conditions | ORUMA Wellness",
-    description:
-      "Read the ORUMA Wellness terms for account use, appointments, payments, online consultations, support, and platform responsibilities.",
+    title: `Terms and Conditions | ${SITE_NAME}`,
+    description: `Read the ${SITE_NAME} terms for account use, appointments, payments, online consultations, support, and responsibilities.`,
   },
   "/terms-and-conditions": {
-    title: "Terms and Conditions | ORUMA Wellness",
-    description:
-      "Read the ORUMA Wellness terms for account use, appointments, payments, online consultations, support, and platform responsibilities.",
+    title: `Terms and Conditions | ${SITE_NAME}`,
+    description: `Read the ${SITE_NAME} terms for account use, appointments, payments, online consultations, support, and responsibilities.`,
     canonicalPath: "/terms",
   },
 };
 
 const privateSeoRoutes: Record<string, PageSeo> = {
   "/login": {
-    title: "Login | ORUMA Wellness",
-    description: "Sign in to your ORUMA Wellness account.",
+    title: `Login | ${SITE_NAME}`,
+    description: `Sign in to your ${SITE_NAME} account.`,
     noIndex: true,
   },
   "/register": {
-    title: "Create an Account | ORUMA Wellness",
-    description: "Create an ORUMA Wellness patient account.",
+    title: `Create an Account | ${SITE_NAME}`,
+    description: `Create a ${SITE_NAME} patient account.`,
     noIndex: true,
   },
   "/profile/patient": {
-    title: "Patient Dashboard | ORUMA Wellness",
-    description: "Manage your private ORUMA Wellness patient account.",
+    title: `Patient Dashboard | ${SITE_NAME}`,
+    description: `Manage your private ${SITE_NAME} patient account.`,
     noIndex: true,
   },
   "/profile/therapist": {
-    title: "Therapist Dashboard | ORUMA Wellness",
-    description: "Manage your private ORUMA Wellness therapist account.",
+    title: `Practitioner Dashboard | ${SITE_NAME}`,
+    description: `Manage your private ${SITE_NAME} practitioner account.`,
     noIndex: true,
   },
   "/profile/admin": {
-    title: "Admin Dashboard | ORUMA Wellness",
-    description: "ORUMA Wellness administration area.",
+    title: `Admin Dashboard | ${SITE_NAME}`,
+    description: `${SITE_NAME} administration area.`,
     noIndex: true,
   },
   "/profile/admin/therapists": {
-    title: "Manage Therapists | ORUMA Wellness",
-    description: "ORUMA Wellness therapist administration area.",
+    title: `Manage Practitioners | ${SITE_NAME}`,
+    description: `${SITE_NAME} practitioner administration area.`,
     noIndex: true,
   },
 };
@@ -160,23 +147,24 @@ export function resolvePageSeo(pathname: string): PageSeo {
 
   if (path.startsWith("/therapists/")) {
     return {
-      title: "Therapist Profile & Availability | ORUMA Wellness",
-      description:
-        "View an ORUMA Wellness therapist profile, specializations, fees, availability, and online session booking options.",
+      title: `Practitioner Profile & Availability | ${SITE_NAME}`,
+      description: `View a verified ${SITE_NAME} practitioner profile, stated qualifications, fees, availability, and online booking options.`,
       type: "profile",
     };
   }
 
   return {
     title: SITE_NAME,
-    description: "Professional online counselling and mental health support from ORUMA Wellness.",
+    description: `Online counselling and wellness booking services from ${SITE_NAME}.`,
     canonicalPath: "/",
     noIndex: true,
   };
 }
 
 function setMeta(attribute: "name" | "property", key: string, content: string) {
-  let element = document.head.querySelector<HTMLMetaElement>(`meta[${attribute}="${key}"]`);
+  let element = document.head.querySelector<HTMLMetaElement>(
+    `meta[${attribute}="${key}"]`,
+  );
   if (!element) {
     element = document.createElement("meta");
     element.setAttribute(attribute, key);
@@ -186,7 +174,9 @@ function setMeta(attribute: "name" | "property", key: string, content: string) {
 }
 
 function setCanonical(href: string) {
-  let element = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+  let element = document.head.querySelector<HTMLLinkElement>(
+    'link[rel="canonical"]',
+  );
   if (!element) {
     element = document.createElement("link");
     element.rel = "canonical";
@@ -196,7 +186,8 @@ function setCanonical(href: string) {
 }
 
 function setPageSchema(seo: PageSeo, canonicalUrl: string) {
-  let script = document.head.querySelector<HTMLScriptElement>("#oruma-page-schema");
+  let script =
+    document.head.querySelector<HTMLScriptElement>("#oruma-page-schema");
   if (!script) {
     script = document.createElement("script");
     script.id = "oruma-page-schema";
@@ -211,7 +202,7 @@ function setPageSchema(seo: PageSeo, canonicalUrl: string) {
     name: seo.title,
     description: seo.description,
     isPartOf: { "@id": `${SITE_URL}/#website` },
-    about: { "@id": `${SITE_URL}/#organization` },
+    about: { "@id": `${SITE_URL}/#business` },
     inLanguage: "en-IN",
   });
 }
@@ -236,7 +227,11 @@ export function applyDocumentSeo(pathname: string) {
   setMeta("property", "og:type", seo.type ?? "website");
   setMeta("property", "og:url", canonicalUrl);
   setMeta("property", "og:image", DEFAULT_SOCIAL_IMAGE);
-  setMeta("property", "og:image:alt", "ORUMA Wellness online counselling and mental health support");
+  setMeta(
+    "property",
+    "og:image:alt",
+    `${SITE_NAME} online counselling and wellness services`,
+  );
   setMeta("name", "twitter:card", "summary_large_image");
   setMeta("name", "twitter:title", seo.title);
   setMeta("name", "twitter:description", seo.description);
@@ -274,7 +269,11 @@ function initializeAnalytics() {
     anonymize_ip: true,
   });
 
-  if (!document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${analyticsId}"]`)) {
+  if (
+    !document.querySelector(
+      `script[src*="googletagmanager.com/gtag/js?id=${analyticsId}"]`,
+    )
+  ) {
     const script = document.createElement("script");
     script.async = true;
     script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(analyticsId)}`;

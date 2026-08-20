@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "compliance:check": "node ./scripts/validate-compliance.mjs",
+    "prebuild": "npm run compliance:check",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",

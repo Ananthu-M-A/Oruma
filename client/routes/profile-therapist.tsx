@@ -36,11 +36,7 @@ import {
   fromIstDateTimeInputValue,
   toIstDateTimeInputValue,
 } from "../src/lib/dateTime";
-import {
-  therapistQualificationOptions as qualificationOptions,
-  therapistSpecializationOptions as specializationOptions,
-  therapistTitleOptions as titleOptions,
-} from "../src/lib/therapistProfileOptions";
+import { therapistSpecializationOptions as specializationOptions } from "../src/lib/therapistProfileOptions";
 
 export const meta = {
   title: "Therapist Profile | Oruma",
@@ -254,7 +250,15 @@ export default function TherapistProfilePage() {
     image: "",
     voiceIntro: "",
     qualifications: "",
+    awardingInstitution: "",
+    verifiedExperienceHours: "",
+    professionalRegistrationNumber: "",
+    registrationAuthority: "",
     specialization: "",
+    areasOfPractice: "",
+    consultationType: "",
+    sessionDurationMinutes: "",
+    engagementRelationship: "",
     bio: "",
   });
   const [caseForm, setCaseForm] = useState({
@@ -316,7 +320,20 @@ export default function TherapistProfilePage() {
           image: effectiveProfile.image ?? "",
           voiceIntro: effectiveProfile.voiceIntro ?? "",
           qualifications: effectiveProfile.qualifications ?? "",
+          awardingInstitution: effectiveProfile.awardingInstitution ?? "",
+          verifiedExperienceHours: effectiveProfile.verifiedExperienceHours
+            ? String(effectiveProfile.verifiedExperienceHours)
+            : "",
+          professionalRegistrationNumber:
+            effectiveProfile.professionalRegistrationNumber ?? "",
+          registrationAuthority: effectiveProfile.registrationAuthority ?? "",
           specialization: effectiveProfile.specialization ?? "",
+          areasOfPractice: (effectiveProfile.tags ?? []).join(", "),
+          consultationType: effectiveProfile.consultationType ?? "",
+          sessionDurationMinutes: effectiveProfile.sessionDurationMinutes
+            ? String(effectiveProfile.sessionDurationMinutes)
+            : "",
+          engagementRelationship: effectiveProfile.engagementRelationship ?? "",
           bio: effectiveProfile.bio ?? "",
         });
       })
@@ -365,7 +382,23 @@ export default function TherapistProfilePage() {
         image: form.image.trim(),
         voiceIntro: form.voiceIntro.trim(),
         qualifications: form.qualifications.trim() || undefined,
+        awardingInstitution: form.awardingInstitution.trim() || undefined,
+        verifiedExperienceHours: form.verifiedExperienceHours
+          ? Number(form.verifiedExperienceHours)
+          : null,
+        professionalRegistrationNumber:
+          form.professionalRegistrationNumber.trim() || undefined,
+        registrationAuthority: form.registrationAuthority.trim() || undefined,
         specialization: form.specialization.trim() || undefined,
+        tags: form.areasOfPractice
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean),
+        consultationType: form.consultationType.trim() || undefined,
+        sessionDurationMinutes: form.sessionDurationMinutes
+          ? Number(form.sessionDurationMinutes)
+          : null,
+        engagementRelationship: form.engagementRelationship.trim() || undefined,
         bio: form.bio.trim() || undefined,
       });
       setProfile(updatedProfile);
@@ -610,7 +643,7 @@ export default function TherapistProfilePage() {
                   />
                   {profile?.isActive
                     ? "Public profile active"
-                    : "Awaiting admin activation"}
+                    : `Verification: ${profile?.verificationStatus ?? "UNVERIFIED"}`}
                 </span>
               </aside>
 
@@ -680,15 +713,14 @@ export default function TherapistProfilePage() {
                         onChange={(value) => setForm({ ...form, name: value })}
                         required
                       />
-                      <SelectField
-                        label="Title"
+                      <Field
+                        label="Exact professional role"
                         value={form.title}
                         onChange={(value) => setForm({ ...form, title: value })}
-                        options={titleOptions}
                         required
                       />
                       <Field
-                        label="Experience"
+                        label="Years of experience"
                         type="number"
                         value={form.experience}
                         onChange={(value) =>
@@ -737,13 +769,44 @@ export default function TherapistProfilePage() {
                         onClear={() => clearProfileMedia("voiceIntro")}
                         preview="audio"
                       />
-                      <SelectField
-                        label="Qualification"
+                      <Field
+                        label="Exact qualification"
                         value={form.qualifications}
                         onChange={(value) =>
                           setForm({ ...form, qualifications: value })
                         }
-                        options={qualificationOptions}
+                      />
+                      <Field
+                        label="Awarding institution"
+                        value={form.awardingInstitution}
+                        onChange={(value) =>
+                          setForm({ ...form, awardingInstitution: value })
+                        }
+                      />
+                      <Field
+                        label="Claimed experience hours (admin verifies)"
+                        type="number"
+                        value={form.verifiedExperienceHours}
+                        onChange={(value) =>
+                          setForm({ ...form, verifiedExperienceHours: value })
+                        }
+                      />
+                      <Field
+                        label="Professional registration number (if applicable)"
+                        value={form.professionalRegistrationNumber}
+                        onChange={(value) =>
+                          setForm({
+                            ...form,
+                            professionalRegistrationNumber: value,
+                          })
+                        }
+                      />
+                      <Field
+                        label="Registration authority"
+                        value={form.registrationAuthority}
+                        onChange={(value) =>
+                          setForm({ ...form, registrationAuthority: value })
+                        }
                       />
                       <SelectField
                         label="Specialization"
@@ -752,6 +815,35 @@ export default function TherapistProfilePage() {
                           setForm({ ...form, specialization: value })
                         }
                         options={specializationOptions}
+                      />
+                      <Field
+                        label="Areas of practice (comma-separated)"
+                        value={form.areasOfPractice}
+                        onChange={(value) =>
+                          setForm({ ...form, areasOfPractice: value })
+                        }
+                      />
+                      <Field
+                        label="Consultation type"
+                        value={form.consultationType}
+                        onChange={(value) =>
+                          setForm({ ...form, consultationType: value })
+                        }
+                      />
+                      <Field
+                        label="Session duration (minutes)"
+                        type="number"
+                        value={form.sessionDurationMinutes}
+                        onChange={(value) =>
+                          setForm({ ...form, sessionDurationMinutes: value })
+                        }
+                      />
+                      <Field
+                        label="Engagement relationship with Oruma"
+                        value={form.engagementRelationship}
+                        onChange={(value) =>
+                          setForm({ ...form, engagementRelationship: value })
+                        }
                       />
                       <label className="md:col-span-2">
                         <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">

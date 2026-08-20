@@ -154,7 +154,7 @@ export default function TherapistGrid({
           );
           const languages = languageTags.length
             ? languageTags.join(", ")
-            : "Malayalam, English";
+            : "See profile";
           const specialization =
             therapist.specialization ||
             tags.slice(0, 2).join(", ") ||
@@ -197,6 +197,9 @@ export default function TherapistGrid({
               </div>
 
               <div className="p-7">
+                <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#EAF7F2] px-3 py-2 text-[9px] font-black uppercase tracking-widest text-[#075E59]">
+                  <LucideIcon name="badge-check" size={13} /> Profile verified
+                </p>
                 <div className="flex gap-4 overflow-x-auto border-b border-[#E2E8E6] pb-5">
                   {visibleTags.map((tag) => (
                     <span
@@ -238,8 +241,12 @@ export default function TherapistGrid({
 
                 <div className="grid grid-cols-3 gap-4 border-b border-[#E2E8E6] py-6">
                   <StatItem
-                    value={`${therapist.experience}+`}
-                    label="Therapy hrs"
+                    value={
+                      therapist.verifiedExperienceHours
+                        ? `${therapist.verifiedExperienceHours}+ hrs`
+                        : `${therapist.experience} yrs`
+                    }
+                    label="Verified experience"
                   />
                   <StatItem value={languages} label="Languages" />
                   <StatItem
@@ -252,7 +259,7 @@ export default function TherapistGrid({
                   <InfoItem
                     icon="award"
                     label="Qualification"
-                    value={therapist.qualifications || "Verified professional"}
+                    value={therapist.qualifications}
                   />
                   <InfoItem
                     icon="sparkles"
@@ -263,6 +270,10 @@ export default function TherapistGrid({
 
                 <div className="flex flex-col gap-5 pt-6 sm:flex-row sm:items-end sm:justify-between">
                   <div>
+                    <p className="text-xs font-bold text-[#5F7F7A]">
+                      {therapist.sessionDurationMinutes} minutes ·{" "}
+                      {therapist.consultationType}
+                    </p>
                     <p className="text-sm font-bold text-[#1A2E2C]/35">
                       Next available in
                     </p>

@@ -7,7 +7,7 @@ ORUMA is the source of truth for bookings, payments, appointment status, and ses
 1. Open **Admin dashboard → Appointments** and work from the newest paid appointment.
 2. Confirm the appointment only after ORUMA shows **Paid**. Confirmation keeps the booked slot and tells the patient and therapist that the care team is preparing the link.
 3. Open the prepared confirmation message, send it from the official ORUMA WhatsApp Business account, and select **Mark confirmation sent**.
-4. Create one unique meeting in the organisation's Zoom account. Enable a waiting room and passcode, do not enable recording by default, and never reuse a patient meeting link.
+4. Create one unique meeting in the owner-controlled Zoom account used for Oruma operations. Enable a waiting room and passcode, do not enable recording by default, and never reuse a patient meeting link.
 5. Paste the official HTTPS `zoom.us` meeting link into ORUMA and save it. The patient and therapist can then join from their dashboards.
 6. Open the prepared link message, send it to the patient's verified booking number, and select **Mark link sent**.
 7. Before the appointment, open the prepared reminder, send it, and select **Mark reminder sent**.

@@ -1,5 +1,5 @@
-import React from 'react';
-import { LucideIcon } from '@site-builder/icons';
+import React from "react";
+import { LucideIcon } from "@site-builder/icons";
 
 export default function IntroSection() {
   return (
@@ -8,9 +8,9 @@ export default function IntroSection() {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="relative order-2 lg:order-1">
             <div className="relative z-10 rounded-[2.5rem] overflow-hidden shadow-2xl">
-              <img 
-                src="/assets/generated-6faa31cf.webp" 
-                alt="Gentle healing abstract illustration" 
+              <img
+                src="/assets/generated-6faa31cf.webp"
+                alt="Gentle healing abstract illustration"
                 loading="lazy"
                 decoding="async"
                 className="w-full h-auto"
@@ -25,29 +25,36 @@ export default function IntroSection() {
               Why Oruma?
             </h2>
             <p className="text-[#2E3E3C] text-xl leading-relaxed mb-8">
-              At Oruma, we believe healing happens gently — through understanding, empathy, and connection. 
-              Our licensed psychologists provide a safe space where you can express, heal, and grow.
+              At Oruma, we believe healing happens gently — through
+              understanding, empathy, and connection. Browse practitioners whose
+              roles and submitted credentials have been reviewed before their
+              profiles are published.
             </p>
-            
+
             <div className="space-y-6">
               {[
-                { title: 'Certified Psychologists', icon: 'shield-check' },
-                { title: 'Confidential & Safe', icon: 'lock' },
-                { title: 'Online & In-Person Sessions', icon: 'video' },
-                { title: 'Client-Centric Care', icon: 'heart' }
+                {
+                  title: "Verified Practitioner Profiles",
+                  icon: "shield-check",
+                },
+                { title: "Published Privacy Practices", icon: "lock" },
+                { title: "Digitally Delivered Sessions", icon: "video" },
+                { title: "Upfront Fees and Duration", icon: "heart" },
               ].map((item) => (
                 <div key={item.title} className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-[#0A7F7A] shadow-sm">
                     <LucideIcon name={item.icon} size={20} />
                   </div>
-                  <span className="font-bold text-[#064F4B] text-lg">{item.title}</span>
+                  <span className="font-bold text-[#064F4B] text-lg">
+                    {item.title}
+                  </span>
                 </div>
               ))}
             </div>
 
             <div className="mt-12">
-              <a 
-                href="/about" 
+              <a
+                href="/about"
                 className="text-[#0A7F7A] font-bold border-b-2 border-[#0A7F7A] pb-1 hover:text-[#064F4B] hover:border-[#064F4B] transition-all"
               >
                 Learn more about our philosophy

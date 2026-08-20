@@ -1,4 +1,5 @@
-import React from 'react';
+import React from "react";
+import { createWhatsAppUrl } from "../src/config/business";
 
 export default function AssessmentBanner() {
   return (
@@ -9,12 +10,18 @@ export default function AssessmentBanner() {
             💭
           </div>
           <div>
-            <h3 className="text-2xl font-bold text-[#064F4B] mb-2">Not sure what you need?</h3>
-            <p className="text-[#5F7F7A] font-medium">Takes just 60 seconds and connects you with your personal advisor.</p>
+            <h3 className="text-2xl font-bold text-[#064F4B] mb-2">
+              Not sure what you need?
+            </h3>
+            <p className="text-[#5F7F7A] font-medium">
+              Ask a general question before choosing a service or practitioner.
+            </p>
           </div>
         </div>
         <a
-          href="https://wa.me/918157039987?text=Hi,%20I'd%20like%20to%20take%20the%20mental%20health%20assessment."
+          href={createWhatsAppUrl(
+            "Hello, I need help choosing an Oruma service or practitioner.",
+          )}
           className="whitespace-nowrap bg-[#1A1A1A] text-white px-8 py-3.5 rounded-full font-bold hover:bg-black transition-all shadow-lg"
         >
           Start assessment ›

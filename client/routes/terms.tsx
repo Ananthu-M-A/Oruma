@@ -1,163 +1,98 @@
-import React from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import React from "react";
+import PolicyPage, { PolicySection } from "../components/PolicyPage";
+import { businessConfig } from "../src/config/business";
 
 export const meta = {
-  title: 'Terms and Conditions | ORUMA Wellness',
-  description:
-    'Read the ORUMA terms covering account use, appointments, payments, consultations, support, and platform responsibilities.',
+  title: `Terms and Conditions | ${businessConfig.brandName}`,
+  description: `Terms for ${businessConfig.brandName} accounts, practitioner listings, digital bookings, payments, consultations, and support.`,
 };
 
-const sections = [
+const sections: PolicySection[] = [
   {
-    title: '1. Acceptance of Terms',
+    title: "1. Operator and acceptance",
     body: [
-      'By accessing ORUMA.ME, creating an account, booking an appointment, making a payment, joining a session, or using any dashboard or support feature, the user agrees to these Terms and Conditions.',
-      'If a user does not agree with these terms, the user should not use the platform or services.',
+      `${businessConfig.brandName} is a brand operated by ${businessConfig.operatorLegalName} as an individual-owned online counselling and wellness business. No separate legal-person or institutional healthcare status is claimed.`,
+      "By using the website, creating an account, booking, paying, or joining a session, the user agrees to these Terms and the linked Privacy, Cancellation, Refund, and Service Delivery Policies.",
     ],
   },
   {
-    title: '2. Nature of Services',
+    title: "2. Nature and classification of services",
     body: [
-      'ORUMA provides a digital wellness platform for therapist discovery, appointment booking, online consultations, case management, payment coordination, communication, and support.',
-      'Therapy and counselling services are provided by qualified professionals or therapists associated with ORUMA. ORUMA may facilitate technology, scheduling, communication, payments, and support.',
-      'The platform is not an emergency service. Users facing a crisis, risk of self-harm, medical emergency, or threat to safety should contact local emergency services, a nearby hospital, or a trusted crisis support resource immediately.',
+      "Oruma provides online practitioner discovery, scheduling, payment coordination, digitally delivered counselling and wellness sessions, joining instructions, and customer support.",
+      "General counselling and wellness support is distinct from clinical psychology, psychiatry, diagnosis, medication management, and other medical services. A regulated or medical service is available only when the selected practitioner's verified profile expressly identifies the applicable qualification, registration, and scope.",
+      "Educational courses, webinars, or training, if separately offered, are educational services and are not represented as personal medical care.",
+      "Oruma is not an emergency service. For immediate danger, self-harm risk, or medical emergencies, contact local emergency services or a nearby hospital.",
     ],
   },
   {
-    title: '3. Accounts and User Responsibilities',
+    title: "3. Practitioner responsibility and relationship",
     body: [
-      'Users must provide accurate information during registration, booking, payment, and support interactions.',
-      'Users are responsible for maintaining the confidentiality of login credentials and for all activity under their account.',
-      'Users must not misuse the platform, impersonate another person, disrupt services, attempt unauthorized access, upload harmful content, or use the platform for unlawful purposes.',
+      "Each public practitioner profile should state the person's exact role, verified credentials, areas of practice, consultation type, fee, duration, registration details where legally applicable, and engagement relationship with Oruma.",
+      "Where a profile identifies an independent practitioner, that practitioner is responsible for professional judgment, advice, scope of practice, session delivery, and professional-record obligations. Oruma facilitates discovery, booking, payment, communication, and operational support.",
+      "A profile, testimonial, or service description is not a guarantee of diagnosis, cure, treatment result, or particular outcome.",
     ],
   },
   {
-    title: '4. Appointments and Consultations',
+    title: "4. Accounts and customer responsibilities",
     body: [
-      'Appointments are subject to therapist availability, confirmation, successful payment where applicable, and platform scheduling rules.',
-      'Therapists may publish, and patients may select, only appointment times scheduled at least twenty-four (24) hours after the current time.',
-      'All appointment times, therapist availability, booking timestamps, cancellation windows, and related schedule information displayed by ORUMA use Indian Standard Time (IST, Asia/Kolkata).',
-      'ORUMA may send confirmations, reminders, payment updates, Zoom/session links, and support communications through email, WhatsApp/SMS, dashboard notices, or other configured channels.',
-      'Therapists may update case sheets or session notes for continuity of care, administrative review, and lawful record keeping.',
-      'Users must join sessions on time and ensure they have a private environment, stable internet connection, and compatible device.',
+      "Users must provide accurate identity, contact, booking, and payment information and must protect their login credentials.",
+      "Customers should review the selected service, practitioner profile, date, time, duration, price, discount, cancellation window, and refund conditions before consenting and paying.",
+      "Customers must have a compatible device, stable internet connection, private environment, and timely access to joining instructions.",
     ],
   },
   {
-    title: '5. Payments, Invoices, Cancellations, and Refunds',
+    title: "5. Booking and delivery",
     body: [
-      'Fees displayed on the platform may vary by therapist, service type, offer, currency, and administrative decision.',
-      'Payments may be processed through third-party payment gateways. Gateway charges, transaction failures, delays, chargebacks, and bank-side issues may be governed by the respective provider policies.',
-      'Invoices or receipts may be generated for paid or refunded payments through the platform.',
-      'Users may cancel online only during the first one (1) hour after booking and before the appointment starts. Refund eligibility, exceptional cancellation requests, rescheduling, and no-show treatment are governed by the current Cancellation Policy and Refund Policy.',
+      "A booking is subject to practitioner availability, the displayed scheduling rules, successful payment where required, and confirmation by Oruma staff.",
+      "The booking record and patient dashboard show the booking reference and current appointment and payment status. Staff provides confirmation and joining instructions through the dashboard and official contact channels as described in the Service Delivery Policy.",
+      "Dates and times shown by Oruma use Indian Standard Time unless the interface expressly states otherwise.",
     ],
   },
   {
-    title: '6. Therapist Profiles and Information',
+    title: "6. Payments, invoices, cancellation, and refunds",
     body: [
-      'Therapist profiles may include qualifications, experience, specializations, fees, voice introductions, images, and availability.',
-      'ORUMA may review, approve, reject, or edit therapist profile changes for accuracy, compliance, quality, and platform consistency.',
-      'Users should not treat public profile information as a guarantee of a particular clinical outcome.',
+      "The final amount shown before payment is based on the selected practitioner, service, and any displayed package discount. Payment does not override practitioner availability or create a right to an unavailable service.",
+      "Online payments may be processed by Razorpay. Oruma sends only non-sensitive booking, invoice, amount, and payment-status information to payment systems; health and consultation content is excluded.",
+      "Cancellation eligibility, no-show handling, payment failures, duplicate debits, rescheduling, and refund timelines are governed by the public Cancellation and Refund Policies.",
     ],
   },
   {
-    title: '7. User Content and Communications',
+    title: "7. Privacy and communications",
     body: [
-      'Users may submit intake information, health concerns, support tickets, messages, payment details, and feedback through the platform.',
-      'Users confirm that information submitted by them is accurate to the best of their knowledge and does not violate the rights of others.',
-      'ORUMA may use submitted information to provide services, operate the platform, respond to support requests, comply with law, and protect safety.',
+      "Use of personal and wellness information is governed by the Privacy Policy. Paid consultations and bookings are identified services and are not anonymous.",
+      "Oruma may send verification codes, booking updates, payment status, joining instructions, and support responses through the dashboard, email, telephone, or the official WhatsApp number.",
     ],
   },
   {
-    title: '8. Privacy and Data Protection',
+    title: "8. Third-party services and availability",
     body: [
-      'Use of personal information is governed by the ORUMA Privacy Policy.',
-      'By using the platform, users consent to the processing of information necessary for account management, booking, consultations, payments, communication, support, security, and compliance.',
+      "Payment gateways, banks, email providers, video-meeting tools, hosting services, and communications providers may experience delays or outages. Oruma will provide reasonable operational support but cannot control third-party systems.",
+      "The website and sessions are provided subject to availability. No uninterrupted-access or specific-outcome guarantee is made.",
     ],
   },
   {
-    title: '9. Third-Party Services',
+    title: "9. Intellectual property and acceptable use",
     body: [
-      'ORUMA may use third-party services for payments, email, WhatsApp/SMS, video meetings, cloud hosting, media storage, analytics, and security.',
-      'ORUMA is not responsible for outages, policy changes, payment gateway behavior, or service interruptions caused by third-party providers, but will make reasonable efforts to support affected users.',
+      "The Oruma brand, site design, original text, graphics, and software are owned by the operator or used with permission. Practitioner and third-party materials remain subject to their respective rights.",
+      "Users must not impersonate others, interfere with the service, attempt unauthorised access, scrape private information, upload harmful content, or use the service unlawfully.",
     ],
   },
   {
-    title: '10. Intellectual Property',
+    title: "10. Governing law and contact",
     body: [
-      'The ORUMA name, logo, platform design, text, graphics, workflows, content, and software elements are owned by ORUMA or licensed to ORUMA unless otherwise stated.',
-      'Users may not copy, reproduce, resell, modify, scrape, or commercially exploit the platform without written permission.',
-    ],
-  },
-  {
-    title: '11. Limitation of Liability',
-    body: [
-      'The platform is provided on an as-available basis. ORUMA does not guarantee uninterrupted access, error-free operation, or specific therapeutic outcomes.',
-      'To the maximum extent permitted by law, ORUMA is not liable for indirect, incidental, consequential, special, or punitive damages arising from platform use, third-party services, missed appointments, technical issues, or user-provided information.',
-    ],
-  },
-  {
-    title: '12. Changes to Terms',
-    body: [
-      'ORUMA may update these terms from time to time. Updated terms will be posted on this page with a revised effective date where appropriate.',
-      'Continued use of the platform after changes means the user accepts the updated terms.',
-    ],
-  },
-  {
-    title: '13. Governing Law and Contact',
-    body: [
-      'These terms are governed by the laws of India, subject to applicable jurisdictional rules.',
-      'For questions about these terms, users may contact ORUMA at terms-conditions@oruma.me or through the official contact page.',
+      "These Terms are governed by applicable Indian law, with disputes subject to courts or forums having lawful jurisdiction in Kerala unless mandatory law requires otherwise.",
+      `Questions may be sent to ${businessConfig.emails.support} or raised through the authenticated support-ticket system.`,
     ],
   },
 ];
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-[#F8FBF8] font-body text-[#2E3E3C]">
-      <Navbar />
-      <section className="bg-[#F5F8F7] px-6 pb-16 pt-36 md:pt-44">
-        <div className="mx-auto max-w-4xl">
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#0A7F7A]">
-            Legal
-          </p>
-          <h1 className="mt-4 text-4xl font-heading font-black leading-tight text-[#064F4B] md:text-6xl">
-            Terms and Conditions
-          </h1>
-          <p className="mt-6 max-w-3xl text-lg font-medium leading-relaxed text-[#5F7F7A]">
-            These Terms and Conditions govern use of ORUMA.ME, including
-            accounts, bookings, dashboards, digital consultations, payments,
-            support tickets, invoices, case sheet workflows, and communication
-            features.
-          </p>
-          <p className="mt-6 text-sm font-bold text-[#064F4B]">
-            Effective date: July 19, 2026
-          </p>
-        </div>
-      </section>
-
-      <section className="px-6 py-16">
-        <div className="mx-auto grid max-w-4xl gap-6">
-          {sections.map((section) => (
-            <article
-              key={section.title}
-              className="rounded-lg border border-[#E2E8E6] bg-white p-6 shadow-sm md:p-8"
-            >
-              <h2 className="text-2xl font-heading font-black text-[#064F4B]">
-                {section.title}
-              </h2>
-              <div className="mt-5 grid gap-3">
-                {section.body.map((item) => (
-                  <p key={item} className="text-base font-medium leading-relaxed text-[#5F7F7A]">
-                    {item}
-                  </p>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-      <Footer />
-    </main>
+    <PolicyPage
+      title="Terms and Conditions"
+      introduction={`These terms govern use of ${businessConfig.website}, an online counselling and wellness service operated by ${businessConfig.operatorLegalName}.`}
+      effectiveDate="August 19, 2026"
+      sections={sections}
+    />
   );
 }

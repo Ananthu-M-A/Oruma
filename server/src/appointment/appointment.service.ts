@@ -36,6 +36,7 @@ import { isStartTimeBookable } from './booking-lead-time';
 import { AuthService } from '../auth/auth.service';
 import { ConfigService } from '@nestjs/config';
 import { ProviderJobService } from '../reliability/provider-job.service';
+import { businessConfig } from '../config/business.config';
 import { Payment } from '../payment/entities/payment.entity';
 import { PaymentStatus } from '../payment/entities/payment-status.enum';
 import { normalizeManualZoomLink } from './appointment-operations';
@@ -383,25 +384,45 @@ export class AppointmentService {
       appointment.slot.endTime,
     );
     const service = appointment.service ?? 'Therapy session';
+    const duration = appointment.therapist.sessionDurationMinutes;
+    const payableAmount =
+      appointment.packageOfferAmount > 0
+        ? appointment.packageOfferAmount
+        : appointment.service === 'Couple Therapy'
+          ? (appointment.therapist.couplePrice ?? appointment.therapist.price)
+          : appointment.therapist.price;
+    const policyUrl = `${businessConfig.website}/service-delivery-policy`;
 
     if (email) {
       await this.providerJobService.enqueueEmail(
         {
           to: email,
-          subject: 'Your Oruma appointment request is received',
+          subject: `${businessConfig.brandName} booking and payment received`,
           text: [
-            'Your Oruma appointment request has been received.',
+            `Your ${businessConfig.brandName} booking and payment have been received.`,
+            `Booking reference: ${appointment.id}`,
             `Service: ${service}`,
             `Therapist: ${appointment.therapist.name}`,
             `Slot: ${slotRange}`,
-            'Our care team will confirm the appointment and contact you with joining instructions.',
+            `Session duration: ${duration} minutes`,
+            `Amount paid: INR ${payableAmount}`,
+            'Payment status: Paid',
+            'Staff will confirm the appointment and send joining instructions.',
+            `Service delivery, cancellation, and refund information: ${policyUrl}`,
+            `Support: ${businessConfig.emails.support} | ${businessConfig.supportPhone.display}`,
           ].join('\n'),
           html: `
-          <p>Your Oruma appointment request has been received.</p>
+          <p>Your ${businessConfig.brandName} booking and payment have been received.</p>
+          <p><strong>Booking reference:</strong> ${appointment.id}</p>
           <p><strong>Service:</strong> ${service}</p>
           <p><strong>Therapist:</strong> ${appointment.therapist.name}</p>
           <p><strong>Slot:</strong> ${slotRange}</p>
-          <p>Our care team will confirm the appointment and contact you with joining instructions.</p>
+          <p><strong>Session duration:</strong> ${duration} minutes</p>
+          <p><strong>Amount paid:</strong> INR ${payableAmount}</p>
+          <p><strong>Payment status:</strong> Paid</p>
+          <p>Staff will confirm the appointment and send joining instructions.</p>
+          <p><a href="${policyUrl}">Service delivery, cancellation, and refund information</a></p>
+          <p>Support: ${businessConfig.emails.support} · ${businessConfig.supportPhone.display}</p>
         `,
         },
         { deduplicationKey: `appointment:${appointment.id}:request:email` },

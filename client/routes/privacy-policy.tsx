@@ -1,149 +1,98 @@
-import React from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import React from "react";
+import PolicyPage, { PolicySection } from "../components/PolicyPage";
+import { businessConfig } from "../src/config/business";
 
 export const meta = {
-  title: 'Privacy Policy | ORUMA Wellness',
-  description:
-    'Read how ORUMA collects, uses, protects, and manages personal information for counselling, booking, payment, and support services.',
+  title: `Privacy Policy | ${businessConfig.brandName}`,
+  description: `How ${businessConfig.brandName} handles identity, booking, payment, consultation, wellness, and support information.`,
 };
 
-const sections = [
+const sections: PolicySection[] = [
   {
-    title: '1. Information We Collect',
+    title: "1. Scope and operator",
     body: [
-      'Account and identity details such as name, email address, phone number, age, gender, login credentials, and role.',
-      'Appointment and wellness information shared during booking, intake, case sheet creation, support requests, or therapist communication.',
-      'Payment information including payment status, transaction references, invoice details, refund records, and payment gateway identifiers. ORUMA does not store full card, UPI, or banking credentials.',
-      'Communication records such as email, WhatsApp/SMS delivery information, support tickets, and administrative notes.',
-      'Technical information such as IP address, browser/device information, approximate location, pages visited, and security logs where required for platform reliability and fraud prevention.',
+      `${businessConfig.brandName} is the website brand. ${businessConfig.operatorLegalName} is the individual operator and data contact for the online counselling and wellness service described in this policy.`,
+      "This policy applies to public enquiries, accounts, practitioner discovery, bookings, payments, online sessions, case records, support requests, and administrative operations.",
     ],
   },
   {
-    title: '2. How We Use Information',
+    title: "2. Information collected",
     body: [
-      'To create and manage patient, therapist, and administrator accounts.',
-      'To schedule appointments, prevent double booking, generate meeting links, maintain case sheets, and coordinate therapy sessions.',
-      'To process payments, refunds, invoices, receipts, and transaction support.',
-      'To send booking confirmations, OTP/login messages, appointment updates, Zoom/session links, and support responses.',
-      'To improve platform security, prevent misuse, troubleshoot errors, comply with applicable law, and maintain operational records.',
+      "Account and contact information may include name, email address, telephone number, age, gender, login records, and account role.",
+      "Booking information may include the selected service, practitioner, appointment date and time, contact preference, booking reference, payment status, and operational communications.",
+      "Where a user chooses to provide it, consultation information may include wellness concerns, symptoms, medication information, previous support, case-sheet content, session notes, and other sensitive information relevant to the service.",
+      "Payment records include amount, status, invoice and booking references, gateway payment identifiers, and refund records. Full card credentials, UPI PINs, bank passwords, and complete banking credentials are not stored by Oruma.",
+      "Technical and security records may include IP address, device and browser information, pages visited, authentication events, and error logs.",
     ],
   },
   {
-    title: '3. Sensitive Wellness Information',
+    title: "3. Confidentiality—not complete anonymity",
     body: [
-      'Information about mental health concerns, therapy notes, symptoms, treatment preferences, and session history is treated as confidential wellness information.',
-      'Therapists may access only the information reasonably needed to provide services. Administrators may access records only for platform operations, support, compliance, dispute resolution, and quality monitoring.',
-      'ORUMA asks users to share only information that is relevant to booking, consultation, support, and care continuity.',
+      "Oruma protects personal and wellness information through limited access, role controls, authentication, and operational confidentiality. No online service can promise complete anonymity or absolute security.",
+      "A person may make a general initial enquiry without describing a health concern, but email, telephone, WhatsApp, and similar channels reveal account or contact identifiers to their providers and to Oruma staff handling the enquiry.",
+      "Bookings and paid consultations are identified services because Oruma collects customer contact details, booking information, payment references, and records needed to deliver and support the service.",
     ],
   },
   {
-    title: '4. Legal Basis and Consent',
+    title: "4. Uses of information",
     body: [
-      'By creating an account, booking a session, submitting a form, raising a ticket, or using the platform, users consent to the collection and processing described in this policy.',
-      'Where applicable, ORUMA processes personal data for consent-based purposes, service delivery, legal compliance, payment processing, security, and legitimate platform operations.',
-      'Users may withdraw consent or request changes to their information, subject to legal, clinical, billing, dispute, and record-retention requirements.',
+      "Information is used to manage accounts, verify access, display practitioner availability, create and confirm bookings, process payments and refunds, deliver joining instructions, provide consultations, respond to support requests, and maintain records.",
+      "Information may also be used to prevent fraud and double booking, investigate incidents, maintain platform security, comply with applicable law, respond to disputes, and improve service reliability.",
+      "Sensitive consultation information is not placed in Razorpay order notes, QR descriptions, payment receipts, or other payment metadata. Payment metadata is limited to non-sensitive booking or invoice references and generic service information.",
     ],
   },
   {
-    title: '5. Sharing of Information',
+    title: "5. Access and sharing",
     body: [
-      'Information may be shared with assigned therapists, authorized administrators, payment gateways, email/SMS/WhatsApp providers, video consultation providers, hosting providers, analytics/security providers, and legal or regulatory authorities where required.',
-      'Third-party processors are expected to use information only for the service they provide to ORUMA.',
-      'ORUMA does not sell personal wellness information.',
+      "Relevant information may be available to the selected practitioner, authorised Oruma staff, and service providers used for payments, email, hosting, video meetings, storage, analytics, and security, only to the extent needed for their functions.",
+      "Information may be disclosed to a bank, payment gateway, regulator, court, law-enforcement body, or other authority where legally required or reasonably necessary to handle fraud, disputes, refunds, or safety concerns.",
+      "Oruma does not sell sensitive wellness information.",
     ],
   },
   {
-    title: '6. Data Security',
+    title: "6. Security and customer responsibilities",
     body: [
-      'ORUMA uses access controls, authentication, role-based restrictions, encryption in transit where available, restricted administrative access, and operational safeguards to protect user information.',
-      'Authenticated dashboards use an access token stored in the user browser until the user signs out or the token is removed. Users should sign out and avoid using a shared or untrusted device for sensitive account activity.',
-      'No online platform can guarantee absolute security. Users should protect their login credentials and immediately report suspected unauthorized access.',
+      "Oruma uses authentication, access restrictions, transport encryption where supported, administrative controls, and audit records. Security controls reduce risk but cannot eliminate it.",
+      "Users should protect login credentials, avoid shared devices for sensitive activity, verify messages are from official contact channels, and never share UPI PINs, passwords, or one-time payment credentials with Oruma staff.",
     ],
   },
   {
-    title: '7. Retention',
+    title: "7. Retention",
     body: [
-      'ORUMA retains account, appointment, case sheet, payment, invoice, and support information for as long as needed to provide services, comply with law, resolve disputes, maintain clinical continuity, and meet accounting requirements.',
-      'Records may be retained even after account closure where required for legal, billing, safety, clinical, or administrative purposes.',
+      "Account, booking, consultation, payment, invoice, refund, and support records are retained only for as long as reasonably needed for service delivery, continuity, payment reconciliation, disputes, security, and applicable legal or accounting obligations.",
+      "Deletion or account closure may not remove records that must be retained for an unresolved payment, refund, complaint, safety matter, professional record obligation, or legal requirement.",
     ],
   },
   {
-    title: '8. User Rights',
+    title: "8. Rights and requests",
     body: [
-      'Users may request access, correction, update, deletion, or restriction of their personal information, subject to verification and applicable legal or operational limitations.',
-      'Users may also request clarification about how their data is used or raise a privacy grievance through the contact details below.',
+      "Subject to identity verification and applicable limitations, users may request access, correction, export, restriction, or deletion of personal information through the dashboard or privacy contact.",
+      `Privacy questions and requests should be sent to ${businessConfig.emails.privacy}. Do not email PAN, Aadhaar, bank credentials, UPI PINs, or unrelated medical documents.`,
     ],
   },
   {
-    title: '9. Children and Minors',
+    title: "9. Minors and emergencies",
     body: [
-      'ORUMA services are intended for users who can lawfully consent to counselling and digital services. Where a user is a minor, parent/guardian involvement or consent may be required.',
-      'ORUMA does not knowingly process minor data for targeted advertising or profiling unrelated to care delivery.',
+      "A parent or lawful guardian may need to consent where the customer cannot independently consent under applicable law or practitioner requirements.",
+      "Oruma is not an emergency service. A person facing immediate danger, self-harm risk, or a medical emergency should contact local emergency services or a nearby hospital and should not wait for an Oruma response.",
     ],
   },
   {
-    title: '10. Changes to this Privacy Policy',
+    title: "10. Updates and governing law",
     body: [
-      'ORUMA may update this Privacy Policy to reflect legal, operational, technical, or business changes. The latest version will be published on this page with its revised effective date.',
-      'Continued use of the platform after an update constitutes acceptance of the revised Privacy Policy.',
-    ],
-  },
-  {
-    title: '11. Contact and Privacy Grievances',
-    body: [
-      'For privacy questions, correction requests, deletion requests, or grievances, contact ORUMA at privacy@oruma.me or through the official contact page.',
-      'Users should include enough information for ORUMA to verify the request and respond appropriately.',
+      "This policy may be updated when services, technology, providers, or legal requirements change. The current version and effective date will remain available on this public page.",
+      "This policy is governed by applicable Indian law.",
     ],
   },
 ];
 
 export default function PrivacyPolicyPage() {
   return (
-    <main className="min-h-screen bg-[#F8FBF8] font-body text-[#2E3E3C]">
-      <Navbar />
-      <section className="bg-[#F5F8F7] px-6 pb-16 pt-36 md:pt-44">
-        <div className="mx-auto max-w-4xl">
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#0A7F7A]">
-            Legal
-          </p>
-          <h1 className="mt-4 text-4xl font-heading font-black leading-tight text-[#064F4B] md:text-6xl">
-            Privacy Policy
-          </h1>
-          <p className="mt-6 max-w-3xl text-lg font-medium leading-relaxed text-[#5F7F7A]">
-            This Privacy Policy explains how ORUMA.ME collects, uses, stores,
-            shares, and protects information when users access our digital
-            wellness platform, dashboards, booking tools, payment flows, video
-            consultation workflows, and support services.
-          </p>
-          <p className="mt-6 text-sm font-bold text-[#064F4B]">
-            Effective date: July 19, 2026
-          </p>
-        </div>
-      </section>
-
-      <section className="px-6 py-16">
-        <div className="mx-auto grid max-w-4xl gap-6">
-          {sections.map((section) => (
-            <article
-              key={section.title}
-              className="rounded-lg border border-[#E2E8E6] bg-white p-6 shadow-sm md:p-8"
-            >
-              <h2 className="text-2xl font-heading font-black text-[#064F4B]">
-                {section.title}
-              </h2>
-              <div className="mt-5 grid gap-3">
-                {section.body.map((item) => (
-                  <p key={item} className="text-base font-medium leading-relaxed text-[#5F7F7A]">
-                    {item}
-                  </p>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-      <Footer />
-    </main>
+    <PolicyPage
+      title="Privacy Policy"
+      introduction={`This policy explains how ${businessConfig.brandName} handles personal, booking, payment, consultation, and support information for its digitally delivered services.`}
+      effectiveDate="August 19, 2026"
+      sections={sections}
+    />
   );
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getRazorpayCheckoutDescription,
   getRazorpayPaymentFailureMessage,
   RAZORPAY_UPI_CHECKOUT_CONFIG,
 } from "./razorpay";
@@ -30,5 +31,13 @@ describe("Razorpay UPI checkout", () => {
         error: { description: "Payment failed at the issuing bank." },
       }),
     ).toBe("Payment failed at the issuing bank.");
+  });
+
+  it("uses only a generic booking reference in checkout descriptions", () => {
+    const description = getRazorpayCheckoutDescription("BOOK-123");
+    expect(description).toBe("Online counselling or wellness booking BOOK-123");
+    expect(description).not.toMatch(
+      /diagnosis|symptoms|therapy notes|sexual|medication/i,
+    );
   });
 });

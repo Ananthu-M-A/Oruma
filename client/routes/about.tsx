@@ -1,96 +1,77 @@
-import React from 'react';
-import Navbar from '../components/Navbar';
-import TeamMember from '../components/TeamMember';
-import Footer from '../components/Footer';
-import FloatingActions from '../components/FloatingActions';
-import { LucideIcon } from '@site-builder/icons';
+import React from "react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import FloatingActions from "../components/FloatingActions";
+import BusinessIdentityDisclosure from "../components/BusinessIdentityDisclosure";
+import { businessConfig } from "../src/config/business";
 
 export const meta = {
-  title: "Our Change Makers | About ORUMA Wellness",
-  description: "Meet the visionary team behind Oruma. Our youth-led team is committed to making mental health a priority for everyone."
+  title: `About ${businessConfig.brandName} | Ownership and Services`,
+  description: `Learn who operates ${businessConfig.brandName} and how its individual-owned online counselling and wellness service works.`,
 };
-
-const team = [
-  {
-    name: 'Ranjini R',
-    role: 'Founder & Director',
-    bio: 'Visionary leader driving the mission to make mental healthcare accessible to every household. Committed to breaking the stigma through innovation and empathy.',
-    img: '/assets/ranjini-r-founder-director.webp',
-    bgColor: 'bg-[#0A7F7A]'
-  },
-  {
-    name: 'Reshmi',
-    role: 'Clinical Lead',
-    bio: 'Dedicated to creating safe spaces for healing. With over a decade of clinical experience, she ensures our psychological programs meet the highest ethical standards.',
-    img: '/assets/reshmi-clinical-lead.webp',
-    bgColor: 'bg-[#B7C8A3]',
-    reverse: true
-  }
-];
 
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-white font-body text-[#2E3E3C]">
       <Navbar />
       <FloatingActions />
-      
-      {/* Brand Hero */}
-      <section className="pt-48 pb-24 bg-[#F5F8F7] text-center">
-        <div className="max-w-4xl mx-auto px-6">
-          <h1 className="text-4xl lg:text-6xl font-heading font-extrabold text-[#064F4B] mb-8 leading-tight">
-            About ORUMA Wellness: <span className="text-[#0A7F7A]">Our Change Makers</span>
+      <section className="bg-[#F5F8F7] pb-20 pt-40 text-center md:pt-48">
+        <div className="mx-auto max-w-4xl px-6">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#0A7F7A]">
+            Ownership and service model
+          </p>
+          <h1 className="mt-5 text-4xl font-heading font-extrabold leading-tight text-[#064F4B] lg:text-6xl">
+            About {businessConfig.brandName}
           </h1>
-          <div className="w-20 h-1.5 bg-[#B7C8A3] mx-auto rounded-full mb-8" />
-          <p className="text-xl text-[#5F7F7A] leading-relaxed">
-            ORUMA Wellness is a youth-led mental health initiative connecting people with empathetic, professional online counselling. Our team works to make mental healthcare more accessible in India and worldwide.
+          <p className="mx-auto mt-7 max-w-3xl text-xl leading-relaxed text-[#5F7F7A]">
+            {businessConfig.brandName} is an individual-owned online counselling
+            and wellness service. The website helps customers review verified
+            practitioner profiles, book available sessions, pay online, and
+            receive digital joining instructions and support.
           </p>
         </div>
       </section>
 
-      {/* Change Makers Section */}
-      <section className="py-24 bg-white">
-        <div className="max-w-5xl mx-auto px-6">
-          {team.map((member, idx) => (
-            <TeamMember 
-              key={member.name}
-              {...member}
-            />
-          ))}
+      <section className="px-6 py-20">
+        <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2">
+          <article className="rounded-[2rem] bg-[#064F4B] p-8 text-white md:p-10">
+            <p className="text-xs font-black uppercase tracking-widest text-[#B7C8A3]">
+              Individual operator
+            </p>
+            <h2 className="mt-4 text-4xl font-heading font-black">
+              {businessConfig.operatorLegalName}
+            </h2>
+            <p className="mt-5 font-medium leading-relaxed text-white/75">
+              Website operator and owner of the {businessConfig.brandName}{" "}
+              brand. No professional healthcare qualification or separate
+              legal-entity status is claimed here.
+            </p>
+          </article>
+          <article className="rounded-[2rem] border border-[#DDE8E5] bg-[#F5F8F7] p-8 md:p-10">
+            <p className="text-xs font-black uppercase tracking-widest text-[#0A7F7A]">
+              What Oruma does
+            </p>
+            <h2 className="mt-4 text-3xl font-heading font-black text-[#064F4B]">
+              Digital service coordination
+            </h2>
+            <p className="mt-5 font-medium leading-relaxed text-[#5F7F7A]">
+              Oruma coordinates practitioner discovery, booking, payment,
+              appointment confirmation, joining instructions, and customer
+              support. Each practitioner profile identifies the person's
+              verified role, qualifications, scope, fees, duration, and
+              relationship with Oruma.
+            </p>
+          </article>
         </div>
-      </section>
-
-      {/* Wave CTA Section - Replaced image with YouTube video */}
-      <section className="py-24 bg-[#F5F8F7] text-center border-t border-[#E2E8E6]">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-4xl lg:text-5xl font-heading font-extrabold text-[#064F4B] mb-6">
-            Welcome to The 1% – <br /> Let's Make Waves!
-          </h2>
-          <p className="text-[#5F7F7A] text-lg mb-12">
-            Join our mission to normalize mental health conversations across the globe.
+        <div className="mx-auto mt-8 max-w-5xl">
+          <BusinessIdentityDisclosure />
+          <p className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm font-bold leading-relaxed text-amber-950">
+            Oruma is not an emergency service. For immediate danger, self-harm
+            risk, or a medical emergency, contact local emergency services or a
+            nearby hospital.
           </p>
-          
-          <a
-            href="/careers"
-            className="inline-block bg-[#1A1A1A] text-white px-12 py-4 rounded-full font-bold text-lg hover:bg-black transition-all shadow-xl shadow-black/10 mb-16"
-          >
-            Join Us
-          </a>
-
-          {/* YouTube Video Section */}
-          <div className="relative aspect-video w-full max-w-4xl mx-auto overflow-hidden rounded-[2.5rem] md:rounded-[3rem] shadow-2xl shadow-[#0A7F7A]/10 border-8 border-white">
-            <iframe
-              className="absolute inset-0 w-full h-full"
-              src="https://www.youtube.com/embed/R9m-SGecnVc"
-              title="ORUMA Wellness Story"
-              loading="lazy"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          </div>
         </div>
       </section>
-
       <Footer />
     </main>
   );

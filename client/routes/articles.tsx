@@ -1,48 +1,54 @@
-import React from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import FloatingActions from '../components/FloatingActions';
-import { LucideIcon } from '@site-builder/icons';
+import React from "react";
+import { businessLinks } from "../src/config/business";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import FloatingActions from "../components/FloatingActions";
+import { LucideIcon } from "@site-builder/icons";
 
 export const meta = {
   title: "Mental Health Articles | oruma.me",
-  description: "Insightful articles on mental wellness, therapy, and self-care. Read the latest from Oruma's experts."
+  description:
+    "Insightful articles on mental wellness, therapy, and self-care. Read the latest from Oruma's experts.",
 };
 
 export default function ArticlesPage() {
   const articles = [
     {
       title: "Understanding Anxiety: More Than Just Worry",
-      excerpt: "Anxiety is a complex emotional response. Learn how it affects the mind and body, and discover gentle ways to manage it daily.",
+      excerpt:
+        "Anxiety is a complex emotional response. Learn how it affects the mind and body, and discover gentle ways to manage it daily.",
       category: "Mental Health",
       date: "May 12, 2026",
       img: "https://images.unsplash.com/photo-1621887348744-6b0444f8a058?auto=format&fit=crop&q=80&w=800",
-      readTime: "5 min read"
+      readTime: "5 min read",
     },
     {
       title: "The Gentle Art of Mindfulness in a Busy World",
-      excerpt: "Mindfulness doesn't require hours of meditation. We explore simple, practical ways to stay grounded amidst the chaos of modern life.",
+      excerpt:
+        "Mindfulness doesn't require hours of meditation. We explore simple, practical ways to stay grounded amidst the chaos of modern life.",
       category: "Self-Care",
       date: "May 08, 2026",
       img: "https://images.unsplash.com/photo-1499728603263-13726abce5fd?auto=format&fit=crop&q=80&w=800",
-      readTime: "4 min read"
+      readTime: "4 min read",
     },
     {
-      title: "Why Kerala Needs a Youth-Led Mental Health Movement",
-      excerpt: "The story behind Oruma and our mission to create an anonymous, safe sanctuary for the next generation's mental wellness.",
+      title: "Making Online Wellness Support Easier to Understand",
+      excerpt:
+        "How clear practitioner information, booking steps, and privacy expectations can help people make informed choices.",
       category: "Community",
       date: "May 01, 2026",
       img: "https://images.unsplash.com/photo-1653130892581-7c0ae1f4e8e0?auto=format&fit=crop&q=80&w=800",
-      readTime: "7 min read"
+      readTime: "7 min read",
     },
     {
       title: "Healing Through Connection: The Role of Group Therapy",
-      excerpt: "Discover how shared experiences can foster deeper healing and why community is a vital part of the recovery journey.",
+      excerpt:
+        "Discover how shared experiences can foster deeper healing and why community is a vital part of the recovery journey.",
       category: "Therapy",
       date: "April 25, 2026",
       img: "https://images.unsplash.com/photo-1646963558449-4f49a48af9e0?auto=format&fit=crop&q=80&w=800",
-      readTime: "6 min read"
-    }
+      readTime: "6 min read",
+    },
   ];
 
   return (
@@ -54,12 +60,15 @@ export default function ArticlesPage() {
       <section className="pt-32 md:pt-48 pb-16 bg-[#F5F8F7]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="max-w-3xl">
-            <div className="inline-block bg-[#0A7F7A] text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-6">Resources</div>
+            <div className="inline-block bg-[#0A7F7A] text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-6">
+              Resources
+            </div>
             <h1 className="text-5xl md:text-7xl font-heading font-black text-[#064F4B] mb-8 leading-tight">
               Healing Through <span className="text-[#0A7F7A]">Words</span>
             </h1>
             <p className="text-xl text-[#5F7F7A] font-medium leading-relaxed max-w-2xl">
-              Our library of articles, guides, and stories designed to support your mental wellness journey with empathy and insight.
+              Our library of articles, guides, and stories designed to support
+              your mental wellness journey with empathy and insight.
             </p>
           </div>
         </div>
@@ -71,16 +80,16 @@ export default function ArticlesPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-12">
             {articles.map((article, idx) => (
               <article
-                key={idx} 
+                key={idx}
                 className="group flex flex-col md:flex-row gap-8 bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 hover:border-[#0A7F7A] transition-all hover:shadow-2xl hover:shadow-[#0A7F7A]/5 p-6"
               >
                 <div className="w-full md:w-2/5 aspect-[4/3] rounded-[1.5rem] overflow-hidden shrink-0">
-                  <img 
-                    src={article.img} 
-                    alt={article.title} 
+                  <img
+                    src={article.img}
+                    alt={article.title}
                     loading="lazy"
                     decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
                 </div>
                 <div className="flex flex-col justify-between py-2">
@@ -101,7 +110,9 @@ export default function ArticlesPage() {
                     </p>
                   </div>
                   <div className="mt-6 flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-[#5F7F7A]">{article.date}</span>
+                    <span className="text-[11px] font-bold text-[#5F7F7A]">
+                      {article.date}
+                    </span>
                     <div className="w-10 h-10 rounded-full bg-[#F5F8F7] flex items-center justify-center text-[#0A7F7A] group-hover:bg-[#0A7F7A] group-hover:text-white transition-all">
                       <LucideIcon name="arrow-right" size={20} />
                     </div>
@@ -123,22 +134,29 @@ export default function ArticlesPage() {
       <section className="py-24 bg-[#0A7F7A]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="bg-white/10 backdrop-blur-md rounded-[3rem] p-12 md:p-20 border border-white/20 text-center relative overflow-hidden">
-             <div className="absolute top-0 left-0 w-32 h-32 bg-[#B7C8A3] rounded-full blur-3xl opacity-20 -translate-x-1/2 -translate-y-1/2" />
-             <div className="absolute bottom-0 right-0 w-48 h-48 bg-white rounded-full blur-3xl opacity-10 translate-x-1/3 translate-y-1/3" />
-             
-             <div className="relative z-10 max-w-2xl mx-auto">
-                <LucideIcon name="mail-open" size={48} className="text-[#B7C8A3] mx-auto mb-8" />
-                <h2 className="text-4xl md:text-5xl font-heading font-black text-white mb-6">Stay Centered</h2>
-                <p className="text-xl text-white/80 font-medium mb-12 leading-relaxed">
-                  Join our gentle community to receive mental wellness tips, expert advice, and gentle reminders directly in your inbox.
-                </p>
-                <a
-                  href="mailto:join@oruma.me?subject=Subscribe%20me%20to%20ORUMA%20wellness%20updates"
-                  className="inline-block bg-[#B7C8A3] text-[#064F4B] px-10 py-5 rounded-full font-black text-lg hover:bg-white transition-all active:scale-95 uppercase tracking-widest"
-                >
-                  Request email updates
-                </a>
-             </div>
+            <div className="absolute top-0 left-0 w-32 h-32 bg-[#B7C8A3] rounded-full blur-3xl opacity-20 -translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute bottom-0 right-0 w-48 h-48 bg-white rounded-full blur-3xl opacity-10 translate-x-1/3 translate-y-1/3" />
+
+            <div className="relative z-10 max-w-2xl mx-auto">
+              <LucideIcon
+                name="mail-open"
+                size={48}
+                className="text-[#B7C8A3] mx-auto mb-8"
+              />
+              <h2 className="text-4xl md:text-5xl font-heading font-black text-white mb-6">
+                Stay Centered
+              </h2>
+              <p className="text-xl text-white/80 font-medium mb-12 leading-relaxed">
+                Join our gentle community to receive mental wellness tips,
+                expert advice, and gentle reminders directly in your inbox.
+              </p>
+              <a
+                href={`${businessLinks.supportEmail}?subject=${encodeURIComponent("Oruma wellness updates enquiry")}`}
+                className="inline-block bg-[#B7C8A3] text-[#064F4B] px-10 py-5 rounded-full font-black text-lg hover:bg-white transition-all active:scale-95 uppercase tracking-widest"
+              >
+                Request email updates
+              </a>
+            </div>
           </div>
         </div>
       </section>

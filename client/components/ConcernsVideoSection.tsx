@@ -1,4 +1,5 @@
-import React from 'react';
+import React from "react";
+import { businessConfig } from "../src/config/business";
 
 export default function ConcernsVideoSection() {
   const videoId = "QrGuF5zsaUU";
@@ -16,23 +17,28 @@ export default function ConcernsVideoSection() {
             <div className="inline-block bg-[#064F4B] text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest">
               Featured Insight
             </div>
-            
+
             <h2 className="text-4xl lg:text-6xl font-heading font-black text-[#064F4B] leading-tight uppercase tracking-tighter">
-              Healing <span className="text-[#A3B899]">Begins</span> <br /> 
+              Healing <span className="text-[#A3B899]">Begins</span> <br />
               With Understanding
             </h2>
-            
+
             <p className="text-xl text-[#5F7F7A] font-medium leading-relaxed max-w-xl">
-              Take a moment to understand why therapy is a vital step toward reclaiming your peace. At ORUMA, we provide a safe space to heal, grow, and rediscover yourself.
+              Take a moment to understand why therapy is a vital step toward
+              reclaiming your peace. At ORUMA, we provide a safe space to heal,
+              grow, and rediscover yourself.
             </p>
-            
+
             <div className="flex items-center gap-6 pt-4">
               <div className="flex -space-x-3">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="w-12 h-12 rounded-full border-4 border-white overflow-hidden bg-gray-200">
-                    <img 
-                      src={`https://images.unsplash.com/photo-${1500000000000 + i*10000}?auto=format&fit=crop&q=80&w=100`} 
-                      alt="User avatar" 
+                  <div
+                    key={i}
+                    className="w-12 h-12 rounded-full border-4 border-white overflow-hidden bg-gray-200"
+                  >
+                    <img
+                      src={`https://images.unsplash.com/photo-${1500000000000 + i * 10000}?auto=format&fit=crop&q=80&w=100`}
+                      alt="User avatar"
                       width="100"
                       height="100"
                       loading="lazy"
@@ -43,7 +49,7 @@ export default function ConcernsVideoSection() {
                 ))}
               </div>
               <p className="text-[#064F4B] font-black uppercase text-sm tracking-widest">
-                Trusted by 500+ individuals
+                Confidential online support
               </p>
             </div>
           </div>
@@ -54,14 +60,14 @@ export default function ConcernsVideoSection() {
               <iframe
                 className="absolute inset-0 w-full h-full"
                 src={embedUrl}
-                title="ORUMA Wellness - Understanding Therapy"
+                title={`${businessConfig.brandName} - Understanding counselling`}
                 loading="lazy"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
             </div>
-            
+
             {/* Floating Badge */}
             <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-[2.5rem] shadow-xl border border-gray-100 hidden md:block max-w-[200px] animate-bounce-slow">
               <p className="text-[#064F4B] font-black text-xs uppercase tracking-widest leading-relaxed">
@@ -71,8 +77,10 @@ export default function ConcernsVideoSection() {
           </div>
         </div>
       </div>
-      
-      <style dangerouslySetInnerHTML={{ __html: `
+
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @keyframes bounce-slow {
           0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8,0,1,1); }
           50% { transform: none; animation-timing-function: cubic-bezier(0,0,0.2,1); }
@@ -80,7 +88,9 @@ export default function ConcernsVideoSection() {
         .animate-bounce-slow {
           animation: bounce-slow 3s infinite;
         }
-      `}} />
+      `,
+        }}
+      />
     </section>
   );
 }

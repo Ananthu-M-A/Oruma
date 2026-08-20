@@ -1,7 +1,10 @@
-import React from 'react';
+import React from "react";
+import { createWhatsAppUrl } from "../src/config/business";
 
 export default function TraumaHero() {
-  const whatsappLink = "https://wa.me/918157039987?text=Hi,%20I'd%20like%20to%20get%20therapy%20for%20trauma.";
+  const whatsappLink = createWhatsAppUrl(
+    "Hello, I need help choosing a counselling or wellness service.",
+  );
 
   return (
     <section className="relative w-full overflow-hidden bg-white border-t border-gray-100">
@@ -9,41 +12,45 @@ export default function TraumaHero() {
         {/* Right Side - Content */}
         <div className="w-full lg:w-1/2 bg-[#064F4B] p-8 md:p-16 lg:p-24 flex flex-col justify-center items-start text-white relative z-10 shadow-xl">
           <div className="absolute inset-0 bg-[#064F4B] -z-10" />
-          
+
           <div className="inline-block bg-[#0A7F7A] px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-8 border border-white/10">
             Trauma & PTSD Support
           </div>
 
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-heading font-black mb-8 leading-[1.1] max-w-xl uppercase tracking-tighter">
-            Finding Safety after <br /><span className="text-[#B7C8A3]">Trauma & PTSD</span>
+            Finding Safety after <br />
+            <span className="text-[#B7C8A3]">Trauma & PTSD</span>
           </h1>
           <p className="text-lg md:text-xl mb-12 text-[#B7C8A3] font-medium max-w-lg leading-relaxed italic">
-            Healing from difficult experiences is a delicate journey. We offer specialized, compassionate support to process the past and find peace.
+            Healing from difficult experiences is a delicate journey. We offer
+            specialized, compassionate support to process the past and find
+            peace.
           </p>
-          <a 
+          <a
             href={whatsappLink}
             className="bg-white text-[#064F4B] px-12 py-5 rounded-full font-black text-sm uppercase tracking-widest hover:bg-[#B7C8A3] transition-all shadow-2xl shadow-black/20 active:scale-95"
           >
             Start Healing
           </a>
         </div>
-        
+
         {/* Left Side - Image with Quote */}
         <div className="w-full lg:w-1/2 relative min-h-[500px] lg:min-h-0 bg-[#F5F8F7]">
-          <img 
-            src="/assets/trauma-healing-safe.webp" 
-            alt="Finding safety after trauma and PTSD" 
+          <img
+            src="/assets/trauma-healing-safe.webp"
+            alt="Finding safety after trauma and PTSD"
             loading="lazy"
             decoding="async"
             className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-[#064F4B]/20 mix-blend-multiply" />
-          
+
           {/* Quote Overlay - Top Center */}
           <div className="absolute top-12 left-8 right-8 z-20">
             <div className="p-6 bg-[#064F4B]/40 backdrop-blur-md rounded-[2.5rem] border border-white/20">
               <p className="text-white text-base md:text-xl font-black text-center italic leading-relaxed">
-                “You are safe now. <br />Healing can begin.”
+                “You are safe now. <br />
+                Healing can begin.”
               </p>
             </div>
           </div>

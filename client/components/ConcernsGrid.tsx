@@ -1,64 +1,71 @@
-import React from 'react';
-import { LucideIcon } from '@site-builder/icons';
+import React from "react";
+import { createWhatsAppUrl } from "../src/config/business";
+import { LucideIcon } from "@site-builder/icons";
 
 export default function ConcernsGrid() {
   const concerns = [
-    { 
-      title: 'Performance anxiety issues', 
-      icon: 'zap',
-      href: '/concerns/all-concerns#anxiety'
+    {
+      title: "Performance anxiety issues",
+      icon: "zap",
+      href: "/concerns/all-concerns#anxiety",
     },
-    { 
-      title: 'Low desire or mismatched libido', 
-      icon: 'battery-low',
-      href: '/services/sexual-wellness'
+    {
+      title: "Low desire or mismatched libido",
+      icon: "battery-low",
+      href: "/services/sexual-wellness",
     },
-    { 
-      title: 'Relationship intimacy concerns', 
-      icon: 'heart',
-      href: '/concerns/all-concerns#relationship'
+    {
+      title: "Relationship intimacy concerns",
+      icon: "heart",
+      href: "/concerns/all-concerns#relationship",
     },
-    { 
-      title: 'Healing trauma & past experiences', 
-      icon: 'sparkles',
-      href: '/concerns/all-concerns#trauma'
+    {
+      title: "Healing trauma & past experiences",
+      icon: "sparkles",
+      href: "/concerns/all-concerns#trauma",
     },
-    { 
-      title: 'Body image & self-esteem blocks', 
-      icon: 'user',
-      href: '/concerns/all-concerns#depression'
+    {
+      title: "Body image & self-esteem blocks",
+      icon: "user",
+      href: "/concerns/all-concerns#depression",
     },
-    { 
-      title: 'Gender dysphoria concerns', 
-      icon: 'user-check',
-      href: '/services/sexual-wellness'
+    {
+      title: "Gender dysphoria concerns",
+      icon: "user-check",
+      href: "/services/sexual-wellness",
     },
-    { 
-      title: 'Postpartum intimacy concerns', 
-      icon: 'baby',
-      href: '/concerns/all-concerns#postpartum'
+    {
+      title: "Postpartum intimacy concerns",
+      icon: "baby",
+      href: "/concerns/all-concerns#postpartum",
     },
-    { 
-      title: 'Queer affirmative counseling', 
-      icon: 'rainbow',
-      href: '/services/sexual-wellness'
+    {
+      title: "Queer affirmative counseling",
+      icon: "rainbow",
+      href: "/services/sexual-wellness",
     },
   ];
 
-  const bookingLink = "https://wa.me/918157039987?text=Hi,%20I'd%20like%20to%20book%20a%20consultation%20regarding%20my%20wellness%20concerns.";
+  const bookingLink = createWhatsAppUrl(
+    "Hello, I need help choosing a counselling or wellness practitioner.",
+  );
 
   return (
     <section className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-6 text-center">
-        <h2 className="text-4xl lg:text-5xl font-heading font-extrabold text-[#064F4B] mb-4">Concerns We Can <span className="italic text-[#0A7F7A]">Help</span> With</h2>
+        <h2 className="text-4xl lg:text-5xl font-heading font-extrabold text-[#064F4B] mb-4">
+          Concerns We Can <span className="italic text-[#0A7F7A]">Help</span>{" "}
+          With
+        </h2>
         <p className="text-[#5F7F7A] mb-16 max-w-2xl mx-auto font-medium">
-          We support individuals and couples through a wide range of sexual wellness challenges, including:
+          We support individuals and couples through a wide range of sexual
+          wellness challenges, including:
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
           {concerns.map((item) => (
-            <a 
-              key={item.title} 
+            <a
+              key={item.title}
               href={item.href}
               className="flex flex-col items-center gap-4 group cursor-pointer active:scale-95 transition-transform"
             >
@@ -72,7 +79,7 @@ export default function ConcernsGrid() {
           ))}
         </div>
 
-        <a 
+        <a
           href={bookingLink}
           className="inline-block mt-16 bg-[#064F4B] text-white px-10 py-4 rounded-full font-black shadow-xl shadow-[#064F4B]/20 hover:bg-[#0A7F7A] transition-all active:scale-95"
         >

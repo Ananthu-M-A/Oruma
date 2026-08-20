@@ -9,6 +9,13 @@ export const RAZORPAY_UPI_CHECKOUT_CONFIG: RazorpayCheckoutConfig = {
   },
 };
 
+export function getRazorpayCheckoutDescription(bookingReference: string) {
+  const safeReference = bookingReference
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 24);
+  return `Online counselling or wellness booking ${safeReference}`.trim();
+}
+
 export function getRazorpayPaymentFailureMessage(
   response: RazorpayPaymentFailureResponse,
 ) {

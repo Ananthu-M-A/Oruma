@@ -18,9 +18,9 @@ import {
 import { getIstDateKey } from "../src/lib/dateTime";
 
 export const meta = {
-  title: "Therapist Profile | ORUMA Wellness",
+  title: "Verified Practitioner Profile | Oruma",
   description:
-    "View therapist details, specializations, fees, availability, and book a session with ORUMA Wellness.",
+    "Review verified practitioner details, fees, duration, availability, and request an online Oruma booking.",
 };
 
 function mapForBooking(therapist: Therapist) {
@@ -121,9 +121,7 @@ export default function TherapistDetailPage() {
       slot,
       hasCoupleTherapy,
       price: formatTherapistPrice(therapist),
-      tags: therapist.tags?.length
-        ? therapist.tags
-        : ["Mental Health", "Counseling", "Support"],
+      tags: therapist.tags ?? [],
     };
   }, [therapist]);
 
@@ -204,15 +202,17 @@ export default function TherapistDetailPage() {
                         Experience
                       </p>
                       <p className="text-xl font-black text-[#064F4B] mt-1">
-                        {therapist.experience}+ hrs
+                        {therapist.verifiedExperienceHours
+                          ? `${therapist.verifiedExperienceHours}+ hrs`
+                          : `${therapist.experience} years`}
                       </p>
                     </div>
                     <div className="bg-white/40 rounded-[1.25rem] p-4">
                       <p className="text-[9px] font-black uppercase tracking-widest text-[#064F4B]/60">
-                        Group
+                        Duration
                       </p>
                       <p className="text-xl font-black text-[#064F4B] mt-1">
-                        {therapist.group}
+                        {therapist.sessionDurationMinutes} minutes
                       </p>
                     </div>
                   </div>
@@ -222,7 +222,7 @@ export default function TherapistDetailPage() {
               <div>
                 <div className="inline-flex items-center gap-2 bg-white text-[#0A7F7A] px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-widest mb-5 shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-[#00D494]" />
-                  Available for online consultation
+                  Profile credentials reviewed · Online consultation
                 </div>
 
                 <h1 className="text-4xl md:text-6xl font-heading font-black text-[#064F4B] uppercase tracking-tighter leading-none">
@@ -285,7 +285,7 @@ export default function TherapistDetailPage() {
                       Mode
                     </p>
                     <p className="text-sm font-black text-[#064F4B] mt-1">
-                      Video, audio or chat
+                      {therapist.consultationType}
                     </p>
                   </div>
                 </div>
@@ -308,8 +308,7 @@ export default function TherapistDetailPage() {
                     About
                   </h2>
                   <p className="mt-4 text-[#5F7F7A] font-medium leading-relaxed">
-                    {therapist.bio ||
-                      `${therapist.name} offers professional psychological support with a calm, client-centered approach.`}
+                    {therapist.bio}
                   </p>
                   {therapist.qualifications && (
                     <div className="mt-6 pt-6 border-t border-[#064F4B]/10">
@@ -319,8 +318,34 @@ export default function TherapistDetailPage() {
                       <p className="mt-2 font-bold text-[#064F4B]">
                         {therapist.qualifications}
                       </p>
+                      <p className="mt-1 text-sm font-bold text-[#5F7F7A]">
+                        Awarded by {therapist.awardingInstitution}
+                      </p>
                     </div>
                   )}
+                  <div className="mt-6 grid gap-4 border-t border-[#064F4B]/10 pt-6 sm:grid-cols-2">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                        Relationship with Oruma
+                      </p>
+                      <p className="mt-2 font-bold text-[#064F4B]">
+                        {therapist.engagementRelationship}
+                      </p>
+                    </div>
+                    {therapist.professionalRegistrationNumber && (
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                          Professional registration
+                        </p>
+                        <p className="mt-2 font-bold text-[#064F4B]">
+                          {therapist.professionalRegistrationNumber}
+                          {therapist.registrationAuthority
+                            ? ` · ${therapist.registrationAuthority}`
+                            : ""}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-8 bg-white rounded-[2rem] p-6 md:p-8 shadow-sm">

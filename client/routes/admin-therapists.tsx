@@ -15,11 +15,7 @@ import {
   updateTherapist,
 } from "../src/lib/therapists";
 import { formatIstDateTime } from "../src/lib/dateTime";
-import {
-  therapistQualificationOptions,
-  therapistSpecializationOptions,
-  therapistTitleOptions,
-} from "../src/lib/therapistProfileOptions";
+import { therapistSpecializationOptions } from "../src/lib/therapistProfileOptions";
 
 export const meta = {
   title: "Manage Therapists | Oruma",
@@ -38,8 +34,18 @@ export default function AdminTherapistsPage() {
   const [editForm, setEditForm] = useState({
     name: "",
     title: "",
+    areasOfPractice: "",
+    experience: "",
+    verifiedExperienceHours: "",
     specialization: "",
     qualifications: "",
+    awardingInstitution: "",
+    professionalRegistrationNumber: "",
+    registrationAuthority: "",
+    consultationType: "",
+    sessionDurationMinutes: "",
+    engagementRelationship: "",
+    verificationStatus: "UNVERIFIED" as Therapist["verificationStatus"],
     price: "",
     couplePrice: "",
     voiceIntro: "",
@@ -133,7 +139,13 @@ export default function AdminTherapistsPage() {
 
   const removeTherapist = async (therapist: Therapist) => {
     const token = getAccessToken();
-    if (!token || !window.confirm(`Archive ${therapist.name}? Historical records will be retained.`)) return;
+    if (
+      !token ||
+      !window.confirm(
+        `Archive ${therapist.name}? Historical records will be retained.`,
+      )
+    )
+      return;
 
     setError("");
     setNotice("");
@@ -149,9 +161,19 @@ export default function AdminTherapistsPage() {
   };
 
   const restoreArchivedTherapist = async (therapist: Therapist) => {
-    const token = getAccessToken(); if (!token) return;
-    try { await restoreTherapist(token, therapist.id); setNotice("Therapist restored. Activate the profile when it is ready to return publicly."); await loadData(); }
-    catch (error) { setError(error instanceof Error ? error.message : "Unable to restore therapist."); }
+    const token = getAccessToken();
+    if (!token) return;
+    try {
+      await restoreTherapist(token, therapist.id);
+      setNotice(
+        "Therapist restored. Activate the profile when it is ready to return publicly.",
+      );
+      await loadData();
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Unable to restore therapist.",
+      );
+    }
   };
 
   const verifyChanges = async (
@@ -186,8 +208,23 @@ export default function AdminTherapistsPage() {
     setEditForm({
       name: therapist.name,
       title: therapist.title,
+      areasOfPractice: (therapist.tags ?? []).join(", "),
+      experience: String(therapist.experience),
+      verifiedExperienceHours: therapist.verifiedExperienceHours
+        ? String(therapist.verifiedExperienceHours)
+        : "",
       specialization: therapist.specialization ?? "",
       qualifications: therapist.qualifications ?? "",
+      awardingInstitution: therapist.awardingInstitution ?? "",
+      professionalRegistrationNumber:
+        therapist.professionalRegistrationNumber ?? "",
+      registrationAuthority: therapist.registrationAuthority ?? "",
+      consultationType: therapist.consultationType ?? "",
+      sessionDurationMinutes: therapist.sessionDurationMinutes
+        ? String(therapist.sessionDurationMinutes)
+        : "",
+      engagementRelationship: therapist.engagementRelationship ?? "",
+      verificationStatus: therapist.verificationStatus,
       price: String(therapist.price),
       couplePrice: therapist.couplePrice ? String(therapist.couplePrice) : "",
       voiceIntro: therapist.voiceIntro ?? "",
@@ -206,8 +243,28 @@ export default function AdminTherapistsPage() {
       await updateTherapist(token, editing.id, {
         name: editForm.name.trim(),
         title: editForm.title.trim(),
+        tags: editForm.areasOfPractice
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean),
+        experience: Number(editForm.experience),
+        verifiedExperienceHours: editForm.verifiedExperienceHours
+          ? Number(editForm.verifiedExperienceHours)
+          : null,
         specialization: editForm.specialization.trim() || undefined,
         qualifications: editForm.qualifications.trim() || undefined,
+        awardingInstitution: editForm.awardingInstitution.trim() || undefined,
+        professionalRegistrationNumber:
+          editForm.professionalRegistrationNumber.trim() || undefined,
+        registrationAuthority:
+          editForm.registrationAuthority.trim() || undefined,
+        consultationType: editForm.consultationType.trim() || undefined,
+        sessionDurationMinutes: editForm.sessionDurationMinutes
+          ? Number(editForm.sessionDurationMinutes)
+          : null,
+        engagementRelationship:
+          editForm.engagementRelationship.trim() || undefined,
+        verificationStatus: editForm.verificationStatus,
         price: Number(editForm.price),
         couplePrice: editForm.couplePrice ? Number(editForm.couplePrice) : null,
         voiceIntro: editForm.voiceIntro.trim() || undefined,
@@ -313,6 +370,9 @@ export default function AdminTherapistsPage() {
                           >
                             {therapist.isActive ? "Public" : "Hidden"}
                           </span>
+                          <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-700">
+                            {therapist.verificationStatus}
+                          </span>
                           {therapist.pendingProfileChanges && (
                             <span className="rounded-full bg-amber-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700">
                               Review changes
@@ -405,25 +465,42 @@ export default function AdminTherapistsPage() {
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {therapist.archivedAt ? <button onClick={() => restoreArchivedTherapist(therapist)} className="rounded-full bg-[#064F4B] px-4 py-3 text-[10px] font-black uppercase text-white">Restore</button> : <>
-                        <button
-                          onClick={() => openEditor(therapist)}
-                          className="inline-flex items-center gap-2 rounded-full border border-[#DDE8E5] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#064F4B]"
-                        >
-                          <LucideIcon name="pencil" size={16} />
-                          Edit
-                        </button>
-                        </>}
+                        {therapist.archivedAt ? (
+                          <button
+                            onClick={() => restoreArchivedTherapist(therapist)}
+                            className="rounded-full bg-[#064F4B] px-4 py-3 text-[10px] font-black uppercase text-white"
+                          >
+                            Restore
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => openEditor(therapist)}
+                              className="inline-flex items-center gap-2 rounded-full border border-[#DDE8E5] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#064F4B]"
+                            >
+                              <LucideIcon name="pencil" size={16} />
+                              Edit
+                            </button>
+                          </>
+                        )}
                         <button
                           onClick={() => toggleActive(therapist)}
-                          disabled={Boolean(therapist.archivedAt)}
+                          disabled={
+                            Boolean(therapist.archivedAt) ||
+                            (!therapist.isActive &&
+                              therapist.verificationStatus !== "VERIFIED")
+                          }
                           className="inline-flex items-center gap-2 rounded-full border border-[#DDE8E5] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#064F4B]"
                         >
                           <LucideIcon
                             name={therapist.isActive ? "eye-off" : "eye"}
                             size={16}
                           />
-                          {therapist.isActive ? "Hide" : "Activate"}
+                          {therapist.isActive
+                            ? "Hide"
+                            : therapist.verificationStatus === "VERIFIED"
+                              ? "Activate"
+                              : "Verify first"}
                         </button>
                         <button
                           onClick={() => removeTherapist(therapist)}
@@ -471,20 +548,48 @@ export default function AdminTherapistsPage() {
                 onChange={(value) => setEditForm({ ...editForm, name: value })}
                 required
               />
-              <EditSelectField
-                label="Title"
+              <EditField
+                label="Exact professional role"
                 value={editForm.title}
                 onChange={(value) => setEditForm({ ...editForm, title: value })}
-                options={therapistTitleOptions}
                 required
               />
-              <EditSelectField
-                label="Qualification"
+              <EditField
+                label="Exact qualification"
                 value={editForm.qualifications}
                 onChange={(value) =>
                   setEditForm({ ...editForm, qualifications: value })
                 }
-                options={therapistQualificationOptions}
+              />
+              <EditField
+                label="Awarding institution"
+                value={editForm.awardingInstitution}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, awardingInstitution: value })
+                }
+              />
+              <EditField
+                label="Areas of practice (comma-separated)"
+                value={editForm.areasOfPractice}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, areasOfPractice: value })
+                }
+              />
+              <EditField
+                label="Years of experience"
+                type="number"
+                value={editForm.experience}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, experience: value })
+                }
+              />
+              <EditField
+                label="Verified experience hours"
+                type="number"
+                value={editForm.verifiedExperienceHours}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, verifiedExperienceHours: value })
+                }
               />
               <EditSelectField
                 label="Specialization"
@@ -494,6 +599,66 @@ export default function AdminTherapistsPage() {
                 }
                 options={therapistSpecializationOptions}
               />
+              <EditField
+                label="Registration number (if applicable)"
+                value={editForm.professionalRegistrationNumber}
+                onChange={(value) =>
+                  setEditForm({
+                    ...editForm,
+                    professionalRegistrationNumber: value,
+                  })
+                }
+              />
+              <EditField
+                label="Registration authority"
+                value={editForm.registrationAuthority}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, registrationAuthority: value })
+                }
+              />
+              <EditField
+                label="Consultation type"
+                value={editForm.consultationType}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, consultationType: value })
+                }
+              />
+              <EditField
+                label="Session duration (minutes)"
+                type="number"
+                value={editForm.sessionDurationMinutes}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, sessionDurationMinutes: value })
+                }
+              />
+              <EditField
+                label="Engagement relationship with Oruma"
+                value={editForm.engagementRelationship}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, engagementRelationship: value })
+                }
+              />
+              <label>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                  Verification status
+                </span>
+                <select
+                  value={editForm.verificationStatus}
+                  onChange={(event) =>
+                    setEditForm({
+                      ...editForm,
+                      verificationStatus: event.target
+                        .value as Therapist["verificationStatus"],
+                    })
+                  }
+                  className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+                >
+                  <option value="UNVERIFIED">Unverified</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="VERIFIED">Verified</option>
+                  <option value="REJECTED">Rejected</option>
+                </select>
+              </label>
               <EditField
                 label="Individual fee"
                 type="number"

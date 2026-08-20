@@ -1,0 +1,36 @@
+{
+  "brandName": "Oruma",
+  "website": "https://oruma.me",
+  "operatorLegalName": "RANJINI R",
+  "businessStructure": "Individual-owned business",
+  "serviceDescription": "Individual-owned online counselling and wellness service",
+  "address": {
+    "lines": [
+      "Ranjini W/O Vijith Kumar",
+      "Viji Bhavanam",
+      "Erumakkuzhi, Palamel",
+      "Alappuzha, Nooranad",
+      "Kerala – 690504"
+    ],
+    "addressLocality": "Nooranad",
+    "addressDistrict": "Alappuzha",
+    "addressRegion": "Kerala",
+    "postalCode": "690504",
+    "addressCountry": "IN"
+  },
+  "supportPhone": {
+    "display": "+91-8157039987",
+    "e164": "+918157039987"
+  },
+  "whatsappPhone": {
+    "display": "+91-8157039987",
+    "digits": "918157039987"
+  },
+  "emails": {
+    "support": "oruma9987@gmail.com",
+    "refund": "oruma9987@gmail.com",
+    "cancellation": "oruma9987@gmail.com",
+    "privacy": "oruma9987@gmail.com"
+  },
+  "gstin": null
+}

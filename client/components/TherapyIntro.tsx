@@ -1,8 +1,11 @@
-import React from 'react';
-import { LucideIcon } from '@site-builder/icons';
+import React from "react";
+import { createWhatsAppUrl } from "../src/config/business";
+import { LucideIcon } from "@site-builder/icons";
 
 export default function TherapyIntro() {
-  const whatsappLink = "https://wa.me/918157039987?text=Hi,%20I%20would%20like%20to%20book%20a%20therapy%20session.";
+  const whatsappLink = createWhatsAppUrl(
+    "Hello, I need help booking an Oruma counselling or wellness session.",
+  );
 
   return (
     <section className="pt-28 md:pt-40 pb-16 bg-white">
@@ -13,15 +16,16 @@ export default function TherapyIntro() {
             <span className="italic text-[#0A7F7A]">there is a listener?</span>
           </h1>
           <p className="text-lg text-[#5F7F7A] font-medium mb-10">
-            Mental health is a priority, not a privilege. Take the first step towards healing with oruma.me.
+            Mental health is a priority, not a privilege. Take the first step
+            towards healing with oruma.me.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <a 
+            <a
               href={whatsappLink}
               className="bg-[#064F4B] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#0A7F7A] transition-all shadow-xl shadow-[#064F4B]/20 flex items-center gap-3 active:scale-95"
             >
-               Book Your Therapy
-               <span className="w-2 h-2 bg-[#00D494] rounded-full shadow-[0_0_8px_#00D494]"></span>
+              Book Your Therapy
+              <span className="w-2 h-2 bg-[#00D494] rounded-full shadow-[0_0_8px_#00D494]"></span>
             </a>
           </div>
         </div>

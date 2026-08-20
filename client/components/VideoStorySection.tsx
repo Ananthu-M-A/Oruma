@@ -1,17 +1,17 @@
-import React from 'react';
+import React from "react";
 
 export default function VideoStorySection() {
   const videos = [
     {
       id: "7jd_snHx3CM",
       title: "Understanding Therapy - Your Journey at ORUMA",
-      description: "A deeper look into how our therapy sessions help you grow."
+      description: "A deeper look into how our therapy sessions help you grow.",
     },
     {
       id: "R9m-SGecnVc",
       title: "ORUMA Story - Healing Begins with Understanding",
-      description: "Our philosophy and approach to mental wellness."
-    }
+      description: "Our philosophy and approach to mental wellness.",
+    },
   ];
 
   return (
@@ -23,13 +23,16 @@ export default function VideoStorySection() {
             Video Gallery
           </div>
           <h2 className="text-4xl md:text-5xl font-heading font-black text-[#064F4B] mb-6 uppercase tracking-tighter">
-            Healing Begins with <span className="text-[#A3B899]">Understanding</span>
+            Healing Begins with{" "}
+            <span className="text-[#A3B899]">Understanding</span>
           </h2>
           <p className="text-xl font-body text-[#2E3E3C] max-w-3xl mx-auto opacity-80 leading-relaxed">
-            A safe space to heal, grow, and rediscover yourself. Watch our journey and insights to see how we provide gentle, anonymous support for your mental well-being.
+            Learn how Oruma provides confidential online counselling and
+            wellness support. Paid consultations require identity and booking
+            information and are not anonymous.
           </p>
         </div>
-        
+
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {videos.map((video, index) => (
             <div key={index} className="space-y-6 group">
@@ -55,7 +58,7 @@ export default function VideoStorySection() {
             </div>
           ))}
         </div>
-        
+
         <div className="mt-20 flex justify-center">
           <div className="inline-flex items-center gap-2 px-6 py-3 bg-[#B7C8A3]/20 text-[#064F4B] rounded-full text-sm font-bold border border-[#B7C8A3]/30">
             Together, Gently

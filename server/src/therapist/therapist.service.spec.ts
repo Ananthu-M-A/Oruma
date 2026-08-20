@@ -9,12 +9,14 @@ import { UserService } from '../user/user.service';
 import { Therapist } from './entities/therapist.entity';
 import { TherapistService } from './therapist.service';
 import { ProviderJobService } from '../reliability/provider-job.service';
+import { TherapistVerificationStatus } from './entities/therapist-verification-status.enum';
 
 describe('TherapistService', () => {
   let service: TherapistService;
   const therapistRepository = {
     find: jest.fn(),
     findOne: jest.fn(),
+    save: jest.fn(),
   };
   const appointmentRepository = {
     find: jest.fn(),
@@ -104,7 +106,7 @@ describe('TherapistService', () => {
     expect(slotRepository.find).toHaveBeenCalledTimes(1);
   });
 
-  it('returns only active public profile fields with current availability', async () => {
+  it('returns only verified active public profile fields with current availability', async () => {
     therapistRepository.findOne.mockResolvedValue({
       id: 'therapist-1',
       name: 'Therapist One',
@@ -118,7 +120,15 @@ describe('TherapistService', () => {
       image: null,
       voiceIntro: null,
       qualifications: 'MSc Psychology',
+      awardingInstitution: 'Example University',
+      verifiedExperienceHours: null,
+      professionalRegistrationNumber: null,
+      registrationAuthority: null,
       specialization: 'Anxiety',
+      consultationType: 'Video',
+      sessionDurationMinutes: 60,
+      engagementRelationship: 'Independent professional',
+      verificationStatus: TherapistVerificationStatus.VERIFIED,
       bio: 'Profile',
       pendingProfileChanges: { bio: 'Unpublished profile' },
       pendingProfileSubmittedAt: new Date(),
@@ -139,11 +149,36 @@ describe('TherapistService', () => {
       where: {
         id: 'therapist-1',
         isActive: true,
+        verificationStatus: TherapistVerificationStatus.VERIFIED,
         archivedAt: IsNull(),
       },
     });
     expect(result.nextAvailableSlot).toEqual(new Date('2026-07-22T04:30:00Z'));
     expect(result).not.toHaveProperty('email');
     expect(result).not.toHaveProperty('pendingProfileChanges');
+  });
+
+  it('blocks publication of a regulated role without registration evidence', async () => {
+    therapistRepository.findOne.mockResolvedValue({
+      id: 'therapist-1',
+      name: 'Practitioner One',
+      title: 'Clinical Psychologist',
+      qualifications: 'Verified qualification',
+      awardingInstitution: 'Verified institution',
+      tags: ['Area of practice'],
+      experience: 2,
+      price: 1000,
+      consultationType: 'Video',
+      sessionDurationMinutes: 60,
+      engagementRelationship: 'Independent professional',
+      verificationStatus: TherapistVerificationStatus.VERIFIED,
+      isActive: false,
+      account: null,
+    });
+
+    await expect(
+      service.update('therapist-1', { isActive: true }),
+    ).rejects.toThrow('professional registration number');
+    expect(therapistRepository.save).not.toHaveBeenCalled();
   });
 });

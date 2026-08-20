@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 export default function HeroSection() {
   return (
@@ -6,7 +6,6 @@ export default function HeroSection() {
       <div className="max-w-7xl mx-auto">
         {/* Main Hero Card Container */}
         <div className="bg-[#0A7F7A] rounded-[3rem] overflow-hidden flex flex-col lg:flex-row min-h-[500px] lg:h-[600px] shadow-2xl relative">
-          
           {/* Left Side: Text */}
           <div className="lg:w-3/5 p-10 lg:p-20 flex flex-col justify-center relative overflow-hidden">
             {/* Subtle Gradient Wave Background */}
@@ -16,10 +15,10 @@ export default function HeroSection() {
 
             <div className="relative z-10">
               <h1 className="text-5xl lg:text-8xl font-heading font-black text-white leading-[1.1] tracking-tight text-center lg:text-left">
-                Healing starts <br /> 
+                Healing starts <br />
                 here with <span className="text-[#B7C8A3]">Oruma</span>
               </h1>
-              
+
               <div className="mt-8 flex items-center gap-4 justify-center lg:justify-start">
                 <div className="w-12 h-1 bg-[#B7C8A3] rounded-full hidden lg:block" />
                 <p className="text-xl lg:text-2xl text-[#B7C8A3] font-medium italic">
@@ -31,9 +30,9 @@ export default function HeroSection() {
 
           {/* Right Side: Image */}
           <div className="lg:w-2/5 relative h-[400px] lg:h-full overflow-hidden bg-[#064F4B]">
-            <img 
-              src="/assets/professional-portrait.webp" 
-              alt="ORUMA Wellness mental health professional"
+            <img
+              src="/assets/professional-portrait.webp"
+              alt="Oruma online counselling and wellness support"
               width="666"
               height="1000"
               loading="eager"

@@ -32,6 +32,7 @@ import {
   SESSION_PACKAGE_OPTIONS,
 } from "../src/lib/sessionPackages";
 import {
+  getRazorpayCheckoutDescription,
   getRazorpayPaymentFailureMessage,
   RAZORPAY_UPI_CHECKOUT_CONFIG,
 } from "../src/lib/razorpay";
@@ -93,6 +94,9 @@ export default function BookingModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
+  const [bookingReference, setBookingReference] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("Not started");
   const [bookingOtp, setBookingOtp] = useState("");
   const [bookingVerificationToken, setBookingVerificationToken] = useState("");
   const [bookingOtpRequested, setBookingOtpRequested] = useState(false);
@@ -129,6 +133,9 @@ export default function BookingModal({
     setStep(1);
     setSubmitError("");
     setSubmitSuccess(false);
+    setPolicyAccepted(false);
+    setBookingReference("");
+    setPaymentStatus("Not started");
     setBookingOtp("");
     setBookingVerificationToken("");
     setBookingOtpRequested(false);
@@ -234,11 +241,14 @@ export default function BookingModal({
     if (step === 3) {
       const detailsComplete = Boolean(
         formData.name.trim() &&
-          formData.email.trim() &&
-          formData.phone.trim() &&
-          formData.mode,
+        formData.email.trim() &&
+        formData.phone.trim() &&
+        formData.mode,
       );
-      return detailsComplete && (Boolean(getCurrentUser()) || Boolean(bookingVerificationToken));
+      return (
+        detailsComplete &&
+        (Boolean(getCurrentUser()) || Boolean(bookingVerificationToken))
+      );
     }
     return true;
   };
@@ -260,22 +270,37 @@ export default function BookingModal({
 
   const sendBookingOtp = async () => {
     if (!bookingIdentifier) return setSubmitError("Enter an email to verify.");
-    setBookingOtpLoading(true); setSubmitError("");
+    setBookingOtpLoading(true);
+    setSubmitError("");
     try {
       const result = await requestBookingOtp({ identifier: bookingIdentifier });
       setBookingOtpRequested(true);
       setBookingDevCode(result.devCode ?? "");
-    } catch (error) { setSubmitError(error instanceof Error ? error.message : "Unable to send code."); }
-    finally { setBookingOtpLoading(false); }
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "Unable to send code.",
+      );
+    } finally {
+      setBookingOtpLoading(false);
+    }
   };
 
   const confirmBookingOtp = async () => {
-    setBookingOtpLoading(true); setSubmitError("");
+    setBookingOtpLoading(true);
+    setSubmitError("");
     try {
-      const result = await verifyBookingOtp({ identifier: bookingIdentifier, code: bookingOtp });
+      const result = await verifyBookingOtp({
+        identifier: bookingIdentifier,
+        code: bookingOtp,
+      });
       setBookingVerificationToken(result.verificationToken);
-    } catch (error) { setSubmitError(error instanceof Error ? error.message : "Unable to verify code."); }
-    finally { setBookingOtpLoading(false); }
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : "Unable to verify code.",
+      );
+    } finally {
+      setBookingOtpLoading(false);
+    }
   };
 
   async function handleBooking() {
@@ -308,6 +333,12 @@ export default function BookingModal({
         return;
       }
 
+      if (!policyAccepted) {
+        setSubmitError("Accept the booking and payment policies to continue.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const bookingPayload = {
         slotId: formData.slotId,
         sessionCount: formData.sessionCount,
@@ -317,7 +348,9 @@ export default function BookingModal({
         service: formData.service,
         mode: formData.mode,
         notes: `Service: ${formData.service}\nPackage: ${packagePricing.label}\nMode: ${formData.mode}\nName: ${formData.name}\nEmail: ${formData.email || "Not shared"}\nPhone: ${formData.phone}`,
-        ...(isQuickBooking ? { verificationToken: bookingVerificationToken } : {}),
+        ...(isQuickBooking
+          ? { verificationToken: bookingVerificationToken }
+          : {}),
       };
 
       if (!isQuickBooking) {
@@ -336,6 +369,9 @@ export default function BookingModal({
       if (!appointmentId) {
         throw new Error("Unable to create appointment.");
       }
+
+      setBookingReference(appointmentId);
+      setPaymentStatus("Payment pending");
 
       if (isPaymentBypassEnabled) {
         await completeDevelopmentPayment(accessToken!, appointmentId);
@@ -363,7 +399,7 @@ export default function BookingModal({
         amount: Math.round(order.amount * 100),
         currency: order.currency,
         name: "Oruma",
-        description: `${packagePricing.shortLabel} ${formData.service ?? "Therapy session"} with ${therapist?.name ?? "therapist"}`,
+        description: getRazorpayCheckoutDescription(appointmentId),
         order_id: order.orderId,
         prefill: {
           name: formData.name,
@@ -380,12 +416,13 @@ export default function BookingModal({
               razorpaySignature: response.razorpay_signature,
             });
             paymentCompleted = true;
+            setPaymentStatus("Paid");
             setSubmitSuccess(true);
             setSubmitError("");
             setTimeout(() => {
               onClose();
               redirectToPatientProfile(
-                "Booking and payment received. The care team will confirm your appointment and contact you on WhatsApp with joining instructions.",
+                `Payment confirmed for booking ${appointmentId}. Staff will confirm the appointment and send joining instructions.`,
               );
             }, 1000);
           } catch (err) {
@@ -416,6 +453,7 @@ export default function BookingModal({
       });
 
       checkout.on("payment.failed", (response) => {
+        setPaymentStatus("Payment failed");
         setSubmitError(getRazorpayPaymentFailureMessage(response));
       });
 
@@ -717,9 +755,7 @@ export default function BookingModal({
                 />
               </label>
               <label className="block space-y-1">
-                <span className="text-sm font-bold text-gray-700">
-                  Email
-                </span>
+                <span className="text-sm font-bold text-gray-700">Email</span>
                 <input
                   type="email"
                   required
@@ -765,15 +801,57 @@ export default function BookingModal({
               </fieldset>
               {!getCurrentUser() && (
                 <div className="rounded-xl border border-[#B7C8A3] bg-[#F5F8F7] p-4">
-                  <p className="text-sm font-black text-[#064F4B]">Verify your booking contact</p>
-                  <p className="mt-1 text-xs text-[#5F7F7A]">We will send a six-digit verification code to {bookingIdentifier || "your email"}. Staff will use WhatsApp only for appointment support and joining instructions.</p>
-                  {!bookingVerificationToken && !bookingOtpRequested && <button type="button" disabled={bookingOtpLoading} onClick={sendBookingOtp} className="mt-3 rounded-full bg-[#064F4B] px-5 py-3 text-xs font-black text-white disabled:opacity-50">Send verification code</button>}
-                  {!bookingVerificationToken && bookingOtpRequested && <div className="mt-3 flex flex-wrap gap-2">
-                    <input aria-label="Booking verification code" inputMode="numeric" maxLength={6} value={bookingOtp} onChange={(event) => setBookingOtp(event.target.value.replace(/\D/g, ""))} className="min-h-11 flex-1 rounded-xl border border-gray-200 bg-white px-4" placeholder="6-digit code" />
-                    <button type="button" disabled={bookingOtpLoading || bookingOtp.length !== 6} onClick={confirmBookingOtp} className="rounded-full bg-[#064F4B] px-5 py-3 text-xs font-black text-white disabled:opacity-50">Verify</button>
-                  </div>}
-                  {bookingDevCode && !bookingVerificationToken && <p className="mt-2 text-xs font-bold text-[#0A7F7A]">Development code: {bookingDevCode}</p>}
-                  {bookingVerificationToken && <p className="mt-3 text-sm font-black text-[#0A7F7A]">Contact verified</p>}
+                  <p className="text-sm font-black text-[#064F4B]">
+                    Verify your booking contact
+                  </p>
+                  <p className="mt-1 text-xs text-[#5F7F7A]">
+                    We will send a six-digit verification code to{" "}
+                    {bookingIdentifier || "your email"}. Staff will use WhatsApp
+                    only for appointment support and joining instructions.
+                  </p>
+                  {!bookingVerificationToken && !bookingOtpRequested && (
+                    <button
+                      type="button"
+                      disabled={bookingOtpLoading}
+                      onClick={sendBookingOtp}
+                      className="mt-3 rounded-full bg-[#064F4B] px-5 py-3 text-xs font-black text-white disabled:opacity-50"
+                    >
+                      Send verification code
+                    </button>
+                  )}
+                  {!bookingVerificationToken && bookingOtpRequested && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <input
+                        aria-label="Booking verification code"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={bookingOtp}
+                        onChange={(event) =>
+                          setBookingOtp(event.target.value.replace(/\D/g, ""))
+                        }
+                        className="min-h-11 flex-1 rounded-xl border border-gray-200 bg-white px-4"
+                        placeholder="6-digit code"
+                      />
+                      <button
+                        type="button"
+                        disabled={bookingOtpLoading || bookingOtp.length !== 6}
+                        onClick={confirmBookingOtp}
+                        className="rounded-full bg-[#064F4B] px-5 py-3 text-xs font-black text-white disabled:opacity-50"
+                      >
+                        Verify
+                      </button>
+                    </div>
+                  )}
+                  {bookingDevCode && !bookingVerificationToken && (
+                    <p className="mt-2 text-xs font-bold text-[#0A7F7A]">
+                      Development code: {bookingDevCode}
+                    </p>
+                  )}
+                  {bookingVerificationToken && (
+                    <p className="mt-3 text-sm font-black text-[#0A7F7A]">
+                      Contact verified
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -801,6 +879,10 @@ export default function BookingModal({
                   </div>
                   <div className="border-t border-dashed border-[#B7C8A3]/30 pt-4 space-y-2">
                     <div className="flex items-center gap-3 text-sm text-[#064F4B] font-medium">
+                      <LucideIcon name="user" size={16} />
+                      <span>Practitioner: {therapist?.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-[#064F4B] font-medium">
                       <LucideIcon name="calendar" size={16} />
                       <span>
                         {formData.date
@@ -810,11 +892,97 @@ export default function BookingModal({
                     </div>
                     <div className="flex items-center gap-3 text-sm text-[#064F4B] font-medium">
                       <LucideIcon name="clock" size={16} />
-                      <span>{formData.time || "Contacting for time"}</span>
+                      <span>
+                        {formData.time} · {therapist?.sessionDurationMinutes}{" "}
+                        minutes
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-[#064F4B] font-medium">
+                      <LucideIcon name="badge-indian-rupee" size={16} />
+                      <span>
+                        Final amount: {formattedPrice}
+                        {packagePricing.discountAmount > 0
+                          ? ` (${formatINR(packagePricing.discountAmount)} package discount)`
+                          : " (no discount)"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-[#064F4B] font-medium">
+                      <LucideIcon name="receipt" size={16} />
+                      <span>
+                        Booking reference:{" "}
+                        {bookingReference || "Created when payment starts"} ·
+                        Payment: {paymentStatus}
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
+              <div className="rounded-xl border border-[#DDE8E5] bg-white p-4 text-xs leading-relaxed text-[#5F7F7A]">
+                <p>
+                  Cancel or request rescheduling at least 24 hours before the
+                  session. Refund eligibility depends on the published policy;
+                  approved refunds return to the original payment method.
+                </p>
+                <p className="mt-2 font-bold text-[#064F4B]">
+                  <a
+                    className="underline"
+                    href="/cancellation-policy"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Cancellation
+                  </a>{" "}
+                  ·{" "}
+                  <a
+                    className="underline"
+                    href="/refund-policy"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Refunds
+                  </a>{" "}
+                  ·{" "}
+                  <a
+                    className="underline"
+                    href="/service-delivery-policy"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Service delivery
+                  </a>{" "}
+                  ·{" "}
+                  <a
+                    className="underline"
+                    href="/terms"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Terms
+                  </a>{" "}
+                  ·{" "}
+                  <a
+                    className="underline"
+                    href="/privacy-policy"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Privacy
+                  </a>
+                </p>
+              </div>
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-[#F5F8F7] p-4 text-sm font-bold text-[#064F4B]">
+                <input
+                  type="checkbox"
+                  checked={policyAccepted}
+                  onChange={(event) => setPolicyAccepted(event.target.checked)}
+                  className="mt-1 h-4 w-4"
+                />
+                <span>
+                  I confirm the practitioner, service, date, time, duration,
+                  amount, cancellation and refund terms, and agree to the Terms
+                  and Privacy Policy.
+                </span>
+              </label>
               <p className="text-center text-xs text-gray-400">
                 {isPaymentBypassEnabled
                   ? "Development testing is enabled. No money will be collected; the booking will continue through the post-payment flow."
@@ -864,7 +1032,7 @@ export default function BookingModal({
               type="button"
               className="w-full bg-[#00D494] text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-[#00B37E] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               onClick={handleBooking}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !policyAccepted}
             >
               {isSubmitting && (
                 <LucideIcon name="loader" size={20} className="animate-spin" />

@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import FloatingActions from '../components/FloatingActions';
-import TherapistSearchHero from '../components/TherapistSearchHero';
-import TherapistGrid from '../components/TherapistGrid';
-import { LucideIcon } from '@site-builder/icons';
+import React, { useState } from "react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import FloatingActions from "../components/FloatingActions";
+import TherapistSearchHero from "../components/TherapistSearchHero";
+import TherapistGrid from "../components/TherapistGrid";
+import { LucideIcon } from "@site-builder/icons";
+import { createWhatsAppUrl } from "../src/config/business";
 
 export const meta = {
-  title: "Find Your Therapist | ORUMA Wellness",
-  description: "Connect with senior psychologists and counseling experts. Browse our available therapists and book your session online."
+  title: "Find a Verified Practitioner | Oruma",
+  description:
+    "Review practitioner roles, verified credentials, fees, duration, and availability before requesting an online session.",
 };
 
 export default function TherapistListingPage() {
-  const [query, setQuery] = useState('');
-  const [maxFee, setMaxFee] = useState('');
+  const [query, setQuery] = useState("");
+  const [maxFee, setMaxFee] = useState("");
   const [nextDayOnly, setNextDayOnly] = useState(false);
 
   return (
@@ -28,7 +30,11 @@ export default function TherapistListingPage() {
           <div className="max-w-3xl mx-auto mb-16">
             <div className="relative group">
               <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-                <LucideIcon name="search" size={20} className="text-[#5F7F7A] group-focus-within:text-[#0A7F7A] transition-colors" />
+                <LucideIcon
+                  name="search"
+                  size={20}
+                  className="text-[#5F7F7A] group-focus-within:text-[#0A7F7A] transition-colors"
+                />
               </div>
               <input
                 type="text"
@@ -53,7 +59,12 @@ export default function TherapistListingPage() {
                 </select>
               </label>
               <label className="inline-flex items-center gap-3 rounded-full border border-[#E2E8E6] bg-[#F5F8F7] px-5 py-4 text-sm font-black text-[#064F4B]">
-                <input type="checkbox" checked={nextDayOnly} onChange={(event) => setNextDayOnly(event.target.checked)} className="h-4 w-4 accent-[#0A7F7A]" />
+                <input
+                  type="checkbox"
+                  checked={nextDayOnly}
+                  onChange={(event) => setNextDayOnly(event.target.checked)}
+                  className="h-4 w-4 accent-[#0A7F7A]"
+                />
                 Available tomorrow
               </label>
             </div>
@@ -63,7 +74,9 @@ export default function TherapistListingPage() {
             <div className="inline-flex items-center gap-2 bg-[#064F4B]/5 text-[#064F4B] px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest mb-4">
               Recommended Professionals
             </div>
-            <h2 className="text-3xl font-heading font-black text-[#064F4B] uppercase tracking-tighter">Available Experts</h2>
+            <h2 className="text-3xl font-heading font-black text-[#064F4B] uppercase tracking-tighter">
+              Available Practitioners
+            </h2>
           </div>
 
           <TherapistGrid
@@ -75,9 +88,13 @@ export default function TherapistListingPage() {
           />
 
           <div className="text-center mt-20">
-            <p className="text-[#5F7F7A] font-bold mb-6 italic">Can't find what you're looking for?</p>
+            <p className="text-[#5F7F7A] font-bold mb-6 italic">
+              Can't find what you're looking for?
+            </p>
             <a
-              href="https://wa.me/918157039987?text=Hi,%20I%20need%20help%20finding%20the%20right%20therapist."
+              href={createWhatsAppUrl(
+                "Hello, I need help choosing a verified Oruma practitioner.",
+              )}
               className="inline-flex items-center gap-2 bg-[#064F4B] text-[#FFFFFF] px-10 py-5 rounded-full font-black hover:scale-105 transition-all shadow-xl shadow-[#064F4B]/20 uppercase tracking-widest text-xs"
             >
               Let us help you choose <LucideIcon name="arrow-right" size={18} />

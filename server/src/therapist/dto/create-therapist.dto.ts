@@ -4,12 +4,14 @@ import {
   IsBoolean,
   IsDate,
   IsEmail,
+  IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
   IsString,
   Min,
 } from 'class-validator';
+import { TherapistVerificationStatus } from '../entities/therapist-verification-status.enum';
 
 export class CreateTherapistDto {
   @IsEmail()
@@ -66,7 +68,43 @@ export class CreateTherapistDto {
 
   @IsOptional()
   @IsString()
+  awardingInstitution?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  verifiedExperienceHours?: number;
+
+  @IsOptional()
+  @IsString()
+  professionalRegistrationNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  registrationAuthority?: string;
+
+  @IsOptional()
+  @IsString()
   specialization?: string;
+
+  @IsOptional()
+  @IsString()
+  consultationType?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  sessionDurationMinutes?: number;
+
+  @IsOptional()
+  @IsString()
+  engagementRelationship?: string;
+
+  @IsOptional()
+  @IsEnum(TherapistVerificationStatus)
+  verificationStatus?: TherapistVerificationStatus;
 
   @IsOptional()
   @IsString()

@@ -23,6 +23,7 @@ import { CreateTherapistDto } from './dto/create-therapist.dto';
 import { UpdateTherapistDto } from './dto/update-therapist.dto';
 import { getEarliestBookableStartTime } from '../appointment/booking-lead-time';
 import { ProviderJobService } from '../reliability/provider-job.service';
+import { TherapistVerificationStatus } from './entities/therapist-verification-status.enum';
 
 type TherapistPerformance = {
   therapistId: string;
@@ -50,7 +51,15 @@ type PublicTherapist = Pick<
   | 'image'
   | 'voiceIntro'
   | 'qualifications'
+  | 'awardingInstitution'
+  | 'verifiedExperienceHours'
+  | 'professionalRegistrationNumber'
+  | 'registrationAuthority'
   | 'specialization'
+  | 'consultationType'
+  | 'sessionDurationMinutes'
+  | 'engagementRelationship'
+  | 'verificationStatus'
   | 'bio'
   | 'nextAvailableSlot'
   | 'isActive'
@@ -128,6 +137,7 @@ export class TherapistService {
     const therapists = await this.therapistRepo.find({
       where: {
         isActive: true,
+        verificationStatus: TherapistVerificationStatus.VERIFIED,
         archivedAt: IsNull(),
       },
       order: {
@@ -153,7 +163,12 @@ export class TherapistService {
 
   async findOne(id: string): Promise<PublicTherapist> {
     const therapist = await this.therapistRepo.findOne({
-      where: { id, isActive: true, archivedAt: IsNull() },
+      where: {
+        id,
+        isActive: true,
+        verificationStatus: TherapistVerificationStatus.VERIFIED,
+        archivedAt: IsNull(),
+      },
     });
 
     if (!therapist) {
@@ -185,10 +200,15 @@ export class TherapistService {
       therapist.email = email;
     }
 
-    Object.assign(therapist, {
+    const candidate = {
+      ...therapist,
       ...dto,
       email: email ?? therapist.email,
-    });
+    };
+
+    if (candidate.isActive) this.assertReadyForPublication(candidate);
+
+    Object.assign(therapist, candidate);
 
     return this.therapistRepo.save(therapist);
   }
@@ -214,10 +234,11 @@ export class TherapistService {
     dto: UpdateTherapistDto,
   ): Promise<Therapist> {
     const therapist = await this.findForTherapistAccount(user);
-    const { email, isActive, ...profileUpdates } = dto;
+    const { email, isActive, verificationStatus, ...profileUpdates } = dto;
 
     void email;
     void isActive;
+    void verificationStatus;
     therapist.pendingProfileChanges =
       this.removeEmptyProfileChanges(profileUpdates);
     therapist.pendingProfileSubmittedAt = new Date();
@@ -423,7 +444,15 @@ export class TherapistService {
       image: therapist.image,
       voiceIntro: therapist.voiceIntro,
       qualifications: therapist.qualifications,
+      awardingInstitution: therapist.awardingInstitution,
+      verifiedExperienceHours: therapist.verifiedExperienceHours,
+      professionalRegistrationNumber: therapist.professionalRegistrationNumber,
+      registrationAuthority: therapist.registrationAuthority,
       specialization: therapist.specialization,
+      consultationType: therapist.consultationType,
+      sessionDurationMinutes: therapist.sessionDurationMinutes,
+      engagementRelationship: therapist.engagementRelationship,
+      verificationStatus: therapist.verificationStatus,
       bio: therapist.bio,
       nextAvailableSlot: therapist.nextAvailableSlot,
       isActive: therapist.isActive,
@@ -435,6 +464,48 @@ export class TherapistService {
     return Object.fromEntries(
       Object.entries(changes).filter(([, value]) => value !== undefined),
     );
+  }
+
+  private assertReadyForPublication(therapist: Partial<Therapist>) {
+    if (therapist.verificationStatus !== TherapistVerificationStatus.VERIFIED) {
+      throw new BadRequestException(
+        'Only a verified practitioner profile can be made public',
+      );
+    }
+
+    const requiredFields: Array<[string, unknown]> = [
+      ['full name', therapist.name],
+      ['exact professional role', therapist.title],
+      ['qualifications', therapist.qualifications],
+      ['awarding institution', therapist.awardingInstitution],
+      ['areas of practice', therapist.tags?.length],
+      ['consultation type', therapist.consultationType],
+      ['session duration', therapist.sessionDurationMinutes],
+      ['consultation price', therapist.price],
+      ['engagement relationship', therapist.engagementRelationship],
+    ];
+    const missing = requiredFields
+      .filter(([, value]) => !value)
+      .map(([label]) => label);
+
+    if (
+      /clinical psychologist|psychiatrist|doctor|licensed psychologist|medical practitioner|registered healthcare professional/i.test(
+        therapist.title ?? '',
+      )
+    ) {
+      if (!therapist.professionalRegistrationNumber) {
+        missing.push('professional registration number');
+      }
+      if (!therapist.registrationAuthority) {
+        missing.push('registration authority');
+      }
+    }
+
+    if (missing.length > 0) {
+      throw new BadRequestException(
+        `Practitioner profile cannot be published until these fields are verified: ${missing.join(', ')}`,
+      );
+    }
   }
 
   private async findOneWithAccount(id: string): Promise<Therapist> {
