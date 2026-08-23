@@ -21,6 +21,7 @@ const icons: Record<string, IconComponent> = {
   "calendar-clock": CalendarClock, "calendar-days": CalendarDays, "calendar-plus": CalendarPlus,
   "check-circle": CheckCircle, "chevron-down": ChevronDown, "chevron-left": ChevronLeft,
   "chevron-right": ChevronRight, "chevron-up": ChevronUp, "circle-alert": CircleAlert,
+  "circle-help": CircleHelp,
   "circle-user-round": CircleUserRound, clock: Clock, "clock-alert": ClockAlert,
   "cloud-upload": CloudUpload, eye: Eye, "eye-off": EyeOff, ghost: Ghost, globe: Globe,
   "globe-2": Globe2, "graduation-cap": GraduationCap, heart: Heart,

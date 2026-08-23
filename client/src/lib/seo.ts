@@ -46,6 +46,10 @@ export const publicSeoRoutes: Record<string, PageSeo> = {
     title: `Contact ${SITE_NAME} | Online Counselling Support`,
     description: `Contact ${SITE_NAME} by phone, WhatsApp, or email for online counselling, practitioner selection, booking, payment, and refund support.`,
   },
+  "/find-your-psychologist": {
+    title: `Find the Right Psychologist | ${SITE_NAME}`,
+    description: `Share your preferences and ask ${SITE_NAME} for help comparing suitable verified practitioner profiles, fees, and availability.`,
+  },
   "/online-counselling": {
     title: `Online Counselling in India | ${SITE_NAME}`,
     description: `Access confidential online counselling from home, subject to verified practitioner scope and availability through ${SITE_NAME}.`,
@@ -70,6 +74,10 @@ export const publicSeoRoutes: Record<string, PageSeo> = {
     title: `Online Counselling and Wellness Services | ${SITE_NAME}`,
     description: `Explore ${SITE_NAME} individual, couple, follow-up, sexual-wellness, and online consultation categories and their booking information.`,
   },
+  "/programs": {
+    title: `Courses, Workshops and Webinars | ${SITE_NAME}`,
+    description: `Explore courses, offline workshops, webinars, and events created and hosted by ${SITE_NAME}.`,
+  },
   "/services/couple-therapy": {
     title: `Online Couple and Relationship Counselling | ${SITE_NAME}`,
     description: `Review verified practitioner profiles, fees, duration, availability, and policies for ${SITE_NAME} relationship counselling.`,
@@ -82,6 +90,22 @@ export const publicSeoRoutes: Record<string, PageSeo> = {
     title: `Online Individual Counselling in India | ${SITE_NAME}`,
     description:
       "Book a confidential individual counselling or wellness session with a verified practitioner whose role and scope are shown on their profile.",
+  },
+  "/services/parenting-support": {
+    title: `Online Parenting Support | ${SITE_NAME}`,
+    description: `Explore ${SITE_NAME} parenting support information and compare verified practitioner profiles, fees, and availability.`,
+  },
+  "/services/child-teen-counselling": {
+    title: `Child and Teen Counselling | ${SITE_NAME}`,
+    description: `Explore age-appropriate child and teen counselling information and verified practitioner profiles through ${SITE_NAME}.`,
+  },
+  "/services/family-counselling": {
+    title: `Online Family Counselling | ${SITE_NAME}`,
+    description: `Explore ${SITE_NAME} family counselling information and compare verified practitioner profiles, fees, and availability.`,
+  },
+  "/services/postpartum-support": {
+    title: `Online Postpartum Support | ${SITE_NAME}`,
+    description: `Explore ${SITE_NAME} postpartum support information and compare suitably verified practitioner profiles.`,
   },
   "/services/sexual-wellness": {
     title: `Sexual Wellness & Intimacy Counselling | ${SITE_NAME}`,

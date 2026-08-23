@@ -16,6 +16,45 @@ test("home page renders without horizontal overflow", async ({ page }) => {
   ).toBe(false);
 });
 
+test("home page follows the requested care journey and exposes working destinations", async ({
+  page,
+}) => {
+  test.setTimeout(60000);
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("main")).toBeVisible({ timeout: 20000 });
+  const headings = page.locator("main h1, main h2");
+  const headingText = await headings.allTextContents();
+  const expectedOrder = [
+    "Healing starts here with Oruma.",
+    "What brings you here today?",
+    "A Little About Oruma",
+    "Our Counselling Services",
+    "Common Concerns We Help With",
+    "Meet Our Psychologists",
+    "Learn. Grow. Transform.",
+    "What People Say About Oruma",
+    "Your healing journey can begin today.",
+  ];
+  let previousIndex = -1;
+  for (const expected of expectedOrder) {
+    const index = headingText.findIndex((text) => text.trim() === expected);
+    expect(index, `${expected} should appear on the home page`).toBeGreaterThan(
+      previousIndex,
+    );
+    previousIndex = index;
+  }
+
+  await expect(
+    page.getByRole("link", { name: "Find Your Psychologist" }).first(),
+  ).toHaveAttribute("href", "/therapists");
+  await expect(
+    page.getByRole("link", { name: /Get Started/ }),
+  ).toHaveAttribute("href", "/find-your-psychologist");
+  await expect(
+    page.locator('main a[href="/services/parenting-support"]').first(),
+  ).toHaveAttribute("href", "/services/parenting-support");
+});
+
 test("primary navigation is keyboard reachable", async ({ page }) => {
   await page.goto("/");
   const items = page
@@ -129,10 +168,17 @@ test("official contact links match the centralized phone, WhatsApp, and email", 
 test("core public and policy pages fit desktop and mobile viewports", async ({
   page,
 }) => {
+  test.setTimeout(120000);
   for (const route of [
     "/about",
     "/contact",
+    "/find-your-psychologist",
     "/services",
+    "/programs",
+    "/services/parenting-support",
+    "/services/child-teen-counselling",
+    "/services/family-counselling",
+    "/services/postpartum-support",
     "/online-counselling",
     "/consultation",
     "/therapists",
@@ -142,8 +188,8 @@ test("core public and policy pages fit desktop and mobile viewports", async ({
     "/cancellation-policy",
     "/service-delivery-policy",
   ]) {
-    await page.goto(route);
-    await expect(page.locator("main")).toBeVisible();
+    await page.goto(route, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("main")).toBeVisible({ timeout: 15000 });
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth > window.innerWidth + 1,

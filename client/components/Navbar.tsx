@@ -45,8 +45,13 @@ export default function Navbar() {
   const services = [
     { name: "Individual Therapy", href: "/services/individual-therapy" },
     { name: "Couple Therapy", href: "/services/couple-therapy" },
-    { name: "Postpartum Support", href: "/services#postpartum" },
-    { name: "Teenage Counselling", href: "/concerns/all-concerns#student" },
+    { name: "Parenting Support", href: "/services/parenting-support" },
+    {
+      name: "Child & Teen Counselling",
+      href: "/services/child-teen-counselling",
+    },
+    { name: "Family Counselling", href: "/services/family-counselling" },
+    { name: "Postpartum Support", href: "/services/postpartum-support" },
     { name: "Sexual Wellness", href: "/services/sexual-wellness" },
   ];
 
@@ -61,6 +66,18 @@ export default function Navbar() {
     { name: "Depression", href: "/concerns/all-concerns#depression" },
     { name: "Teenage Wellness", href: "/concerns/all-concerns#student" },
     { name: "Trauma & PTSD", href: "/concerns/all-concerns#trauma" },
+  ];
+
+  const programs = [
+    { name: "Oruma Courses", href: "/programs#courses" },
+    { name: "Offline Workshops", href: "/programs#workshops" },
+    { name: "Webinars & Events", href: "/programs#webinars" },
+  ];
+
+  const resources = [
+    { name: "Articles", href: "/articles" },
+    { name: "About Oruma", href: "/about" },
+    { name: "Join as a Practitioner", href: "/careers" },
   ];
 
   const handleLinkClick = () => {
@@ -129,7 +146,7 @@ export default function Navbar() {
           </button>
 
           {/* Desktop Links */}
-          <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+          <div className="hidden lg:flex items-center gap-4 xl:gap-5">
             <a
               href="/"
               className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors"
@@ -187,12 +204,44 @@ export default function Navbar() {
             >
               Therapists
             </a>
-            <a
-              href="/careers"
-              className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors"
-            >
-              Careers
-            </a>
+
+            <div className="relative group/programs">
+              <button className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
+                Programs <LucideIcon name="chevron-down" size={12} />
+              </button>
+              <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover/programs:opacity-100 group-hover/programs:visible transition-all duration-300">
+                <div className="bg-white border border-gray-100 shadow-2xl rounded-b-2xl p-4 min-w-[220px]">
+                  {programs.map((program) => (
+                    <a
+                      key={program.name}
+                      href={program.href}
+                      className="block py-2.5 text-[11px] font-black uppercase tracking-tighter text-[#5F7F7A] hover:text-[#0A7F7A] transition-colors"
+                    >
+                      {program.name}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="relative group/resources">
+              <button className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
+                Resources <LucideIcon name="chevron-down" size={12} />
+              </button>
+              <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover/resources:opacity-100 group-hover/resources:visible transition-all duration-300">
+                <div className="bg-white border border-gray-100 shadow-2xl rounded-b-2xl p-4 min-w-[220px]">
+                  {resources.map((resource) => (
+                    <a
+                      key={resource.name}
+                      href={resource.href}
+                      className="block py-2.5 text-[11px] font-black uppercase tracking-tighter text-[#5F7F7A] hover:text-[#0A7F7A] transition-colors"
+                    >
+                      {resource.name}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
             <a
               href="/contact"
               className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors"
@@ -226,7 +275,7 @@ export default function Navbar() {
 
             <a
               href={currentUser ? "/therapists" : "/login"}
-              className="bg-[#0A7F7A] text-white px-7 py-2 rounded-full text-[10px] font-black hover:bg-[#064F4B] transition-all active:scale-95 shadow-lg shadow-[#0A7F7A]/20 uppercase tracking-widest"
+                className="bg-[#0A7F7A] text-white px-5 py-2 rounded-full text-[10px] font-black hover:bg-[#064F4B] transition-all active:scale-95 shadow-lg shadow-[#0A7F7A]/20 uppercase tracking-widest"
             >
               Book Appointment
             </a>
@@ -324,6 +373,76 @@ export default function Navbar() {
                         onClick={handleLinkClick}
                       >
                         {c.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="w-full border-b border-gray-50">
+                <button
+                  onClick={() => toggleDropdown("programs")}
+                  className={`w-full text-left px-8 py-5 text-[14px] font-black flex items-center justify-between transition-colors uppercase tracking-tight ${
+                    openDropdown === "programs"
+                      ? "bg-[#0A7F7A]/5 text-[#0A7F7A]"
+                      : "text-[#064F4B]"
+                  }`}
+                >
+                  <span>PROGRAMS ({programs.length})</span>
+                  <LucideIcon
+                    name={
+                      openDropdown === "programs"
+                        ? "chevron-up"
+                        : "chevron-down"
+                    }
+                    size={16}
+                  />
+                </button>
+                {openDropdown === "programs" && (
+                  <div className="bg-white py-1">
+                    {programs.map((program) => (
+                      <a
+                        key={program.name}
+                        href={program.href}
+                        className="block px-12 py-3.5 text-[13px] font-bold text-[#5F7F7A] hover:text-[#0A7F7A] transition-colors uppercase tracking-tighter"
+                        onClick={handleLinkClick}
+                      >
+                        {program.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="w-full border-b border-gray-50">
+                <button
+                  onClick={() => toggleDropdown("resources")}
+                  className={`w-full text-left px-8 py-5 text-[14px] font-black flex items-center justify-between transition-colors uppercase tracking-tight ${
+                    openDropdown === "resources"
+                      ? "bg-[#0A7F7A]/5 text-[#0A7F7A]"
+                      : "text-[#064F4B]"
+                  }`}
+                >
+                  <span>RESOURCES ({resources.length})</span>
+                  <LucideIcon
+                    name={
+                      openDropdown === "resources"
+                        ? "chevron-up"
+                        : "chevron-down"
+                    }
+                    size={16}
+                  />
+                </button>
+                {openDropdown === "resources" && (
+                  <div className="bg-white py-1">
+                    {resources.map((resource) => (
+                      <a
+                        key={resource.name}
+                        href={resource.href}
+                        className="block px-12 py-3.5 text-[13px] font-bold text-[#5F7F7A] hover:text-[#0A7F7A] transition-colors uppercase tracking-tighter"
+                        onClick={handleLinkClick}
+                      >
+                        {resource.name}
                       </a>
                     ))}
                   </div>

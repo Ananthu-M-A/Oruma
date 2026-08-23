@@ -17,6 +17,9 @@ const Concerns = lazy(() => import("../routes/concerns"));
 const AllConcerns = lazy(() => import("../routes/concerns/all-concerns"));
 const Consultation = lazy(() => import("../routes/consultation"));
 const Contact = lazy(() => import("../routes/contact"));
+const FindYourPsychologist = lazy(
+  () => import("../routes/find-your-psychologist"),
+);
 const Login = lazy(() => import("../routes/login"));
 const OnlineCounselling = lazy(() => import("../routes/online-counselling"));
 const PrivacyPolicy = lazy(() => import("../routes/privacy-policy"));
@@ -26,6 +29,7 @@ const ServiceDeliveryPolicy = lazy(
   () => import("../routes/service-delivery-policy"),
 );
 const Register = lazy(() => import("../routes/register"));
+const Programs = lazy(() => import("../routes/programs"));
 const Services = lazy(() => import("../routes/services"));
 const CoupleTherapy = lazy(() => import("../routes/services/couple-therapy"));
 const FollowUp = lazy(() => import("../routes/services/follow-up"));
@@ -33,6 +37,9 @@ const IndividualTherapy = lazy(
   () => import("../routes/services/individual-therapy"),
 );
 const SexualWellness = lazy(() => import("../routes/services/sexual-wellness"));
+const SupportingService = lazy(
+  () => import("../routes/services/supporting-service"),
+);
 const TherapistDetail = lazy(() => import("../routes/therapist-detail"));
 const Therapists = lazy(() => import("../routes/therapists"));
 const Terms = lazy(() => import("../routes/terms"));
@@ -72,12 +79,17 @@ export default function App() {
           <Route path="/concerns/all-concerns" element={<AllConcerns />} />
           <Route path="/consultation" element={<Consultation />} />
           <Route path="/contact" element={<Contact />} />
+          <Route
+            path="/find-your-psychologist"
+            element={<FindYourPsychologist />}
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/online-counselling" element={<OnlineCounselling />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/refund-policy" element={<RefundPolicy />} />
           <Route path="/cancellation-policy" element={<CancellationPolicy />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/programs" element={<Programs />} />
           <Route
             path="/service-delivery-policy"
             element={<ServiceDeliveryPolicy />}
@@ -124,6 +136,22 @@ export default function App() {
           <Route
             path="/services/sexual-wellness"
             element={<SexualWellness />}
+          />
+          <Route
+            path="/services/parenting-support"
+            element={<SupportingService serviceKey="parenting-support" />}
+          />
+          <Route
+            path="/services/child-teen-counselling"
+            element={<SupportingService serviceKey="child-teen-counselling" />}
+          />
+          <Route
+            path="/services/family-counselling"
+            element={<SupportingService serviceKey="family-counselling" />}
+          />
+          <Route
+            path="/services/postpartum-support"
+            element={<SupportingService serviceKey="postpartum-support" />}
           />
           <Route path="/therapists" element={<Therapists />} />
           <Route path="/therapists/:id" element={<TherapistDetail />} />

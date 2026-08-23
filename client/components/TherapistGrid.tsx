@@ -29,6 +29,7 @@ type TherapistGridProps = {
   nextDayOnly?: boolean;
   searchQuery?: string;
   maxFee?: number | null;
+  maxItems?: number;
   emptyTitle?: string;
   emptyDescription?: string;
 };
@@ -37,6 +38,7 @@ export default function TherapistGrid({
   nextDayOnly = false,
   searchQuery = "",
   maxFee = null,
+  maxItems,
   emptyTitle = "No therapists are available right now.",
   emptyDescription = "Please check back soon or contact Oruma directly.",
 }: TherapistGridProps) {
@@ -87,7 +89,7 @@ export default function TherapistGrid({
     setIsModalOpen(true);
   };
 
-  const visibleTherapists = therapists.filter((therapist) => {
+  const filteredTherapists = therapists.filter((therapist) => {
     if (maxFee && therapist.price > maxFee) return false;
 
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -105,6 +107,9 @@ export default function TherapistGrid({
       .toLowerCase()
       .includes(normalizedQuery);
   });
+  const visibleTherapists = maxItems
+    ? filteredTherapists.slice(0, maxItems)
+    : filteredTherapists;
 
   if (isLoading) {
     return (
@@ -289,7 +294,7 @@ export default function TherapistGrid({
                     onClick={() => handleBookNow(therapist)}
                     className="w-full rounded-full bg-[#D8AF17] px-8 py-5 text-sm font-black uppercase tracking-[0.2em] text-[#1A1A1A] shadow-lg shadow-[#D8AF17]/20 transition-all hover:bg-[#F0C72A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#064F4B] active:scale-95 sm:w-auto"
                   >
-                    BOOK NOW
+                    BOOK SESSION
                   </button>
                 </div>
               </div>
