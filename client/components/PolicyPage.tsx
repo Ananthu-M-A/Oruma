@@ -58,11 +58,10 @@ export default function PolicyPage({
               a nearby hospital.
             </p>
             <p className="mt-3">
-              Each verified profile states the practitioner&apos;s relationship
-              with Oruma. Where a practitioner is identified as independent,
-              that practitioner is responsible for professional judgment, scope,
-              session delivery, and applicable professional records; Oruma
-              provides booking, payment, communication, and operational support.
+              Every practitioner is responsible for professional judgment,
+              scope, session delivery, and applicable professional records;
+              Oruma provides booking, payment, communication, and operational
+              support.
             </p>
           </aside>
           {sections.map((section) => (

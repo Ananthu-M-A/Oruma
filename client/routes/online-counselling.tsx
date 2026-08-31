@@ -27,8 +27,8 @@ export default function OnlineCounsellingPage() {
                 Professional support <br /> from your home.
               </h1>
               <p className="text-xl text-[#5F7F7A] mb-12">
-                Review verified practitioner details, available times, session
-                duration, fees, and policies before booking a remote session.
+                Review verified practitioner details, available time slots,
+                fees, and policies before booking a remote session.
               </p>
 
               <div className="grid sm:grid-cols-2 gap-8 mb-12">

@@ -15,7 +15,8 @@ import {
   getTherapistImage,
   Therapist,
 } from "../src/lib/therapists";
-import { getIstDateKey } from "../src/lib/dateTime";
+import { applyTherapistNotFoundSeo, applyTherapistSeo } from "../src/lib/seo";
+import { splitTherapistTags } from "../src/lib/therapistProfileOptions";
 
 export const meta = {
   title: "Verified Practitioner Profile | Oruma",
@@ -113,28 +114,28 @@ export default function TherapistDetailPage() {
 
     const image = getTherapistImage(therapist.image);
     const slot = formatTherapistSlot(therapist.nextAvailableSlot);
-    const hasCoupleTherapy =
-      therapist.group !== 1 && Boolean(therapist.couplePrice);
+    const hasCoupleTherapy = Boolean(therapist.couplePrice);
+    const legacyTags = splitTherapistTags(therapist.tags);
 
     return {
       image,
       slot,
       hasCoupleTherapy,
       price: formatTherapistPrice(therapist),
-      tags: therapist.tags ?? [],
+      areasOfPractice:
+        therapist.areasOfPractice?.length
+          ? therapist.areasOfPractice
+          : legacyTags.areasOfPractice,
+      languages: therapist.languages?.length
+        ? therapist.languages
+        : legacyTags.languages,
     };
   }, [therapist]);
 
-  const nextAvailableDaySlots = useMemo(() => {
-    if (availabilitySlots.length === 0) return [];
-
-    const firstSlot = availabilitySlots[0];
-    const firstDate = getIstDateKey(firstSlot.startTime);
-
-    return availabilitySlots.filter(
-      (slot) => getIstDateKey(slot.startTime) === firstDate,
-    );
-  }, [availabilitySlots]);
+  useEffect(() => {
+    if (therapist) applyTherapistSeo(therapist);
+    else if (!isLoading && error) applyTherapistNotFoundSeo();
+  }, [error, isLoading, therapist]);
 
   return (
     <main className="min-h-screen bg-white font-body text-[#2E3E3C] overflow-x-hidden">
@@ -196,23 +197,13 @@ export default function TherapistDetailPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 mt-5">
+                  <div className="mt-5">
                     <div className="bg-white/40 rounded-[1.25rem] p-4">
                       <p className="text-[9px] font-black uppercase tracking-widest text-[#064F4B]/60">
                         Experience
                       </p>
                       <p className="text-xl font-black text-[#064F4B] mt-1">
-                        {therapist.verifiedExperienceHours
-                          ? `${therapist.verifiedExperienceHours}+ hrs`
-                          : `${therapist.experience} years`}
-                      </p>
-                    </div>
-                    <div className="bg-white/40 rounded-[1.25rem] p-4">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-[#064F4B]/60">
-                        Duration
-                      </p>
-                      <p className="text-xl font-black text-[#064F4B] mt-1">
-                        {therapist.sessionDurationMinutes} minutes
+                        {therapist.experience} years
                       </p>
                     </div>
                   </div>
@@ -238,7 +229,7 @@ export default function TherapistDetailPage() {
                 )}
 
                 <div className="flex flex-wrap gap-2 mt-8">
-                  {profile.tags.map((tag) => (
+                  {profile.areasOfPractice.map((tag) => (
                     <span
                       key={tag}
                       className="px-4 py-2 rounded-full bg-white text-[#064F4B] text-[11px] font-black uppercase tracking-tight shadow-sm"
@@ -247,6 +238,12 @@ export default function TherapistDetailPage() {
                     </span>
                   ))}
                 </div>
+
+                {profile.languages.length > 0 && (
+                  <p className="mt-4 text-sm font-bold text-[#5F7F7A]">
+                    Languages: {profile.languages.join(", ")}
+                  </p>
+                )}
 
                 <div className="grid md:grid-cols-3 gap-4 mt-10">
                   <div className="bg-white rounded-[1.5rem] p-5 shadow-sm">
@@ -300,6 +297,16 @@ export default function TherapistDetailPage() {
                       src={therapist.voiceIntro}
                       className="mt-4 w-full"
                     />
+                    {therapist.voiceIntroTranscript && (
+                      <details className="mt-4 rounded-lg bg-[#F5F8F7] p-4">
+                        <summary className="cursor-pointer text-sm font-black text-[#064F4B]">
+                          Read transcript
+                        </summary>
+                        <p className="mt-3 whitespace-pre-wrap text-sm font-medium leading-relaxed text-[#5F7F7A]">
+                          {therapist.voiceIntroTranscript}
+                        </p>
+                      </details>
+                    )}
                   </div>
                 )}
 
@@ -323,29 +330,36 @@ export default function TherapistDetailPage() {
                       </p>
                     </div>
                   )}
-                  <div className="mt-6 grid gap-4 border-t border-[#064F4B]/10 pt-6 sm:grid-cols-2">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
-                        Relationship with Oruma
-                      </p>
-                      <p className="mt-2 font-bold text-[#064F4B]">
-                        {therapist.engagementRelationship}
-                      </p>
-                    </div>
-                    {therapist.professionalRegistrationNumber && (
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
-                          Professional registration
-                        </p>
-                        <p className="mt-2 font-bold text-[#064F4B]">
-                          {therapist.professionalRegistrationNumber}
-                          {therapist.registrationAuthority
-                            ? ` · ${therapist.registrationAuthority}`
-                            : ""}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  <dl className="mt-6 grid gap-4 border-t border-[#064F4B]/10 pt-6 sm:grid-cols-2">
+                    <ProfileFact
+                      label="Verified experience"
+                      value={
+                        therapist.verifiedExperienceHours == null
+                          ? null
+                          : `${therapist.verifiedExperienceHours.toLocaleString("en-IN")} hours`
+                      }
+                    />
+                    <ProfileFact
+                      label="Session duration"
+                      value={
+                        therapist.sessionDurationMinutes
+                          ? `${therapist.sessionDurationMinutes} minutes`
+                          : null
+                      }
+                    />
+                    <ProfileFact
+                      label="Professional registration"
+                      value={
+                        therapist.professionalRegistrationNumber
+                          ? `${therapist.professionalRegistrationNumber}${therapist.registrationAuthority ? ` · ${therapist.registrationAuthority}` : ""}`
+                          : null
+                      }
+                    />
+                    <ProfileFact
+                      label="Relationship with Oruma"
+                      value={therapist.engagementRelationship}
+                    />
+                  </dl>
                 </div>
 
                 <div className="mt-8 bg-white rounded-[2rem] p-6 md:p-8 shadow-sm">
@@ -399,9 +413,9 @@ export default function TherapistDetailPage() {
 
                   {!isAvailabilityLoading &&
                     !availabilityError &&
-                    nextAvailableDaySlots.length > 0 && (
+                    availabilitySlots.length > 0 && (
                       <div className="grid sm:grid-cols-2 gap-3 mt-6">
-                        {nextAvailableDaySlots.map((slot) => (
+                        {availabilitySlots.map((slot) => (
                           <button
                             key={slot.id}
                             onClick={() => setSelectedSlot(slot)}
@@ -453,5 +467,24 @@ export default function TherapistDetailPage() {
         />
       )}
     </main>
+  );
+}
+
+function ProfileFact({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | null;
+}) {
+  return (
+    <div>
+      <dt className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+        {label}
+      </dt>
+      <dd className="mt-1 font-bold text-[#064F4B]">
+        {value ?? "Not applicable or not displayed"}
+      </dd>
+    </div>
   );
 }

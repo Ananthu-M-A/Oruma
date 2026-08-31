@@ -7,7 +7,7 @@ export default function ServiceScopeNotice() {
         Oruma provides general online counselling and wellness services.
         Psychological services, clinical psychology, psychiatry, diagnosis,
         medication, or other medical services are available only when a selected
-        verified profile expressly supports that role, registration, and scope.
+        verified profile expressly supports that role, qualifications, and scope.
         General website content is educational and is not a diagnosis or
         emergency service.
       </div>

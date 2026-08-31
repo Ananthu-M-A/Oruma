@@ -9,6 +9,7 @@ import { Therapist } from './entities/therapist.entity';
 import { TherapistController } from './therapist.controller';
 import { TherapistService } from './therapist.service';
 import { ReliabilityModule } from '../reliability/reliability.module';
+import { MediaModule } from '../media/media.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ReliabilityModule } from '../reliability/reliability.module';
     UserModule,
     NotificationModule,
     ReliabilityModule,
+    MediaModule,
   ],
   controllers: [TherapistController],
   providers: [TherapistService],

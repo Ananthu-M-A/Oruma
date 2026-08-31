@@ -3,6 +3,7 @@ import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 import PasswordChangeForm from "../components/PasswordChangeForm";
 import ProfileTabs from "../components/ProfileTabs";
+import MultiSelectDropdown from "../components/MultiSelectDropdown";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
 import {
@@ -29,14 +30,27 @@ import {
   getCaseSheets,
   upsertCaseSheet,
 } from "../src/lib/operations";
-import { uploadMedia } from "../src/lib/media";
+import {
+  deleteMedia,
+  UploadedMedia,
+  uploadMedia,
+} from "../src/lib/media";
 import {
   addMinutesToIstInput,
   formatIstDateTime,
   fromIstDateTimeInputValue,
   toIstDateTimeInputValue,
 } from "../src/lib/dateTime";
-import { therapistSpecializationOptions as specializationOptions } from "../src/lib/therapistProfileOptions";
+import {
+  splitTherapistTags,
+  therapistAreaOfPracticeOptions,
+  therapistAwardingInstitutionOptions,
+  therapistConsultationTypeOptions,
+  therapistLanguageOptions,
+  therapistProfessionalRoleOptions,
+  therapistQualificationOptions,
+  therapistSpecializationOptions,
+} from "../src/lib/therapistProfileOptions";
 
 export const meta = {
   title: "Therapist Profile | Oruma",
@@ -232,6 +246,7 @@ function TherapistAppointmentCard({
 
 export default function TherapistProfilePage() {
   const user = getCurrentUser();
+  const mustChangePassword = Boolean(user?.mustChangePassword);
   const [appointments, setAppointments] = useState<BookingResponse[]>([]);
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [caseSheets, setCaseSheets] = useState<CaseSheet[]>([]);
@@ -249,16 +264,16 @@ export default function TherapistProfilePage() {
     couplePrice: "",
     image: "",
     voiceIntro: "",
+    voiceIntroTranscript: "",
     qualifications: "",
     awardingInstitution: "",
-    verifiedExperienceHours: "",
+    specialization: "",
+    areasOfPractice: [] as string[],
+    languages: [] as string[],
+    consultationType: "",
     professionalRegistrationNumber: "",
     registrationAuthority: "",
-    specialization: "",
-    areasOfPractice: "",
-    consultationType: "",
-    sessionDurationMinutes: "",
-    engagementRelationship: "",
+    sessionDurationMinutes: "60",
     bio: "",
   });
   const [caseForm, setCaseForm] = useState({
@@ -275,20 +290,28 @@ export default function TherapistProfilePage() {
     image: null,
     voiceIntro: null,
   });
+  const [mediaIdentifiers, setMediaIdentifiers] = useState({
+    imagePublicId: null as string | null,
+    voiceIntroPublicId: null as string | null,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isAppointmentsRefreshing, setIsAppointmentsRefreshing] =
     useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [uploadingField, setUploadingField] = useState<
-    "image" | "voiceIntro" | null
-  >(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState(
+    mustChangePassword ? "account" : "profile",
+  );
 
   useEffect(() => {
     const token = getAccessToken();
     if (!token) {
+      setIsLoading(false);
+      return;
+    }
+    if (mustChangePassword) {
+      setActiveTab("account");
       setIsLoading(false);
       return;
     }
@@ -307,6 +330,10 @@ export default function TherapistProfilePage() {
           ...profileData,
           ...(profileData.pendingProfileChanges ?? {}),
         };
+        const legacyTags = splitTherapistTags(effectiveProfile.tags);
+        const areasOfPractice =
+          effectiveProfile.areasOfPractice ?? legacyTags.areasOfPractice;
+        const languages = effectiveProfile.languages ?? legacyTags.languages;
 
         setProfile(profileData);
         setForm({
@@ -319,22 +346,26 @@ export default function TherapistProfilePage() {
             : "",
           image: effectiveProfile.image ?? "",
           voiceIntro: effectiveProfile.voiceIntro ?? "",
+          voiceIntroTranscript:
+            effectiveProfile.voiceIntroTranscript ?? "",
           qualifications: effectiveProfile.qualifications ?? "",
           awardingInstitution: effectiveProfile.awardingInstitution ?? "",
-          verifiedExperienceHours: effectiveProfile.verifiedExperienceHours
-            ? String(effectiveProfile.verifiedExperienceHours)
-            : "",
+          specialization: effectiveProfile.specialization ?? "",
+          areasOfPractice,
+          languages,
+          consultationType: effectiveProfile.consultationType ?? "",
           professionalRegistrationNumber:
             effectiveProfile.professionalRegistrationNumber ?? "",
-          registrationAuthority: effectiveProfile.registrationAuthority ?? "",
-          specialization: effectiveProfile.specialization ?? "",
-          areasOfPractice: (effectiveProfile.tags ?? []).join(", "),
-          consultationType: effectiveProfile.consultationType ?? "",
-          sessionDurationMinutes: effectiveProfile.sessionDurationMinutes
-            ? String(effectiveProfile.sessionDurationMinutes)
-            : "",
-          engagementRelationship: effectiveProfile.engagementRelationship ?? "",
+          registrationAuthority:
+            effectiveProfile.registrationAuthority ?? "",
+          sessionDurationMinutes: String(
+            effectiveProfile.sessionDurationMinutes ?? 60,
+          ),
           bio: effectiveProfile.bio ?? "",
+        });
+        setMediaIdentifiers({
+          imagePublicId: effectiveProfile.imagePublicId ?? null,
+          voiceIntroPublicId: effectiveProfile.voiceIntroPublicId ?? null,
         });
       })
       .catch((err) =>
@@ -345,7 +376,7 @@ export default function TherapistProfilePage() {
         ),
       )
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [mustChangePassword]);
 
   useEffect(() => {
     return () => {
@@ -372,38 +403,64 @@ export default function TherapistProfilePage() {
     setIsSaving(true);
     setError("");
     setNotice("");
+    const uploadedMedia: UploadedMedia[] = [];
     try {
+      let image = form.image.trim() || null;
+      let imagePublicId = mediaIdentifiers.imagePublicId;
+      let voiceIntro = form.voiceIntro.trim() || null;
+      let voiceIntroPublicId = mediaIdentifiers.voiceIntroPublicId;
+
+      if (mediaDrafts.image) {
+        const uploaded = await uploadMedia(token, mediaDrafts.image.file);
+        uploadedMedia.push(uploaded);
+        image = uploaded.url;
+        imagePublicId = uploaded.publicId ?? null;
+      }
+      if (mediaDrafts.voiceIntro) {
+        const uploaded = await uploadMedia(token, mediaDrafts.voiceIntro.file);
+        uploadedMedia.push(uploaded);
+        voiceIntro = uploaded.url;
+        voiceIntroPublicId = uploaded.publicId ?? null;
+      }
+
       const updatedProfile = await updateMyTherapistProfile(token, {
         name: form.name.trim(),
         title: form.title.trim(),
         experience: Number(form.experience),
         price: Number(form.price),
         couplePrice: form.couplePrice ? Number(form.couplePrice) : null,
-        image: form.image.trim(),
-        voiceIntro: form.voiceIntro.trim(),
-        qualifications: form.qualifications.trim() || undefined,
-        awardingInstitution: form.awardingInstitution.trim() || undefined,
-        verifiedExperienceHours: form.verifiedExperienceHours
-          ? Number(form.verifiedExperienceHours)
-          : null,
+        image,
+        imagePublicId,
+        voiceIntro,
+        voiceIntroPublicId,
+        voiceIntroTranscript: form.voiceIntroTranscript.trim() || null,
+        qualifications: form.qualifications.trim() || null,
+        awardingInstitution: form.awardingInstitution.trim() || null,
+        specialization: form.specialization.trim() || null,
+        tags: form.areasOfPractice,
+        areasOfPractice: form.areasOfPractice,
+        languages: form.languages,
+        consultationType: form.consultationType.trim() || null,
         professionalRegistrationNumber:
-          form.professionalRegistrationNumber.trim() || undefined,
-        registrationAuthority: form.registrationAuthority.trim() || undefined,
-        specialization: form.specialization.trim() || undefined,
-        tags: form.areasOfPractice
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean),
-        consultationType: form.consultationType.trim() || undefined,
-        sessionDurationMinutes: form.sessionDurationMinutes
-          ? Number(form.sessionDurationMinutes)
-          : null,
-        engagementRelationship: form.engagementRelationship.trim() || undefined,
-        bio: form.bio.trim() || undefined,
+          form.professionalRegistrationNumber.trim() || null,
+        registrationAuthority: form.registrationAuthority.trim() || null,
+        sessionDurationMinutes: Number(form.sessionDurationMinutes),
+        bio: form.bio.trim() || null,
       });
       setProfile(updatedProfile);
-      setNotice("Profile updates submitted for admin verification.");
+      setForm((current) => ({ ...current, image: image ?? "", voiceIntro: voiceIntro ?? "" }));
+      setMediaIdentifiers({ imagePublicId, voiceIntroPublicId });
+      setMediaDrafts((current) => {
+        if (current.image?.previewUrl) URL.revokeObjectURL(current.image.previewUrl);
+        if (current.voiceIntro?.previewUrl)
+          URL.revokeObjectURL(current.voiceIntro.previewUrl);
+        return { image: null, voiceIntro: null };
+      });
+      setNotice("Profile updates submitted for admin review.");
     } catch (err) {
+      await Promise.allSettled(
+        uploadedMedia.map((media) => deleteMedia(token, media)),
+      );
       setError(err instanceof Error ? err.message : "Unable to save profile.");
     } finally {
       setIsSaving(false);
@@ -432,34 +489,10 @@ export default function TherapistProfilePage() {
       return { ...current, [field]: null };
     });
     setForm((current) => ({ ...current, [field]: "" }));
-  };
-
-  const uploadProfileMedia = async (field: "image" | "voiceIntro") => {
-    const token = getAccessToken();
-    const draft = mediaDrafts[field];
-    if (!token || !draft) return;
-
-    setUploadingField(field);
-    setError("");
-    setNotice("");
-    try {
-      const media = await uploadMedia(token, draft.file);
-      setForm((current) => ({ ...current, [field]: media.url }));
-      setMediaDrafts((current) => {
-        if (current[field]?.previewUrl)
-          URL.revokeObjectURL(current[field].previewUrl);
-        return { ...current, [field]: null };
-      });
-      setNotice(
-        field === "image"
-          ? "Profile image uploaded. Save profile to submit it for approval."
-          : "Voice intro uploaded. Save profile to submit it for approval.",
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to upload media.");
-    } finally {
-      setUploadingField(null);
-    }
+    setMediaIdentifiers((current) => ({
+      ...current,
+      [field === "image" ? "imagePublicId" : "voiceIntroPublicId"]: null,
+    }));
   };
 
   const saveCaseSheet = async (event: React.FormEvent) => {
@@ -643,7 +676,7 @@ export default function TherapistProfilePage() {
                   />
                   {profile?.isActive
                     ? "Public profile active"
-                    : `Verification: ${profile?.verificationStatus ?? "UNVERIFIED"}`}
+                    : "Profile not public"}
                 </span>
               </aside>
 
@@ -663,19 +696,31 @@ export default function TherapistProfilePage() {
                 </div>
 
                 <ProfileTabs
-                  tabs={[
-                    { id: "profile", label: "Profile" },
-                    { id: "availability", label: "Availability" },
-                    { id: "appointments", label: "Appointments" },
-                    { id: "cases", label: "Case sheets" },
-                    { id: "account", label: "Account" },
-                  ]}
+                  tabs={
+                    mustChangePassword
+                      ? [{ id: "account", label: "Change password" }]
+                      : [
+                          { id: "profile", label: "Profile" },
+                          { id: "availability", label: "Availability" },
+                          { id: "appointments", label: "Appointments" },
+                          { id: "cases", label: "Case sheets" },
+                          { id: "account", label: "Account" },
+                        ]
+                  }
                   activeTab={activeTab}
-                  onChange={setActiveTab}
+                  onChange={(tab) =>
+                    setActiveTab(mustChangePassword ? "account" : tab)
+                  }
                   className="mt-8"
                 />
 
                 <div className="mt-8">
+                  {mustChangePassword && (
+                    <p className="mb-4 rounded-lg bg-amber-50 p-4 font-bold text-amber-800">
+                      Change the temporary password before accessing profile,
+                      availability, appointments, or clinical records.
+                    </p>
+                  )}
                   {notice && (
                     <p
                       role="status"
@@ -713,10 +758,11 @@ export default function TherapistProfilePage() {
                         onChange={(value) => setForm({ ...form, name: value })}
                         required
                       />
-                      <Field
+                      <DatalistField
                         label="Exact professional role"
                         value={form.title}
                         onChange={(value) => setForm({ ...form, title: value })}
+                        options={therapistProfessionalRoleOptions}
                         required
                       />
                       <Field
@@ -736,7 +782,7 @@ export default function TherapistProfilePage() {
                         required
                       />
                       <Field
-                        label="Couple fee"
+                        label="Couple fee (leave blank if not offered)"
                         type="number"
                         value={form.couplePrice}
                         onChange={(value) =>
@@ -748,9 +794,7 @@ export default function TherapistProfilePage() {
                         accept="image/*"
                         value={form.image}
                         draftPreviewUrl={mediaDrafts.image?.previewUrl ?? ""}
-                        isUploading={uploadingField === "image"}
                         onSelect={(file) => selectProfileMedia(file, "image")}
-                        onUpload={() => uploadProfileMedia("image")}
                         onClear={() => clearProfileMedia("image")}
                         preview="image"
                       />
@@ -761,38 +805,89 @@ export default function TherapistProfilePage() {
                         draftPreviewUrl={
                           mediaDrafts.voiceIntro?.previewUrl ?? ""
                         }
-                        isUploading={uploadingField === "voiceIntro"}
                         onSelect={(file) =>
                           selectProfileMedia(file, "voiceIntro")
                         }
-                        onUpload={() => uploadProfileMedia("voiceIntro")}
                         onClear={() => clearProfileMedia("voiceIntro")}
                         preview="audio"
                       />
-                      <Field
-                        label="Exact qualification"
+                      <label className="md:col-span-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                          Voice intro transcript
+                        </span>
+                        <textarea
+                          maxLength={4000}
+                          value={form.voiceIntroTranscript}
+                          onChange={(event) =>
+                            setForm({
+                              ...form,
+                              voiceIntroTranscript: event.target.value,
+                            })
+                          }
+                          className="mt-2 min-h-24 w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+                        />
+                      </label>
+                      <DatalistField
+                        label="Qualification"
                         value={form.qualifications}
                         onChange={(value) =>
                           setForm({ ...form, qualifications: value })
                         }
+                        options={therapistQualificationOptions}
+                        required
                       />
-                      <Field
+                      <DatalistField
                         label="Awarding institution"
                         value={form.awardingInstitution}
                         onChange={(value) =>
                           setForm({ ...form, awardingInstitution: value })
                         }
+                        options={therapistAwardingInstitutionOptions}
+                        required
                       />
-                      <Field
-                        label="Claimed experience hours (admin verifies)"
-                        type="number"
-                        value={form.verifiedExperienceHours}
+                      <DatalistField
+                        label="Primary specialization"
+                        value={form.specialization}
                         onChange={(value) =>
-                          setForm({ ...form, verifiedExperienceHours: value })
+                          setForm({ ...form, specialization: value })
+                        }
+                        options={therapistSpecializationOptions}
+                      />
+                      <MultiSelectDropdown
+                        label="Areas of practice"
+                        values={form.areasOfPractice}
+                        options={therapistAreaOfPracticeOptions}
+                        onChange={(areasOfPractice) =>
+                          setForm({ ...form, areasOfPractice })
                         }
                       />
+                      <MultiSelectDropdown
+                        label="Languages"
+                        values={form.languages}
+                        options={therapistLanguageOptions}
+                        onChange={(languages) =>
+                          setForm({ ...form, languages })
+                        }
+                      />
+                      <SelectField
+                        label="Consultation type"
+                        value={form.consultationType}
+                        onChange={(value) =>
+                          setForm({ ...form, consultationType: value })
+                        }
+                        options={therapistConsultationTypeOptions}
+                      />
                       <Field
-                        label="Professional registration number (if applicable)"
+                        label="Session duration (minutes)"
+                        type="number"
+                        value={form.sessionDurationMinutes}
+                        onChange={(value) =>
+                          setForm({ ...form, sessionDurationMinutes: value })
+                        }
+                        required
+                      />
+                      <Field
+                        label="Professional registration number (required for regulated roles)"
                         value={form.professionalRegistrationNumber}
                         onChange={(value) =>
                           setForm({
@@ -808,48 +903,26 @@ export default function TherapistProfilePage() {
                           setForm({ ...form, registrationAuthority: value })
                         }
                       />
-                      <SelectField
-                        label="Specialization"
-                        value={form.specialization}
-                        onChange={(value) =>
-                          setForm({ ...form, specialization: value })
-                        }
-                        options={specializationOptions}
-                      />
-                      <Field
-                        label="Areas of practice (comma-separated)"
-                        value={form.areasOfPractice}
-                        onChange={(value) =>
-                          setForm({ ...form, areasOfPractice: value })
-                        }
-                      />
-                      <Field
-                        label="Consultation type"
-                        value={form.consultationType}
-                        onChange={(value) =>
-                          setForm({ ...form, consultationType: value })
-                        }
-                      />
-                      <Field
-                        label="Session duration (minutes)"
-                        type="number"
-                        value={form.sessionDurationMinutes}
-                        onChange={(value) =>
-                          setForm({ ...form, sessionDurationMinutes: value })
-                        }
-                      />
-                      <Field
-                        label="Engagement relationship with Oruma"
-                        value={form.engagementRelationship}
-                        onChange={(value) =>
-                          setForm({ ...form, engagementRelationship: value })
-                        }
-                      />
+                      <div className="rounded-lg border border-[#DDE8E5] bg-white p-4 md:col-span-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+                          Admin verification
+                        </p>
+                        <p className="mt-2 text-sm font-bold text-[#064F4B]">
+                          Status: {profile?.verificationStatus ?? "UNVERIFIED"}
+                          {profile?.verifiedExperienceHours != null
+                            ? ` · ${profile.verifiedExperienceHours} verified hours`
+                            : " · experience hours pending"}
+                          {profile?.engagementRelationship
+                            ? ` · ${profile.engagementRelationship}`
+                            : " · relationship pending"}
+                        </p>
+                      </div>
                       <label className="md:col-span-2">
                         <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
                           Bio
                         </span>
                         <textarea
+                          maxLength={4000}
                           value={form.bio}
                           onChange={(event) =>
                             setForm({ ...form, bio: event.target.value })
@@ -905,7 +978,10 @@ export default function TherapistProfilePage() {
                               const startTime = event.target.value;
                               setSlotForm({
                                 startTime,
-                                endTime: addMinutesToIstInput(startTime, 60),
+                                endTime: addMinutesToIstInput(
+                                  startTime,
+                                  profile?.sessionDurationMinutes ?? 60,
+                                ),
                               });
                             }}
                             className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
@@ -1205,9 +1281,7 @@ function MediaUploadField({
   accept,
   value,
   draftPreviewUrl,
-  isUploading,
   onSelect,
-  onUpload,
   onClear,
   preview,
 }: {
@@ -1215,9 +1289,7 @@ function MediaUploadField({
   accept: string;
   value: string;
   draftPreviewUrl: string;
-  isUploading: boolean;
   onSelect: (file: File) => void;
-  onUpload: () => void;
   onClear: () => void;
   preview: "image" | "audio";
 }) {
@@ -1234,7 +1306,7 @@ function MediaUploadField({
           </p>
           {hasDraft && (
             <p className="mt-1 text-xs font-black text-[#0A7F7A]">
-              Preview before upload
+              Selected file will upload when you save the profile
             </p>
           )}
         </div>
@@ -1272,7 +1344,6 @@ function MediaUploadField({
           <input
             type="file"
             accept={accept}
-            disabled={isUploading}
             className="sr-only"
             onChange={(event) => {
               const file = event.target.files?.[0];
@@ -1281,17 +1352,44 @@ function MediaUploadField({
             }}
           />
         </label>
-        <button
-          type="button"
-          disabled={!hasDraft || isUploading}
-          onClick={onUpload}
-          className="inline-flex items-center gap-2 rounded-full bg-[#064F4B] px-5 py-3 text-xs font-black uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <LucideIcon name="cloud-upload" size={16} />
-          {isUploading ? "Uploading..." : "Upload"}
-        </button>
       </div>
     </div>
+  );
+}
+
+function DatalistField({
+  label,
+  value,
+  onChange,
+  options,
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: readonly string[];
+  required?: boolean;
+}) {
+  const listId = `profile-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+        {label}
+      </span>
+      <input
+        list={listId}
+        required={required}
+        maxLength={255}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-lg border border-[#DDE8E5] bg-white px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+      />
+      <datalist id={listId}>
+        {options.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
+    </label>
   );
 }
 

@@ -10,6 +10,7 @@ import {
   isSlotOnNextDay,
   Therapist,
 } from "../src/lib/therapists";
+import { splitTherapistTags } from "../src/lib/therapistProfileOptions";
 
 function mapForBooking(therapist: Therapist) {
   return {
@@ -100,7 +101,8 @@ export default function TherapistGrid({
       therapist.title,
       therapist.specialization,
       therapist.qualifications,
-      ...(therapist.tags ?? []),
+      ...(therapist.areasOfPractice ?? therapist.tags ?? []),
+      ...(therapist.languages ?? []),
     ]
       .filter(Boolean)
       .join(" ")
@@ -149,16 +151,16 @@ export default function TherapistGrid({
         {visibleTherapists.map((therapist) => {
           const image = getTherapistImage(therapist.image);
           const slot = formatTherapistSlot(therapist.nextAvailableSlot);
-          const tags = therapist.tags?.length
-            ? therapist.tags
-            : ["Mental Health"];
-          const languageTags = tags.filter((tag) =>
-            ["english", "malayalam", "hindi", "tamil", "arabic"].includes(
-              tag.toLowerCase(),
-            ),
-          );
-          const languages = languageTags.length
-            ? languageTags.join(", ")
+          const legacyTags = splitTherapistTags(therapist.tags);
+          const tags = therapist.areasOfPractice?.length
+            ? therapist.areasOfPractice
+            : legacyTags.areasOfPractice.length
+              ? legacyTags.areasOfPractice
+              : ["Mental Health"];
+          const languages = therapist.languages?.length
+            ? therapist.languages.join(", ")
+            : legacyTags.languages.length
+              ? legacyTags.languages.join(", ")
             : "See profile";
           const specialization =
             therapist.specialization ||
@@ -203,7 +205,7 @@ export default function TherapistGrid({
 
               <div className="p-7">
                 <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#EAF7F2] px-3 py-2 text-[9px] font-black uppercase tracking-widest text-[#075E59]">
-                  <LucideIcon name="badge-check" size={13} /> Profile verified
+                  <LucideIcon name="badge-check" size={13} /> Credentials reviewed
                 </p>
                 <div className="flex gap-4 overflow-x-auto border-b border-[#E2E8E6] pb-5">
                   {visibleTags.map((tag) => (
@@ -247,11 +249,15 @@ export default function TherapistGrid({
                 <div className="grid grid-cols-3 gap-4 border-b border-[#E2E8E6] py-6">
                   <StatItem
                     value={
-                      therapist.verifiedExperienceHours
-                        ? `${therapist.verifiedExperienceHours}+ hrs`
+                      therapist.verifiedExperienceHours != null
+                        ? `${therapist.verifiedExperienceHours.toLocaleString("en-IN")} hrs`
                         : `${therapist.experience} yrs`
                     }
-                    label="Verified experience"
+                    label={
+                      therapist.verifiedExperienceHours != null
+                        ? "Verified hours"
+                        : "Experience"
+                    }
                   />
                   <StatItem value={languages} label="Languages" />
                   <StatItem
@@ -276,14 +282,18 @@ export default function TherapistGrid({
                 <div className="flex flex-col gap-5 pt-6 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <p className="text-xs font-bold text-[#5F7F7A]">
-                      {therapist.sessionDurationMinutes} minutes ·{" "}
-                      {therapist.consultationType}
+                      {therapist.sessionDurationMinutes
+                        ? `${therapist.sessionDurationMinutes} minutes · `
+                        : ""}
+                      {therapist.consultationType || "Online consultation"}
                     </p>
                     <p className="text-sm font-bold text-[#1A2E2C]/35">
                       Next available in
                     </p>
                     <p className="mt-2 text-xl font-black text-[#1A2E2C]">
-                      {slot}
+                      {therapist.nextAvailableSlot
+                        ? slot
+                        : "No current slots"}
                     </p>
                     <p className="mt-2 text-[9px] font-black uppercase tracking-widest text-[#0A7F7A]">
                       {nextDayOnly ? "Available tomorrow" : "Available slot"}
@@ -292,9 +302,12 @@ export default function TherapistGrid({
                   <button
                     type="button"
                     onClick={() => handleBookNow(therapist)}
-                    className="w-full rounded-full bg-[#D8AF17] px-8 py-5 text-sm font-black uppercase tracking-[0.2em] text-[#1A1A1A] shadow-lg shadow-[#D8AF17]/20 transition-all hover:bg-[#F0C72A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#064F4B] active:scale-95 sm:w-auto"
+                    disabled={!therapist.nextAvailableSlot}
+                    className="w-full rounded-full bg-[#D8AF17] px-8 py-5 text-sm font-black uppercase tracking-[0.2em] text-[#1A1A1A] shadow-lg shadow-[#D8AF17]/20 transition-all hover:bg-[#F0C72A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#064F4B] active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none sm:w-auto"
                   >
-                    BOOK SESSION
+                    {therapist.nextAvailableSlot
+                      ? "BOOK SESSION"
+                      : "CHECK BACK SOON"}
                   </button>
                 </div>
               </div>

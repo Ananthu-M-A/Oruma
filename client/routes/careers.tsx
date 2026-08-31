@@ -137,8 +137,7 @@ export default function CareersPage() {
                 </h3>
                 <p className="text-[#5F7F7A] font-medium leading-relaxed">
                   Email your CV, role, qualifications, awarding institution,
-                  registration details where applicable, and a brief
-                  introduction to{" "}
+                  and a brief introduction to{" "}
                   <a
                     href={emailLink}
                     className="text-[#0A7F7A] font-bold underline"

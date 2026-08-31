@@ -29,6 +29,8 @@ Minimum application settings:
 NODE_ENV=production
 CLIENT_ORIGIN=https://oruma.me,https://www.oruma.me
 CLIENT_LOGIN_URL=https://oruma.me/login
+ORUMA_API_URL=https://api.oruma.me
+ORUMA_SITE_URL=https://oruma.me
 JWT_SECRET=<at-least-32-random-characters>
 DATABASE_URL=<production-postgres-url>
 DATABASE_SYNC=false
@@ -41,7 +43,7 @@ Provider groups to configure:
 
 - `RAZORPAY_*`
 - `RESEND_API_KEY` and `EMAIL_FROM`
-- `CLOUDINARY_*`
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_UPLOAD_PRESET`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`
 - `ORUMA_*` billing identity
 
 Reliability and privacy policy values to approve:
@@ -69,7 +71,7 @@ Repeat against production only after staging validation and a backup. Seed the i
 - Razorpay: complete individual-business KYC without changing the owner identity or business structure. In Live Mode → Account & Settings → Payment Methods, confirm UPI is `Activated` and verify UPI Intent plus Dynamic QR are available. Oruma uses Standard Checkout and also hides the deprecated UPI Collect flow; mobile checkout should use Intent and desktop checkout should display Razorpay's dynamic QR. A `Rejected` request is an account/category/product decision: preserve its exact Dashboard message and reason code because application code cannot activate it. See `razorpay-activation-checklist.md` and `razorpay-qr-use-case.md`.
 - Configure `https://api.oruma.me/payments/razorpay/webhook`, enable `payment.captured`, `payment.failed`, `order.paid`, and refund events, and test signature verification plus refunds. Use matching Live Mode keys for a controlled Intent/QR acceptance payment; Razorpay Test Mode simulates UPI and does not prove that live Intent/QR activation is complete.
 - Resend: verify the sending domain and DKIM/SPF records, then test OTP and therapist credential delivery.
-- Cloudinary: configure a restricted upload preset and validate image/audio type, size, access, and lifecycle rules.
+- Cloudinary: configure a restricted upload preset that honors the per-account `oruma/therapists/<account-id>` folder. Keep the API secret server-only; it is required to remove replaced, rejected, and abandoned media.
 
 Zoom and WhatsApp are manual MVP operations, not API providers. Use an owner-controlled Zoom subscription and the configured official WhatsApp Business number, then train staff using `MANUAL_APPOINTMENT_OPERATIONS.md`.
 

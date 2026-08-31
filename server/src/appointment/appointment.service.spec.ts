@@ -2,6 +2,134 @@ import { BadRequestException, ConflictException } from '@nestjs/common';
 import { AppointmentService } from './appointment.service';
 import { AppointmentStatus } from './entities/appointment-status.enum';
 import { Role } from '../user/entities/user.entity';
+import { User } from '../user/entities/user.entity';
+import { AvailabilitySlot } from '../availability/entities/availability-slot.entity';
+import { Appointment } from './entities/appointment.entity';
+import { TherapistVerificationStatus } from '../therapist/entities/therapist-verification-status.enum';
+
+describe('AppointmentService booking eligibility', () => {
+  const createBookingService = (
+    therapistOverrides: Record<string, unknown>,
+  ) => {
+    const therapist = {
+      id: 'therapist-1',
+      name: 'Therapist',
+      price: 1500,
+      couplePrice: null,
+      consultationType: 'Video',
+      isActive: true,
+      archivedAt: null,
+      verificationStatus: TherapistVerificationStatus.VERIFIED,
+      ...therapistOverrides,
+    };
+    const slot = {
+      id: 'slot-1',
+      therapist,
+      status: 'AVAILABLE',
+      startTime: new Date(Date.now() + 26 * 60 * 60 * 1000),
+      endTime: new Date(Date.now() + 27 * 60 * 60 * 1000),
+    };
+    const slotQueryBuilder = {
+      setLock: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(slot),
+    };
+    const slotRepository = {
+      createQueryBuilder: jest.fn(() => slotQueryBuilder),
+      save: jest.fn((value: unknown) => Promise.resolve(value)),
+    };
+    const appointmentRepository = {
+      findOne: jest.fn().mockResolvedValue(null),
+      create: jest.fn((value: unknown) => value),
+      save: jest.fn((value: unknown) =>
+        Promise.resolve({ id: 'appointment-1', ...value }),
+      ),
+    };
+    const patientRepository = {
+      findOne: jest.fn().mockResolvedValue({
+        id: 'patient-1',
+        email: 'patient@example.com',
+      }),
+    };
+    const manager = {
+      getRepository: jest.fn((entity: unknown) => {
+        if (entity === AvailabilitySlot) return slotRepository;
+        if (entity === Appointment) return appointmentRepository;
+        return patientRepository;
+      }),
+    };
+    const dataSource = {
+      getRepository: jest.fn((entity: unknown) =>
+        entity === User ? patientRepository : appointmentRepository,
+      ),
+      transaction: jest.fn((callback: (value: typeof manager) => unknown) =>
+        callback(manager),
+      ),
+    };
+    const service = new AppointmentService(
+      appointmentRepository as never,
+      dataSource as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { get: jest.fn() } as never,
+      {} as never,
+    );
+    const patient = {
+      userId: 'patient-1',
+      email: 'patient@example.com',
+      role: Role.PATIENT,
+      mustChangePassword: false,
+    };
+    return { service, patient, appointmentRepository };
+  };
+
+  it('rejects a slot when its therapist is hidden', async () => {
+    const { service, patient, appointmentRepository } = createBookingService({
+      isActive: false,
+    });
+
+    await expect(
+      service.create(
+        {
+          slotId: '00000000-0000-4000-8000-000000000000',
+          service: 'Individual Therapy',
+          mode: 'Video',
+        },
+        patient,
+      ),
+    ).rejects.toThrow('not currently available for booking');
+    expect(appointmentRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('rejects modes and couple services the therapist does not offer', async () => {
+    const first = createBookingService({ consultationType: 'Video' });
+    await expect(
+      first.service.create(
+        {
+          slotId: '00000000-0000-4000-8000-000000000000',
+          service: 'Individual Therapy',
+          mode: 'Audio',
+        },
+        first.patient,
+      ),
+    ).rejects.toThrow('session mode is not offered');
+
+    const second = createBookingService({ couplePrice: null });
+    await expect(
+      second.service.create(
+        {
+          slotId: '00000000-0000-4000-8000-000000000000',
+          service: 'Couple Therapy',
+          mode: 'Video',
+        },
+        second.patient,
+      ),
+    ).rejects.toThrow('Couple therapy is not offered');
+  });
+});
 
 describe('AppointmentService quick booking', () => {
   it('does not issue a booking token for an existing patient contact', async () => {

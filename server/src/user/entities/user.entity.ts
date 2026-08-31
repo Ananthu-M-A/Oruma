@@ -48,6 +48,9 @@ export class User {
   @Column({ type: 'timestamptz', nullable: true })
   disabledAt: Date | null;
 
+  @Column({ default: false })
+  mustChangePassword: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 }

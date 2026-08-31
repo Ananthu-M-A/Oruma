@@ -19,10 +19,16 @@ import { VerifyLoginOtpDto } from './dto/verify-login-otp.dto';
 import { LoginOtp } from './entities/login-otp.entity';
 import { ProviderJobService } from '../reliability/provider-job.service';
 
-type RegisteredUser = Pick<User, 'id' | 'email' | 'role' | 'createdAt'>;
+type RegisteredUser = Pick<
+  User,
+  'id' | 'email' | 'role' | 'createdAt' | 'mustChangePassword'
+>;
 type AuthenticatedUser = {
   accessToken: string;
-  user: Pick<User, 'id' | 'email' | 'role' | 'createdAt'>;
+  user: Pick<
+    User,
+    'id' | 'email' | 'role' | 'createdAt' | 'mustChangePassword'
+  >;
 };
 
 @Injectable()
@@ -54,6 +60,7 @@ export class AuthService {
       age: dto.age ?? null,
       gender: dto.gender?.trim() || null,
       healthInfo: dto.healthInfo ?? null,
+      mustChangePassword: false,
     });
 
     return {
@@ -61,6 +68,7 @@ export class AuthService {
       email: user.email,
       role: user.role,
       createdAt: user.createdAt,
+      mustChangePassword: user.mustChangePassword,
     };
   }
 
@@ -219,6 +227,7 @@ export class AuthService {
       userId: user.id,
       email: user.email,
       role: user.role,
+      mustChangePassword: user.mustChangePassword,
     });
 
     return {
@@ -228,6 +237,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
         createdAt: user.createdAt,
+        mustChangePassword: user.mustChangePassword,
       },
     };
   }

@@ -5,31 +5,31 @@ export class PractitionerVerification1787162400000 implements MigrationInterface
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TYPE "therapist_verificationstatus_enum" AS ENUM ('UNVERIFIED', 'PENDING', 'VERIFIED', 'REJECTED')`,
+      `DO $$ BEGIN CREATE TYPE "therapist_verificationstatus_enum" AS ENUM ('UNVERIFIED', 'PENDING', 'VERIFIED', 'REJECTED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;`,
     );
     await queryRunner.query(
-      `ALTER TABLE "therapist" ADD "awardingInstitution" character varying`,
+      `ALTER TABLE "therapist" ADD COLUMN IF NOT EXISTS "awardingInstitution" character varying`,
     );
     await queryRunner.query(
-      `ALTER TABLE "therapist" ADD "verifiedExperienceHours" integer`,
+      `ALTER TABLE "therapist" ADD COLUMN IF NOT EXISTS "verifiedExperienceHours" integer`,
     );
     await queryRunner.query(
-      `ALTER TABLE "therapist" ADD "professionalRegistrationNumber" character varying`,
+      `ALTER TABLE "therapist" ADD COLUMN IF NOT EXISTS "professionalRegistrationNumber" character varying`,
     );
     await queryRunner.query(
-      `ALTER TABLE "therapist" ADD "registrationAuthority" character varying`,
+      `ALTER TABLE "therapist" ADD COLUMN IF NOT EXISTS "registrationAuthority" character varying`,
     );
     await queryRunner.query(
-      `ALTER TABLE "therapist" ADD "consultationType" character varying`,
+      `ALTER TABLE "therapist" ADD COLUMN IF NOT EXISTS "consultationType" character varying`,
     );
     await queryRunner.query(
-      `ALTER TABLE "therapist" ADD "sessionDurationMinutes" integer`,
+      `ALTER TABLE "therapist" ADD COLUMN IF NOT EXISTS "sessionDurationMinutes" integer`,
     );
     await queryRunner.query(
-      `ALTER TABLE "therapist" ADD "engagementRelationship" character varying`,
+      `ALTER TABLE "therapist" ADD COLUMN IF NOT EXISTS "engagementRelationship" character varying`,
     );
     await queryRunner.query(
-      `ALTER TABLE "therapist" ADD "verificationStatus" "therapist_verificationstatus_enum" NOT NULL DEFAULT 'UNVERIFIED'`,
+      `ALTER TABLE "therapist" ADD COLUMN IF NOT EXISTS "verificationStatus" "therapist_verificationstatus_enum" NOT NULL DEFAULT 'UNVERIFIED'`,
     );
     await queryRunner.query(
       `UPDATE "therapist" SET "isActive" = false WHERE "isActive" = true`,

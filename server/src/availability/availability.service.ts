@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThanOrEqual, Repository } from 'typeorm';
+import { IsNull, MoreThanOrEqual, Repository } from 'typeorm';
 
 import { AvailabilitySlot } from './entities/availability-slot.entity';
 import { Therapist } from '../therapist/entities/therapist.entity';
@@ -21,6 +21,7 @@ import {
   getEarliestBookableStartTime,
   isStartTimeBookable,
 } from '../appointment/booking-lead-time';
+import { TherapistVerificationStatus } from '../therapist/entities/therapist-verification-status.enum';
 
 @Injectable()
 export class AvailabilityService {
@@ -36,8 +37,6 @@ export class AvailabilityService {
     const startTime = new Date(dto.startTime);
     const endTime = new Date(dto.endTime);
 
-    this.validateSlotTime(startTime, endTime);
-
     const therapist = await this.therapistRepo.findOne({
       where: { id: dto.therapistId },
     });
@@ -45,6 +44,12 @@ export class AvailabilityService {
     if (!therapist) {
       throw new NotFoundException('Therapist not found');
     }
+
+    this.validateSlotTime(
+      startTime,
+      endTime,
+      therapist.sessionDurationMinutes ?? 60,
+    );
 
     await this.assertNoOverlap(dto.therapistId, startTime, endTime);
 
@@ -57,7 +62,11 @@ export class AvailabilityService {
     return this.slotRepo.save(slot);
   }
 
-  private validateSlotTime(startTime: Date, endTime: Date) {
+  private validateSlotTime(
+    startTime: Date,
+    endTime: Date,
+    durationMinutes = 60,
+  ) {
     if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
       throw new BadRequestException('Invalid slot time');
     }
@@ -76,9 +85,11 @@ export class AvailabilityService {
       throw new BadRequestException('End time must be after start time');
     }
 
-    const oneHourMs = 60 * 60 * 1000;
-    if (endTime.getTime() - startTime.getTime() !== oneHourMs) {
-      throw new BadRequestException('Standard therapy slots must be 1 hour');
+    const expectedDurationMs = durationMinutes * 60 * 1000;
+    if (endTime.getTime() - startTime.getTime() !== expectedDurationMs) {
+      throw new BadRequestException(
+        `Slots for this therapist must be ${durationMinutes} minutes`,
+      );
     }
   }
 
@@ -139,7 +150,19 @@ export class AvailabilityService {
   }
 
   async getAvailableSlots(therapistId: string) {
-    return this.slotRepo.find({
+    const therapist = await this.therapistRepo.findOne({
+      where: {
+        id: therapistId,
+        isActive: true,
+        verificationStatus: TherapistVerificationStatus.VERIFIED,
+        archivedAt: IsNull(),
+      },
+    });
+    if (!therapist) {
+      throw new NotFoundException('Therapist not found');
+    }
+
+    const slots = await this.slotRepo.find({
       where: {
         therapist: {
           id: therapistId,
@@ -151,6 +174,14 @@ export class AvailabilityService {
         startTime: 'ASC',
       },
     });
+
+    return slots.map((slot) => ({
+      id: slot.id,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      status: slot.status,
+      createdAt: slot.createdAt,
+    }));
   }
 
   async getOwnSlots(user: JwtPayload) {
@@ -182,7 +213,11 @@ export class AvailabilityService {
     const startTime = dto.startTime ? new Date(dto.startTime) : slot.startTime;
     const endTime = dto.endTime ? new Date(dto.endTime) : slot.endTime;
 
-    this.validateSlotTime(startTime, endTime);
+    this.validateSlotTime(
+      startTime,
+      endTime,
+      slot.therapist.sessionDurationMinutes ?? 60,
+    );
 
     await this.assertNoOverlap(slot.therapist.id, startTime, endTime, slotId);
 

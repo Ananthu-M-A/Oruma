@@ -25,6 +25,7 @@ export class UserService {
         'email',
         'password',
         'role',
+        'mustChangePassword',
         'disabledAt',
         'anonymizedAt',
         'createdAt',
@@ -64,7 +65,15 @@ export class UserService {
   create(
     user: Pick<User, 'email' | 'password' | 'role'> &
       Partial<
-        Pick<User, 'fullName' | 'phone' | 'age' | 'gender' | 'healthInfo'>
+        Pick<
+          User,
+          | 'fullName'
+          | 'phone'
+          | 'age'
+          | 'gender'
+          | 'healthInfo'
+          | 'mustChangePassword'
+        >
       >,
   ): Promise<User> {
     const createdUser = this.userRepository.create(user);
@@ -98,7 +107,7 @@ export class UserService {
   ): Promise<{ message: string }> {
     const user = await this.userRepository.findOne({
       where: { id },
-      select: ['id', 'password'],
+      select: ['id', 'password', 'mustChangePassword'],
     });
 
     if (!user) {
@@ -115,6 +124,7 @@ export class UserService {
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
+    user.mustChangePassword = false;
     await this.userRepository.save(user);
 
     return { message: 'Password updated successfully' };

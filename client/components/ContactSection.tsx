@@ -58,9 +58,8 @@ export default function ContactSection() {
               General enquiries can begin without describing a personal concern.
               Identified bookings require contact, appointment, and payment
               details. Confidentiality is protected through limited access, but
-              complete anonymity is not promised. Each verified profile states
-              the practitioner&apos;s relationship with Oruma and applicable
-              responsibility model.
+              complete anonymity is not promised. Practitioner profiles are
+              reviewed before Oruma makes them public.
             </p>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <a

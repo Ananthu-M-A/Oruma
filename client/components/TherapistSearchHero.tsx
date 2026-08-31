@@ -29,7 +29,7 @@ export default function TherapistSearchHero() {
           </h1>
           <p className="text-lg text-[#5F7F7A] font-medium leading-relaxed mb-12">
             Review each practitioner&apos;s verified role, qualifications, areas
-            of practice, session duration, and fee before requesting a booking.
+            of practice, availability, and fee before requesting a booking.
           </p>
 
           <div className="grid grid-cols-1 gap-8 border-y border-[#0A7F7A]/10 py-10 sm:grid-cols-3">

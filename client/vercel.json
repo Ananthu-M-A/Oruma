@@ -1,4 +1,11 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/therapist-profile.mjs": {
+      "includeFiles": "dist/index.html",
+      "maxDuration": 10
+    }
+  },
   "headers": [
     {
       "source": "/login",
@@ -22,6 +29,10 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/therapists/:id",
+      "destination": "/api/therapist-profile?id=:id"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

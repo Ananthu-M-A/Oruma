@@ -98,6 +98,171 @@ for (const dashboard of [
   });
 }
 
+test("therapist profile uses controlled choices for standard fields", async ({
+  page,
+}) => {
+  await page.route("**/api/**", (route) => {
+    if (route.request().url().endsWith("/api/therapists/me/profile")) {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "therapist-1",
+          name: "Test Therapist",
+          email: "therapist@oruma.test",
+          title: "Counselling Psychologist",
+          tags: ["Anxiety", "English", "Malayalam"],
+          areasOfPractice: ["Anxiety"],
+          languages: ["English", "Malayalam"],
+          experience: 5,
+          price: 1200,
+          couplePrice: 1800,
+          image: null,
+          voiceIntro: null,
+          qualifications: "MSc Psychology",
+          awardingInstitution: "Test University",
+          specialization: "Anxiety & Stress",
+          consultationType: "Video",
+          sessionDurationMinutes: 60,
+          verifiedExperienceHours: 500,
+          engagementRelationship: "Independent practitioner",
+          verificationStatus: "VERIFIED",
+          bio: "Supportive care",
+          pendingProfileChanges: null,
+          nextAvailableSlot: null,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        }),
+      });
+    }
+
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: "[]",
+    });
+  });
+  await page.addInitScript(
+    (token) => localStorage.setItem("oruma_access_token", token),
+    tokenFor("THERAPIST"),
+  );
+
+  await page.goto("/profile/therapist");
+  await expect(page.getByLabel("Exact professional role")).toHaveValue(
+    "Counselling Psychologist",
+  );
+  await expect(page.getByLabel("Years of experience")).toHaveValue("5");
+  await expect(page.getByLabel("Qualification")).toHaveValue(
+    "MSc Psychology",
+  );
+  await expect(page.getByLabel("Awarding institution")).toHaveValue(
+    "Test University",
+  );
+  await expect(page.getByLabel("Primary specialization")).toHaveValue(
+    "Anxiety & Stress",
+  );
+  await expect(page.getByLabel("Consultation type")).toHaveValue("Video");
+  await expect(page.getByLabel("Session duration (minutes)")).toHaveValue("60");
+  await expect(page.getByLabel(/Registration authority/i)).toHaveValue("");
+  await expect(page.getByText(/500 verified hours/i)).toBeVisible();
+  await expect(page.getByText(/Independent practitioner/i)).toBeVisible();
+  await expect(
+    page.locator('details[aria-label="Areas of practice options"]'),
+  ).toContainText("1 selected");
+  await expect(
+    page.locator('details[aria-label="Languages options"]'),
+  ).toContainText("2 selected");
+  await expect(page.getByLabel("Voice intro transcript")).toHaveValue("");
+});
+
+test("admin verifies a complete therapist before publishing", async ({
+  page,
+}) => {
+  let therapist = {
+    id: "therapist-1",
+    name: "Test Therapist",
+    email: "therapist@oruma.test",
+    title: "Counselling Psychologist",
+    tags: ["Anxiety", "English"],
+    areasOfPractice: ["Anxiety"],
+    languages: ["English"],
+    experience: 5,
+    price: 1200,
+    couplePrice: null,
+    image: null,
+    voiceIntro: null,
+    qualifications: "MSc Psychology",
+    awardingInstitution: "University of Kerala",
+    specialization: "Anxiety & Stress",
+    consultationType: "Video",
+    sessionDurationMinutes: 60,
+    verifiedExperienceHours: 500,
+    engagementRelationship: "Independent practitioner",
+    verificationStatus: "UNVERIFIED",
+    bio: "Supportive care",
+    pendingProfileChanges: null,
+    nextAvailableSlot: null,
+    isActive: false,
+    archivedAt: null,
+    createdAt: new Date().toISOString(),
+  };
+  const updatePayloads: Record<string, unknown>[] = [];
+
+  await page.route("**/api/**", async (route) => {
+    const request = route.request();
+    const url = request.url();
+
+    if (
+      request.method() === "PATCH" &&
+      url.endsWith("/api/therapists/therapist-1")
+    ) {
+      const payload = request.postDataJSON() as Record<string, unknown>;
+      updatePayloads.push(payload);
+      therapist = { ...therapist, ...payload };
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(therapist),
+      });
+    }
+
+    if (url.endsWith("/api/therapists/admin")) {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([therapist]),
+      });
+    }
+
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: "[]",
+    });
+  });
+  await page.addInitScript(
+    (token) => localStorage.setItem("oruma_access_token", token),
+    tokenFor("ADMIN"),
+  );
+
+  await page.goto("/profile/admin/therapists");
+  await expect(page.getByText("UNVERIFIED", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Publish profile" })).toBeDisabled();
+  await page.getByRole("button", { name: "Edit" }).click();
+  await page.getByLabel("Verification status").selectOption("VERIFIED");
+  await page.getByRole("button", { name: "Save therapist" }).click();
+  await expect.poll(() => updatePayloads.length).toBe(1);
+  expect(updatePayloads[0]).toEqual(
+    expect.objectContaining({ verificationStatus: "VERIFIED" }),
+  );
+  expect(updatePayloads[0]).not.toHaveProperty("isActive");
+  await expect(page.getByRole("button", { name: "Publish profile" })).toBeEnabled();
+  await page.getByRole("button", { name: "Publish profile" }).click();
+  await expect
+    .poll(() => updatePayloads[1])
+    .toEqual({ isActive: true });
+});
+
 test("booking dialog opens for a live slot and can be cancelled with Escape", async ({
   page,
 }) => {
@@ -123,12 +288,8 @@ test("booking dialog opens for a live slot and can be cancelled with Escape", as
     qualifications: "MSc Psychology",
     awardingInstitution: "Example University",
     verifiedExperienceHours: null,
-    professionalRegistrationNumber: null,
-    registrationAuthority: null,
     specialization: "Anxiety",
     consultationType: "Video",
-    sessionDurationMinutes: 60,
-    engagementRelationship: "Independent professional",
     verificationStatus: "VERIFIED",
     bio: "Supportive care",
     nextAvailableSlot: slot.startTime,

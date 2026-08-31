@@ -20,11 +20,11 @@ export const meta = {
 const bookingChecks = [
   {
     title: "Practitioner",
-    text: "Review the exact professional role, qualifications, areas of practice, and engagement relationship shown on the verified profile.",
+    text: "Review the exact professional role, qualifications, and areas of practice shown on the verified profile.",
   },
   {
     title: "Booking",
-    text: "Confirm the selected date, time, session duration, consultation mode, final amount, and any package discount.",
+    text: "Confirm the selected time slot, consultation mode, final amount, and any package discount.",
   },
   {
     title: "Policies",

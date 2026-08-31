@@ -58,35 +58,44 @@ export class TherapistController {
   @Get('me/profile')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.THERAPIST)
-  findOwnProfile(@Req() req: AuthenticatedRequest) {
-    return this.therapistService.findForTherapistAccount(req.user);
+  async findOwnProfile(@Req() req: AuthenticatedRequest) {
+    const therapist = await this.therapistService.findForTherapistAccount(
+      req.user,
+    );
+    return this.therapistService.serializePrivateProfile(therapist);
   }
 
   // THERAPIST ONLY
   @Patch('me/profile')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.THERAPIST)
-  updateOwnProfile(
+  async updateOwnProfile(
     @Req() req: AuthenticatedRequest,
     @Body() dto: UpdateTherapistDto,
   ) {
-    return this.therapistService.updateOwnProfile(req.user, dto);
+    const therapist = await this.therapistService.updateOwnProfile(
+      req.user,
+      dto,
+    );
+    return this.therapistService.serializePrivateProfile(therapist);
   }
 
   // ADMIN ONLY
   @Patch(':id/profile-changes/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  approveProfileChanges(@Param('id') id: string) {
-    return this.therapistService.approveProfileChanges(id);
+  async approveProfileChanges(@Param('id') id: string) {
+    const therapist = await this.therapistService.approveProfileChanges(id);
+    return this.therapistService.serializePrivateProfile(therapist);
   }
 
   // ADMIN ONLY
   @Patch(':id/profile-changes/reject')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  rejectProfileChanges(@Param('id') id: string) {
-    return this.therapistService.rejectProfileChanges(id);
+  async rejectProfileChanges(@Param('id') id: string) {
+    const therapist = await this.therapistService.rejectProfileChanges(id);
+    return this.therapistService.serializePrivateProfile(therapist);
   }
 
   // PUBLIC
@@ -99,20 +108,22 @@ export class TherapistController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  create(@Body() dto: CreateTherapistDto) {
-    return this.therapistService.create(dto);
+  async create(@Body() dto: CreateTherapistDto) {
+    const therapist = await this.therapistService.create(dto);
+    return this.therapistService.serializePrivateProfile(therapist);
   }
 
   // ADMIN ONLY
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  update(
+  async update(
     @Param('id') id: string,
 
     @Body() dto: UpdateTherapistDto,
   ) {
-    return this.therapistService.update(id, dto);
+    const therapist = await this.therapistService.update(id, dto);
+    return this.therapistService.serializePrivateProfile(therapist);
   }
 
   // ADMIN ONLY
@@ -126,7 +137,8 @@ export class TherapistController {
   @Patch(':id/restore')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  restore(@Param('id') id: string) {
-    return this.therapistService.restore(id);
+  async restore(@Param('id') id: string) {
+    const therapist = await this.therapistService.restore(id);
+    return this.therapistService.serializePrivateProfile(therapist);
   }
 }

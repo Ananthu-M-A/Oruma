@@ -1,13 +1,11 @@
 export type SessionPackageOption = {
-  sessionCount: 1 | 4 | 8;
+  sessionCount: 1;
   discountPercent: number;
   label: string;
 };
 
 export const SESSION_PACKAGE_OPTIONS: SessionPackageOption[] = [
   { sessionCount: 1, discountPercent: 0, label: 'Single session' },
-  { sessionCount: 4, discountPercent: 10, label: '4-session care package' },
-  { sessionCount: 8, discountPercent: 15, label: '8-session care package' },
 ];
 
 export function getSessionPackageOption(sessionCount: number) {

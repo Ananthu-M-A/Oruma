@@ -1,4 +1,6 @@
 import { businessConfig } from "../config/business";
+import type { Therapist } from "./therapists";
+import { splitTherapistTags } from "./therapistProfileOptions";
 
 const SITE_URL = businessConfig.website;
 const SITE_NAME = businessConfig.brandName;
@@ -80,11 +82,11 @@ export const publicSeoRoutes: Record<string, PageSeo> = {
   },
   "/services/couple-therapy": {
     title: `Online Couple and Relationship Counselling | ${SITE_NAME}`,
-    description: `Review verified practitioner profiles, fees, duration, availability, and policies for ${SITE_NAME} relationship counselling.`,
+    description: `Review verified practitioner profiles, fees, availability, and policies for ${SITE_NAME} relationship counselling.`,
   },
   "/services/follow-up": {
     title: `Counselling Follow-Up Sessions | ${SITE_NAME}`,
-    description: `Review practitioner availability, session duration, fees, and policies for a ${SITE_NAME} follow-up booking.`,
+    description: `Review practitioner availability, fees, and policies for a ${SITE_NAME} follow-up booking.`,
   },
   "/services/individual-therapy": {
     title: `Online Individual Counselling in India | ${SITE_NAME}`,
@@ -231,6 +233,18 @@ function setPageSchema(seo: PageSeo, canonicalUrl: string) {
   });
 }
 
+function setStructuredData(value: Record<string, unknown>) {
+  let script =
+    document.head.querySelector<HTMLScriptElement>("#oruma-page-schema");
+  if (!script) {
+    script = document.createElement("script");
+    script.id = "oruma-page-schema";
+    script.type = "application/ld+json";
+    document.head.appendChild(script);
+  }
+  script.textContent = JSON.stringify(value);
+}
+
 export function applyDocumentSeo(pathname: string) {
   const seo = resolvePageSeo(pathname);
   const currentPath = normalizePath(pathname);
@@ -264,6 +278,94 @@ export function applyDocumentSeo(pathname: string) {
   setPageSchema(seo, canonicalUrl);
 
   return seo;
+}
+
+export function applyTherapistSeo(therapist: Therapist) {
+  const canonicalUrl = `${SITE_URL}/therapists/${therapist.id}`;
+  const title = `${therapist.name}, ${therapist.title} | ${SITE_NAME}`;
+  const legacyTags = splitTherapistTags(therapist.tags);
+  const areas = therapist.areasOfPractice?.length
+    ? therapist.areasOfPractice
+    : legacyTags.areasOfPractice;
+  const languages = therapist.languages?.length
+    ? therapist.languages
+    : legacyTags.languages;
+  const description = [
+    `View ${therapist.name}'s reviewed ${therapist.title} profile`,
+    therapist.qualifications ? `, ${therapist.qualifications}` : "",
+    areas.length > 0 ? `, areas including ${areas.slice(0, 3).join(", ")}` : "",
+    ", fees, session mode, and current availability.",
+  ].join("");
+  const image = therapist.image
+    ? therapist.image.startsWith("http")
+      ? therapist.image
+      : `${SITE_URL}${therapist.image.startsWith("/") ? "" : "/assets/"}${therapist.image}`
+    : DEFAULT_SOCIAL_IMAGE;
+
+  document.title = title;
+  setMeta("name", "description", description);
+  setMeta(
+    "name",
+    "robots",
+    "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+  );
+  setMeta("name", "googlebot", "index, follow");
+  setMeta("property", "og:title", title);
+  setMeta("property", "og:description", description);
+  setMeta("property", "og:type", "profile");
+  setMeta("property", "og:url", canonicalUrl);
+  setMeta("property", "og:image", image);
+  setMeta("property", "og:image:alt", `${therapist.name} profile image`);
+  setMeta("name", "twitter:title", title);
+  setMeta("name", "twitter:description", description);
+  setMeta("name", "twitter:image", image);
+  setCanonical(canonicalUrl);
+  setStructuredData({
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "@id": `${canonicalUrl}#profile`,
+    url: canonicalUrl,
+    name: title,
+    description,
+    mainEntity: {
+      "@type": "Person",
+      name: therapist.name,
+      jobTitle: therapist.title,
+      image,
+      description: therapist.bio || undefined,
+      knowsLanguage: languages.length ? languages : undefined,
+      hasCredential: therapist.qualifications
+        ? {
+            "@type": "EducationalOccupationalCredential",
+            name: therapist.qualifications,
+            recognizedBy: therapist.awardingInstitution
+              ? { "@type": "Organization", name: therapist.awardingInstitution }
+              : undefined,
+          }
+        : undefined,
+    },
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    inLanguage: "en-IN",
+  });
+}
+
+export function applyTherapistNotFoundSeo() {
+  const title = `Practitioner Profile Unavailable | ${SITE_NAME}`;
+  const description = "This practitioner profile is not publicly available.";
+  document.title = title;
+  setMeta("name", "description", description);
+  setMeta("name", "robots", "noindex, nofollow");
+  setMeta("name", "googlebot", "noindex, nofollow");
+  setMeta("property", "og:title", title);
+  setMeta("property", "og:description", description);
+  setCanonical(`${SITE_URL}/therapists`);
+  setStructuredData({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: title,
+    description,
+    url: `${SITE_URL}/therapists`,
+  });
 }
 
 type AnalyticsWindow = Window & {

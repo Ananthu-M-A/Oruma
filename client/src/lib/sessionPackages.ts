@@ -1,5 +1,5 @@
 export type SessionPackageOption = {
-  sessionCount: 1 | 4 | 8;
+  sessionCount: 1;
   discountPercent: number;
   label: string;
   shortLabel: string;
@@ -11,18 +11,6 @@ export const SESSION_PACKAGE_OPTIONS: SessionPackageOption[] = [
     discountPercent: 0,
     label: "Single session",
     shortLabel: "1 session",
-  },
-  {
-    sessionCount: 4,
-    discountPercent: 10,
-    label: "4-session care package",
-    shortLabel: "4 sessions",
-  },
-  {
-    sessionCount: 8,
-    discountPercent: 15,
-    label: "8-session care package",
-    shortLabel: "8 sessions",
   },
 ];
 

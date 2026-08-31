@@ -1,6 +1,7 @@
 import React, { FormEvent, useEffect, useMemo, useState } from "react";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
+import MultiSelectDropdown from "../components/MultiSelectDropdown";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken } from "../src/lib/auth";
 import {
@@ -12,10 +13,21 @@ import {
   restoreTherapist,
   Therapist,
   TherapistPerformance,
+  getTherapistImage,
   updateTherapist,
 } from "../src/lib/therapists";
 import { formatIstDateTime } from "../src/lib/dateTime";
-import { therapistSpecializationOptions } from "../src/lib/therapistProfileOptions";
+import {
+  splitTherapistTags,
+  therapistAreaOfPracticeOptions,
+  therapistAwardingInstitutionOptions,
+  therapistConsultationTypeOptions,
+  therapistEngagementRelationshipOptions,
+  therapistLanguageOptions,
+  therapistProfessionalRoleOptions,
+  therapistQualificationOptions,
+  therapistSpecializationOptions,
+} from "../src/lib/therapistProfileOptions";
 
 export const meta = {
   title: "Manage Therapists | Oruma",
@@ -34,21 +46,21 @@ export default function AdminTherapistsPage() {
   const [editForm, setEditForm] = useState({
     name: "",
     title: "",
-    areasOfPractice: "",
+    areasOfPractice: [] as string[],
+    languages: [] as string[],
     experience: "",
-    verifiedExperienceHours: "",
     specialization: "",
     qualifications: "",
     awardingInstitution: "",
+    consultationType: "",
+    verifiedExperienceHours: "",
     professionalRegistrationNumber: "",
     registrationAuthority: "",
-    consultationType: "",
-    sessionDurationMinutes: "",
+    sessionDurationMinutes: "60",
     engagementRelationship: "",
     verificationStatus: "UNVERIFIED" as Therapist["verificationStatus"],
     price: "",
     couplePrice: "",
-    voiceIntro: "",
     bio: "",
   });
 
@@ -91,7 +103,8 @@ export default function AdminTherapistsPage() {
         therapist.specialization ?? "",
         therapist.qualifications ?? "",
         therapist.bio ?? "",
-        ...(therapist.tags ?? []),
+        ...(therapist.areasOfPractice ?? therapist.tags ?? []),
+        ...(therapist.languages ?? []),
       ].some((value) => value.toLowerCase().includes(search));
     });
 
@@ -116,18 +129,21 @@ export default function AdminTherapistsPage() {
     });
   }, [performanceByTherapist, query, sortBy, therapists]);
 
-  const toggleActive = async (therapist: Therapist) => {
+  const togglePublication = async (therapist: Therapist) => {
     const token = getAccessToken();
     if (!token) return;
 
     setError("");
     setNotice("");
     try {
-      await updateTherapist(token, therapist.id, {
-        isActive: !therapist.isActive,
-      });
+      const isPublishing = !therapist.isActive;
+      await updateTherapist(
+        token,
+        therapist.id,
+        { isActive: isPublishing },
+      );
       setNotice(
-        `${therapist.name} is now ${therapist.isActive ? "hidden from" : "available to"} the public.`,
+        `${therapist.name}'s profile is now ${isPublishing ? "public" : "hidden"}.`,
       );
       await loadData();
     } catch (err) {
@@ -166,7 +182,7 @@ export default function AdminTherapistsPage() {
     try {
       await restoreTherapist(token, therapist.id);
       setNotice(
-        "Therapist restored. Activate the profile when it is ready to return publicly.",
+        "Therapist restored. Publish the profile when it is ready to return publicly.",
       );
       await loadData();
     } catch (error) {
@@ -204,30 +220,33 @@ export default function AdminTherapistsPage() {
   };
 
   const openEditor = (therapist: Therapist) => {
+    const legacyTags = splitTherapistTags(therapist.tags);
+    const areasOfPractice =
+      therapist.areasOfPractice ?? legacyTags.areasOfPractice;
+    const languages = therapist.languages ?? legacyTags.languages;
     setEditing(therapist);
     setEditForm({
       name: therapist.name,
       title: therapist.title,
-      areasOfPractice: (therapist.tags ?? []).join(", "),
+      areasOfPractice,
+      languages,
       experience: String(therapist.experience),
-      verifiedExperienceHours: therapist.verifiedExperienceHours
-        ? String(therapist.verifiedExperienceHours)
-        : "",
       specialization: therapist.specialization ?? "",
       qualifications: therapist.qualifications ?? "",
       awardingInstitution: therapist.awardingInstitution ?? "",
+      consultationType: therapist.consultationType ?? "",
+      verifiedExperienceHours:
+        therapist.verifiedExperienceHours == null
+          ? ""
+          : String(therapist.verifiedExperienceHours),
       professionalRegistrationNumber:
         therapist.professionalRegistrationNumber ?? "",
       registrationAuthority: therapist.registrationAuthority ?? "",
-      consultationType: therapist.consultationType ?? "",
-      sessionDurationMinutes: therapist.sessionDurationMinutes
-        ? String(therapist.sessionDurationMinutes)
-        : "",
+      sessionDurationMinutes: String(therapist.sessionDurationMinutes ?? 60),
       engagementRelationship: therapist.engagementRelationship ?? "",
       verificationStatus: therapist.verificationStatus,
       price: String(therapist.price),
       couplePrice: therapist.couplePrice ? String(therapist.couplePrice) : "",
-      voiceIntro: therapist.voiceIntro ?? "",
       bio: therapist.bio ?? "",
     });
   };
@@ -243,32 +262,28 @@ export default function AdminTherapistsPage() {
       await updateTherapist(token, editing.id, {
         name: editForm.name.trim(),
         title: editForm.title.trim(),
-        tags: editForm.areasOfPractice
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean),
+        tags: editForm.areasOfPractice,
+        areasOfPractice: editForm.areasOfPractice,
+        languages: editForm.languages,
         experience: Number(editForm.experience),
+        specialization: editForm.specialization.trim() || null,
+        qualifications: editForm.qualifications.trim() || null,
+        awardingInstitution: editForm.awardingInstitution.trim() || null,
+        consultationType: editForm.consultationType.trim() || null,
         verifiedExperienceHours: editForm.verifiedExperienceHours
           ? Number(editForm.verifiedExperienceHours)
           : null,
-        specialization: editForm.specialization.trim() || undefined,
-        qualifications: editForm.qualifications.trim() || undefined,
-        awardingInstitution: editForm.awardingInstitution.trim() || undefined,
         professionalRegistrationNumber:
-          editForm.professionalRegistrationNumber.trim() || undefined,
+          editForm.professionalRegistrationNumber.trim() || null,
         registrationAuthority:
-          editForm.registrationAuthority.trim() || undefined,
-        consultationType: editForm.consultationType.trim() || undefined,
-        sessionDurationMinutes: editForm.sessionDurationMinutes
-          ? Number(editForm.sessionDurationMinutes)
-          : null,
+          editForm.registrationAuthority.trim() || null,
+        sessionDurationMinutes: Number(editForm.sessionDurationMinutes),
         engagementRelationship:
-          editForm.engagementRelationship.trim() || undefined,
+          editForm.engagementRelationship.trim() || null,
         verificationStatus: editForm.verificationStatus,
         price: Number(editForm.price),
         couplePrice: editForm.couplePrice ? Number(editForm.couplePrice) : null,
-        voiceIntro: editForm.voiceIntro.trim() || undefined,
-        bio: editForm.bio.trim() || undefined,
+        bio: editForm.bio.trim() || null,
       });
       setEditing(null);
       setNotice("Therapist updated.");
@@ -402,20 +417,7 @@ export default function AdminTherapistsPage() {
                                 "recently",
                               )}
                             </p>
-                            <div className="mt-3 grid gap-2 text-sm font-bold text-[#064F4B]">
-                              {Object.entries(
-                                therapist.pendingProfileChanges,
-                              ).map(([field, value]) => (
-                                <p key={field}>
-                                  <span className="uppercase tracking-widest text-[#5F7F7A]">
-                                    {field}:{" "}
-                                  </span>
-                                  {Array.isArray(value)
-                                    ? value.join(", ")
-                                    : String(value ?? "")}
-                                </p>
-                              ))}
-                            </div>
+                            <PendingProfileChangesReview therapist={therapist} />
                             <div className="mt-4 flex flex-wrap gap-2">
                               <button
                                 onClick={() =>
@@ -484,23 +486,30 @@ export default function AdminTherapistsPage() {
                           </>
                         )}
                         <button
-                          onClick={() => toggleActive(therapist)}
+                          onClick={() => togglePublication(therapist)}
                           disabled={
                             Boolean(therapist.archivedAt) ||
                             (!therapist.isActive &&
-                              therapist.verificationStatus !== "VERIFIED")
+                              (therapist.verificationStatus !== "VERIFIED" ||
+                                Boolean(therapist.pendingProfileChanges)))
                           }
-                          className="inline-flex items-center gap-2 rounded-full border border-[#DDE8E5] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#064F4B]"
+                          title={
+                            !therapist.isActive &&
+                            therapist.verificationStatus !== "VERIFIED"
+                              ? "Verify the complete profile before publishing"
+                              : therapist.pendingProfileChanges
+                                ? "Review pending changes before publishing"
+                                : undefined
+                          }
+                          className="inline-flex items-center gap-2 rounded-full border border-[#DDE8E5] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#064F4B] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <LucideIcon
                             name={therapist.isActive ? "eye-off" : "eye"}
                             size={16}
                           />
                           {therapist.isActive
-                            ? "Hide"
-                            : therapist.verificationStatus === "VERIFIED"
-                              ? "Activate"
-                              : "Verify first"}
+                            ? "Hide profile"
+                            : "Publish profile"}
                         </button>
                         <button
                           onClick={() => removeTherapist(therapist)}
@@ -548,31 +557,45 @@ export default function AdminTherapistsPage() {
                 onChange={(value) => setEditForm({ ...editForm, name: value })}
                 required
               />
-              <EditField
+              <EditDatalistField
                 label="Exact professional role"
                 value={editForm.title}
                 onChange={(value) => setEditForm({ ...editForm, title: value })}
+                options={therapistProfessionalRoleOptions}
                 required
               />
-              <EditField
-                label="Exact qualification"
+              <EditDatalistField
+                label="Qualification"
                 value={editForm.qualifications}
                 onChange={(value) =>
                   setEditForm({ ...editForm, qualifications: value })
                 }
+                options={therapistQualificationOptions}
+                required
               />
-              <EditField
+              <EditDatalistField
                 label="Awarding institution"
                 value={editForm.awardingInstitution}
                 onChange={(value) =>
                   setEditForm({ ...editForm, awardingInstitution: value })
                 }
+                options={therapistAwardingInstitutionOptions}
+                required
               />
-              <EditField
-                label="Areas of practice (comma-separated)"
-                value={editForm.areasOfPractice}
-                onChange={(value) =>
-                  setEditForm({ ...editForm, areasOfPractice: value })
+              <MultiSelectDropdown
+                label="Areas of practice"
+                values={editForm.areasOfPractice}
+                options={therapistAreaOfPracticeOptions}
+                onChange={(areasOfPractice) =>
+                  setEditForm({ ...editForm, areasOfPractice })
+                }
+              />
+              <MultiSelectDropdown
+                label="Languages"
+                values={editForm.languages}
+                options={therapistLanguageOptions}
+                onChange={(languages) =>
+                  setEditForm({ ...editForm, languages })
                 }
               />
               <EditField
@@ -583,6 +606,31 @@ export default function AdminTherapistsPage() {
                   setEditForm({ ...editForm, experience: value })
                 }
               />
+              <EditDatalistField
+                label="Primary specialization"
+                value={editForm.specialization}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, specialization: value })
+                }
+                options={therapistSpecializationOptions}
+              />
+              <EditSelectField
+                label="Consultation type"
+                value={editForm.consultationType}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, consultationType: value })
+                }
+                options={therapistConsultationTypeOptions}
+              />
+              <EditField
+                label="Session duration (minutes)"
+                type="number"
+                value={editForm.sessionDurationMinutes}
+                onChange={(value) =>
+                  setEditForm({ ...editForm, sessionDurationMinutes: value })
+                }
+                required
+              />
               <EditField
                 label="Verified experience hours"
                 type="number"
@@ -591,16 +639,8 @@ export default function AdminTherapistsPage() {
                   setEditForm({ ...editForm, verifiedExperienceHours: value })
                 }
               />
-              <EditSelectField
-                label="Specialization"
-                value={editForm.specialization}
-                onChange={(value) =>
-                  setEditForm({ ...editForm, specialization: value })
-                }
-                options={therapistSpecializationOptions}
-              />
               <EditField
-                label="Registration number (if applicable)"
+                label="Professional registration number"
                 value={editForm.professionalRegistrationNumber}
                 onChange={(value) =>
                   setEditForm({
@@ -616,49 +656,27 @@ export default function AdminTherapistsPage() {
                   setEditForm({ ...editForm, registrationAuthority: value })
                 }
               />
-              <EditField
-                label="Consultation type"
-                value={editForm.consultationType}
-                onChange={(value) =>
-                  setEditForm({ ...editForm, consultationType: value })
-                }
-              />
-              <EditField
-                label="Session duration (minutes)"
-                type="number"
-                value={editForm.sessionDurationMinutes}
-                onChange={(value) =>
-                  setEditForm({ ...editForm, sessionDurationMinutes: value })
-                }
-              />
-              <EditField
-                label="Engagement relationship with Oruma"
+              <EditSelectField
+                label="Engagement relationship"
                 value={editForm.engagementRelationship}
                 onChange={(value) =>
                   setEditForm({ ...editForm, engagementRelationship: value })
                 }
+                options={therapistEngagementRelationshipOptions}
               />
-              <label>
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
-                  Verification status
-                </span>
-                <select
-                  value={editForm.verificationStatus}
-                  onChange={(event) =>
-                    setEditForm({
-                      ...editForm,
-                      verificationStatus: event.target
-                        .value as Therapist["verificationStatus"],
-                    })
-                  }
-                  className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
-                >
-                  <option value="UNVERIFIED">Unverified</option>
-                  <option value="PENDING">Pending</option>
-                  <option value="VERIFIED">Verified</option>
-                  <option value="REJECTED">Rejected</option>
-                </select>
-              </label>
+              <EditSelectField
+                label="Verification status"
+                value={editForm.verificationStatus}
+                onChange={(value) =>
+                  setEditForm({
+                    ...editForm,
+                    verificationStatus:
+                      value as Therapist["verificationStatus"],
+                  })
+                }
+                options={["UNVERIFIED", "PENDING", "VERIFIED", "REJECTED"]}
+                required
+              />
               <EditField
                 label="Individual fee"
                 type="number"
@@ -667,18 +685,11 @@ export default function AdminTherapistsPage() {
                 required
               />
               <EditField
-                label="Couple fee"
+                label="Couple fee (leave blank if not offered)"
                 type="number"
                 value={editForm.couplePrice}
                 onChange={(value) =>
                   setEditForm({ ...editForm, couplePrice: value })
-                }
-              />
-              <EditField
-                label="Voice intro URL"
-                value={editForm.voiceIntro}
-                onChange={(value) =>
-                  setEditForm({ ...editForm, voiceIntro: value })
                 }
               />
               <label className="md:col-span-2">
@@ -686,6 +697,7 @@ export default function AdminTherapistsPage() {
                   Bio
                 </span>
                 <textarea
+                  maxLength={4000}
                   value={editForm.bio}
                   onChange={(event) =>
                     setEditForm({ ...editForm, bio: event.target.value })
@@ -702,6 +714,83 @@ export default function AdminTherapistsPage() {
       )}
       <Footer />
     </main>
+  );
+}
+
+function PendingProfileChangesReview({ therapist }: { therapist: Therapist }) {
+  const pending = therapist.pendingProfileChanges ?? {};
+  const entries = Object.entries(pending).filter(
+    ([field]) => !field.endsWith("PublicId"),
+  );
+
+  const formatValue = (value: unknown) => {
+    if (Array.isArray(value)) return value.join(", ") || "None";
+    if (value == null || value === "") return "None";
+    return String(value);
+  };
+
+  return (
+    <div className="mt-3 grid gap-3 text-sm font-bold text-[#064F4B]">
+      {entries.map(([field, submitted]) => {
+        const current = therapist[field as keyof Therapist];
+        if (field === "image") {
+          return (
+            <div key={field} className="rounded-lg bg-white p-3">
+              <p className="text-[10px] uppercase tracking-widest text-[#5F7F7A]">
+                Profile image · current / submitted
+              </p>
+              <div className="mt-2 flex gap-3">
+                {[current, submitted].map((value, index) =>
+                  typeof value === "string" && value ? (
+                    <img
+                      key={index}
+                      src={getTherapistImage(value)}
+                      alt={index === 0 ? "Current profile" : "Submitted profile"}
+                      className="h-20 w-20 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <span key={index} className="p-3 text-xs text-slate-500">
+                      None
+                    </span>
+                  ),
+                )}
+              </div>
+            </div>
+          );
+        }
+        if (field === "voiceIntro") {
+          return (
+            <div key={field} className="rounded-lg bg-white p-3">
+              <p className="text-[10px] uppercase tracking-widest text-[#5F7F7A]">
+                Voice intro · current / submitted
+              </p>
+              <div className="mt-2 grid gap-2">
+                {[current, submitted].map((value, index) =>
+                  typeof value === "string" && value ? (
+                    <audio key={index} controls src={value} className="w-full" />
+                  ) : (
+                    <span key={index} className="text-xs text-slate-500">
+                      None
+                    </span>
+                  ),
+                )}
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div key={field} className="rounded-lg bg-white p-3">
+            <p className="text-[10px] uppercase tracking-widest text-[#5F7F7A]">
+              {field.replace(/([a-z])([A-Z])/g, "$1 $2")}
+            </p>
+            <p className="mt-1 text-xs text-[#5F7F7A]">
+              Current: {formatValue(current)}
+            </p>
+            <p className="mt-1">Submitted: {formatValue(submitted)}</p>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -730,6 +819,42 @@ function EditField({
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
       />
+    </label>
+  );
+}
+
+function EditDatalistField({
+  label,
+  value,
+  onChange,
+  options,
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: readonly string[];
+  required?: boolean;
+}) {
+  const listId = `admin-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  return (
+    <label>
+      <span className="text-[10px] font-black uppercase tracking-widest text-[#5F7F7A]">
+        {label}
+      </span>
+      <input
+        list={listId}
+        required={required}
+        maxLength={255}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 w-full rounded-lg border border-[#DDE8E5] bg-[#FBFDFC] px-4 py-3 font-bold text-[#064F4B] outline-none focus:border-[#0A7F7A]"
+      />
+      <datalist id={listId}>
+        {options.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
     </label>
   );
 }

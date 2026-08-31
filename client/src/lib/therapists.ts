@@ -13,22 +13,26 @@ export type Therapist = {
   email?: string | null;
   title: string;
   tags: string[] | null;
+  areasOfPractice: string[] | null;
+  languages: string[] | null;
   experience: number;
-  group: number;
   price: number;
   couplePrice: number | null;
   image: string | null;
   voiceIntro: string | null;
+  voiceIntroTranscript: string | null;
+  imagePublicId?: string | null;
+  voiceIntroPublicId?: string | null;
   qualifications: string | null;
   awardingInstitution: string | null;
+  specialization: string | null;
+  consultationType: string | null;
   verifiedExperienceHours: number | null;
   professionalRegistrationNumber: string | null;
   registrationAuthority: string | null;
-  specialization: string | null;
-  consultationType: string | null;
   sessionDurationMinutes: number | null;
   engagementRelationship: string | null;
-  verificationStatus: TherapistVerificationStatus;
+  verificationStatus: "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
   bio: string | null;
   pendingProfileChanges?: Partial<TherapistPayload> | null;
   pendingProfileSubmittedAt?: string | null;
@@ -36,37 +40,35 @@ export type Therapist = {
   isActive: boolean;
   archivedAt?: string | null;
   createdAt: string;
-  credentialsSent?: boolean;
+  credentialsQueued?: boolean;
 };
-
-export type TherapistVerificationStatus =
-  | "UNVERIFIED"
-  | "PENDING"
-  | "VERIFIED"
-  | "REJECTED";
 
 export type TherapistPayload = {
   name: string;
   email: string;
   title: string;
-  tags?: string[];
+  tags?: string[] | null;
+  areasOfPractice?: string[] | null;
+  languages?: string[] | null;
   experience: number;
-  group: number;
   price: number;
   couplePrice?: number | null;
-  image?: string;
-  voiceIntro?: string;
-  qualifications?: string;
-  awardingInstitution?: string;
+  image?: string | null;
+  imagePublicId?: string | null;
+  voiceIntro?: string | null;
+  voiceIntroPublicId?: string | null;
+  voiceIntroTranscript?: string | null;
+  qualifications?: string | null;
+  awardingInstitution?: string | null;
   verifiedExperienceHours?: number | null;
-  professionalRegistrationNumber?: string;
-  registrationAuthority?: string;
-  specialization?: string;
-  consultationType?: string;
+  professionalRegistrationNumber?: string | null;
+  registrationAuthority?: string | null;
+  specialization?: string | null;
+  consultationType?: string | null;
   sessionDurationMinutes?: number | null;
-  engagementRelationship?: string;
-  verificationStatus?: TherapistVerificationStatus;
-  bio?: string;
+  engagementRelationship?: string | null;
+  verificationStatus?: Therapist["verificationStatus"];
+  bio?: string | null;
   nextAvailableSlot?: string | null;
   isActive?: boolean;
 };
@@ -110,9 +112,7 @@ export async function getTherapists() {
     throw new Error(message);
   }
 
-  return (data as Therapist[]).filter(
-    (therapist) => therapist.isActive && therapist.nextAvailableSlot !== null,
-  );
+  return data as Therapist[];
 }
 
 export async function getAdminTherapists(accessToken: string) {

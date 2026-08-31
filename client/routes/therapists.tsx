@@ -72,7 +72,7 @@ export default function TherapistListingPage() {
 
           <div className="mb-12">
             <div className="inline-flex items-center gap-2 bg-[#064F4B]/5 text-[#064F4B] px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest mb-4">
-              Recommended Professionals
+              Verified Professionals
             </div>
             <h2 className="text-3xl font-heading font-black text-[#064F4B] uppercase tracking-tighter">
               Available Practitioners

@@ -15,7 +15,7 @@ export class CreateAppointmentDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @IsIn([1, 4, 8])
+  @IsIn([1])
   sessionCount?: number;
 
   @IsOptional()
@@ -31,11 +31,11 @@ export class CreateAppointmentDto {
   contactPhone?: string;
 
   @IsOptional()
-  @IsString()
+  @IsIn(['Individual Therapy', 'Couple Therapy'])
   service?: string;
 
   @IsOptional()
-  @IsString()
+  @IsIn(['Video', 'Audio'])
   mode?: string;
 
   @IsOptional()

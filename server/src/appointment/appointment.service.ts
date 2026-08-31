@@ -40,6 +40,8 @@ import { businessConfig } from '../config/business.config';
 import { Payment } from '../payment/entities/payment.entity';
 import { PaymentStatus } from '../payment/entities/payment-status.enum';
 import { normalizeManualZoomLink } from './appointment-operations';
+import { TherapistVerificationStatus } from '../therapist/entities/therapist-verification-status.enum';
+import { getSupportedBookingModes } from '../therapist/therapist-profile.constants';
 
 @Injectable()
 export class AppointmentService {
@@ -158,11 +160,22 @@ export class AppointmentService {
       .createQueryBuilder('slot')
       .setLock('pessimistic_write', undefined, ['slot'])
       .leftJoinAndSelect('slot.therapist', 'therapist')
+      .addSelect('therapist.archivedAt')
       .where('slot.id = :slotId', { slotId: dto.slotId })
       .getOne();
 
     if (!slot) {
       throw new NotFoundException('Slot not found');
+    }
+
+    if (
+      !slot.therapist?.isActive ||
+      slot.therapist.archivedAt ||
+      slot.therapist.verificationStatus !== TherapistVerificationStatus.VERIFIED
+    ) {
+      throw new BadRequestException(
+        'The selected therapist is not currently available for booking',
+      );
     }
 
     if (slot.status === SlotStatus.BOOKED) {
@@ -228,9 +241,21 @@ export class AppointmentService {
     therapist: Therapist,
   ) {
     const service = dto.service?.trim();
+    if (service === 'Couple Therapy' && !therapist.couplePrice) {
+      throw new BadRequestException(
+        'Couple therapy is not offered by this therapist',
+      );
+    }
+    const mode = dto.mode?.trim();
+    const supportedModes = getSupportedBookingModes(therapist.consultationType);
+    if (!mode || !supportedModes.includes(mode)) {
+      throw new BadRequestException(
+        'The selected session mode is not offered by this therapist',
+      );
+    }
     const baseAmount =
-      service === 'Couple Therapy' && therapist.couplePrice
-        ? therapist.couplePrice
+      service === 'Couple Therapy'
+        ? (therapist.couplePrice as number)
         : therapist.price;
     const pricing = calculateSessionPackagePricing(
       baseAmount,
@@ -384,7 +409,6 @@ export class AppointmentService {
       appointment.slot.endTime,
     );
     const service = appointment.service ?? 'Therapy session';
-    const duration = appointment.therapist.sessionDurationMinutes;
     const payableAmount =
       appointment.packageOfferAmount > 0
         ? appointment.packageOfferAmount
@@ -404,7 +428,6 @@ export class AppointmentService {
             `Service: ${service}`,
             `Therapist: ${appointment.therapist.name}`,
             `Slot: ${slotRange}`,
-            `Session duration: ${duration} minutes`,
             `Amount paid: INR ${payableAmount}`,
             'Payment status: Paid',
             'Staff will confirm the appointment and send joining instructions.',
@@ -417,7 +440,6 @@ export class AppointmentService {
           <p><strong>Service:</strong> ${service}</p>
           <p><strong>Therapist:</strong> ${appointment.therapist.name}</p>
           <p><strong>Slot:</strong> ${slotRange}</p>
-          <p><strong>Session duration:</strong> ${duration} minutes</p>
           <p><strong>Amount paid:</strong> INR ${payableAmount}</p>
           <p><strong>Payment status:</strong> Paid</p>
           <p>Staff will confirm the appointment and send joining instructions.</p>

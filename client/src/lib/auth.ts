@@ -4,6 +4,7 @@ export type AuthUser = {
   userId: string;
   email: string;
   role: AuthRole;
+  mustChangePassword?: boolean;
   fullName?: string | null;
   exp?: number;
   iat?: number;
@@ -19,6 +20,7 @@ export type AuthAccount = {
   gender?: string | null;
   healthInfo?: Record<string, unknown> | null;
   createdAt: string;
+  mustChangePassword?: boolean;
 };
 
 type LoginPayload = {

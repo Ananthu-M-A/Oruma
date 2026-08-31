@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { Role } from '../../user/entities/user.entity';
@@ -7,6 +12,7 @@ type AuthenticatedUser = {
   userId: string;
   email: string;
   role: Role;
+  mustChangePassword: boolean;
 };
 
 type RequestWithUser = {
@@ -29,6 +35,12 @@ export class RolesGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<RequestWithUser>();
     const user = request.user;
+
+    if (user?.role === Role.THERAPIST && user.mustChangePassword) {
+      throw new ForbiddenException(
+        'Change your temporary password before using the therapist dashboard',
+      );
+    }
 
     return Boolean(user && requiredRoles.includes(user.role));
   }

@@ -1,10 +1,13 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { AvailabilityService } from './availability.service';
 import { BOOKING_LEAD_TIME_MS } from '../appointment/booking-lead-time';
 
 describe('AvailabilityService', () => {
-  const createService = (overlappingSlot: unknown = null) => {
+  const createService = (
+    overlappingSlot: unknown = null,
+    availableSlots: unknown[] = [],
+  ) => {
     type FindOptions = {
       where: { startTime: FindOperator<Date> };
     };
@@ -21,7 +24,7 @@ describe('AvailabilityService', () => {
       ),
       find: jest.fn((options: FindOptions) => {
         capturedFindOptions = options;
-        return Promise.resolve([]);
+        return Promise.resolve(availableSlots);
       }),
       createQueryBuilder: jest.fn(() => queryBuilder),
     };
@@ -42,6 +45,7 @@ describe('AvailabilityService', () => {
       queryBuilder,
       slotRepo,
       getCapturedFindOptions: () => capturedFindOptions,
+      therapistRepo,
     };
   };
 
@@ -133,5 +137,39 @@ describe('AvailabilityService', () => {
         process.env.BOOKING_LEAD_TIME_BYPASS_ENABLED = originalBypass;
       }
     }
+  });
+
+  it('does not expose the eager therapist relation in public slot responses', async () => {
+    const { service } = createService(null, [
+      {
+        id: 'slot-1',
+        startTime: new Date('2026-09-01T04:30:00Z'),
+        endTime: new Date('2026-09-01T05:30:00Z'),
+        status: 'AVAILABLE',
+        createdAt: new Date('2026-08-01T00:00:00Z'),
+        therapist: {
+          id: 'therapist-a',
+          email: 'private@example.com',
+          pendingProfileChanges: { bio: 'private draft' },
+        },
+      },
+    ]);
+
+    const [slot] = await service.getAvailableSlots('therapist-a');
+
+    expect(slot).not.toHaveProperty('therapist');
+    expect(slot).toEqual(
+      expect.objectContaining({ id: 'slot-1', status: 'AVAILABLE' }),
+    );
+  });
+
+  it('returns no public availability for an ineligible therapist', async () => {
+    const { service, therapistRepo, slotRepo } = createService();
+    therapistRepo.findOne.mockResolvedValueOnce(null);
+
+    await expect(
+      service.getAvailableSlots('therapist-a'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(slotRepo.find).not.toHaveBeenCalled();
   });
 });

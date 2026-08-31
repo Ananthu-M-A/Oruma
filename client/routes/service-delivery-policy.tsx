@@ -18,8 +18,8 @@ const sections: PolicySection[] = [
   {
     title: "2. Selecting and ordering a service",
     body: [
-      "A customer selects a service, reviews a verified practitioner profile, chooses an available date and time, reviews the session duration and final payable amount, accepts the linked policies, and submits the booking.",
-      "The booking flow displays the selected service, practitioner, appointment time in IST, duration, fee, any discount, cancellation window, refund conditions, and a booking reference once created.",
+      "A customer selects a service, reviews a verified practitioner profile, chooses an available time slot, reviews the final payable amount, accepts the linked policies, and submits the booking.",
+      "The booking flow displays the selected service, practitioner, appointment time range in IST, fee, any discount, cancellation window, refund conditions, and a booking reference once created.",
     ],
   },
   {
@@ -38,9 +38,9 @@ const sections: PolicySection[] = [
     ],
   },
   {
-    title: "5. Duration and practitioner availability",
+    title: "5. Appointment timing and practitioner availability",
     body: [
-      "The applicable session duration is shown in the booking summary and practitioner profile. Duration may vary by service and practitioner and is not inferred where it has not been verified.",
+      "The selected appointment's start and end times are shown as a single time slot in the booking flow and confirmation.",
       "All appointment slots depend on current practitioner availability. Displaying a profile does not guarantee a particular future time.",
     ],
   },

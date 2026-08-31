@@ -367,9 +367,9 @@ export default function AdminProfilePage() {
         email: email.trim().toLowerCase(),
       });
       setNotice(
-        therapist.credentialsSent
-          ? "Therapist account created and credentials email sent."
-          : "Therapist account created. Configure email delivery to send credentials automatically.",
+        therapist.credentialsQueued
+          ? "Therapist account created and the credentials email was queued for delivery."
+          : "Therapist account created, but the credentials email could not be queued. Send onboarding instructions manually.",
       );
       setEmail("");
       setIsCreateOpen(false);

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, MoreThanOrEqual, Repository } from 'typeorm';
+import { DataSource, In, IsNull, MoreThanOrEqual, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { ConfigService } from '@nestjs/config';
@@ -14,7 +14,7 @@ import { Appointment } from '../appointment/entities/appointment.entity';
 import { AppointmentStatus } from '../appointment/entities/appointment-status.enum';
 import { AvailabilitySlot } from '../availability/entities/availability-slot.entity';
 import { SlotStatus } from '../availability/entities/slot-status.enum';
-import { Role } from '../user/entities/user.entity';
+import { Role, User } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
 import { NotificationType } from '../notification/entities/notification.entity';
 import { NotificationService } from '../notification/notification.service';
@@ -24,6 +24,11 @@ import { UpdateTherapistDto } from './dto/update-therapist.dto';
 import { getEarliestBookableStartTime } from '../appointment/booking-lead-time';
 import { ProviderJobService } from '../reliability/provider-job.service';
 import { TherapistVerificationStatus } from './entities/therapist-verification-status.enum';
+import {
+  requiresProfessionalRegistration,
+  splitLegacyTherapistTags,
+} from './therapist-profile.constants';
+import { MediaService } from '../media/media.service';
 
 type TherapistPerformance = {
   therapistId: string;
@@ -44,19 +49,21 @@ type PublicTherapist = Pick<
   | 'name'
   | 'title'
   | 'tags'
+  | 'areasOfPractice'
+  | 'languages'
   | 'experience'
-  | 'group'
   | 'price'
   | 'couplePrice'
   | 'image'
   | 'voiceIntro'
+  | 'voiceIntroTranscript'
   | 'qualifications'
   | 'awardingInstitution'
+  | 'specialization'
+  | 'consultationType'
   | 'verifiedExperienceHours'
   | 'professionalRegistrationNumber'
   | 'registrationAuthority'
-  | 'specialization'
-  | 'consultationType'
   | 'sessionDurationMinutes'
   | 'engagementRelationship'
   | 'verificationStatus'
@@ -75,15 +82,17 @@ export class TherapistService {
     private readonly appointmentRepo: Repository<Appointment>,
     @InjectRepository(AvailabilitySlot)
     private readonly slotRepo: Repository<AvailabilitySlot>,
+    private readonly dataSource: DataSource,
     private readonly userService: UserService,
     private readonly configService: ConfigService,
     private readonly notificationService: NotificationService,
     private readonly providerJobService: ProviderJobService,
+    private readonly mediaService: MediaService,
   ) {}
 
   async create(
     dto: CreateTherapistDto,
-  ): Promise<Therapist & { credentialsSent: boolean }> {
+  ): Promise<Therapist & { credentialsQueued: boolean }> {
     const email = dto.email.trim().toLowerCase();
     const existingUser = await this.userService.findByEmail(email);
 
@@ -93,43 +102,73 @@ export class TherapistService {
 
     const temporaryPassword = this.generateTemporaryPassword();
     const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-    const account = await this.userService.create({
-      email,
-      password: hashedPassword,
-      role: Role.THERAPIST,
-    });
+    let savedTherapist: Therapist;
+    try {
+      savedTherapist = await this.dataSource.transaction(async (manager) => {
+        const userRepo = manager.getRepository(User);
+        const therapistRepo = manager.getRepository(Therapist);
+        const account = await userRepo.save(
+          userRepo.create({
+            email,
+            password: hashedPassword,
+            role: Role.THERAPIST,
+            mustChangePassword: true,
+          }),
+        );
+        const legacyTags = splitLegacyTherapistTags(dto.tags);
+        const therapist = therapistRepo.create({
+          ...dto,
+          email,
+          name: dto.name?.trim() || email.split('@')[0],
+          title: dto.title?.trim() || 'Therapist',
+          tags: this.normalizeList(dto.tags),
+          areasOfPractice: this.normalizeList(
+            dto.areasOfPractice ?? legacyTags.areasOfPractice,
+          ),
+          languages: this.normalizeList(dto.languages ?? legacyTags.languages),
+          experience: dto.experience ?? 0,
+          group: 1,
+          price: dto.price ?? 0,
+          verificationStatus: TherapistVerificationStatus.UNVERIFIED,
+          isActive: false,
+          account,
+        });
+        this.assertSafeMedia(therapist);
 
-    const therapist = this.therapistRepo.create({
-      ...dto,
-      email,
-      name: dto.name?.trim() || email.split('@')[0],
-      title: dto.title?.trim() || 'Therapist',
-      experience: dto.experience ?? 0,
-      group: dto.group ?? 1,
-      price: dto.price ?? 0,
-      isActive: false,
-      account,
-    });
-
-    const savedTherapist = await this.therapistRepo.save(therapist);
-    const credentialsSent = await this.sendTherapistCredentials(
-      savedTherapist,
-      temporaryPassword,
-    );
-    if (savedTherapist.account?.id) {
-      await this.notificationService.create({
-        recipientId: savedTherapist.account.id,
-        type: NotificationType.PROFILE,
-        title: 'Therapist account created',
-        body: 'Your Oruma therapist account is ready. Complete your profile to begin onboarding.',
-        actionUrl: '/profile/therapist',
-        metadata: { therapistId: savedTherapist.id },
+        return therapistRepo.save(therapist);
       });
+    } catch (error) {
+      if ((error as { code?: string }).code === '23505') {
+        throw new ConflictException('Email is already registered');
+      }
+      throw error;
+    }
+    let credentialsQueued = false;
+    try {
+      credentialsQueued = await this.sendTherapistCredentials(
+        savedTherapist,
+        email,
+        temporaryPassword,
+      );
+    } catch {
+      credentialsQueued = false;
+    }
+    if (savedTherapist.account?.id) {
+      await this.notificationService
+        .create({
+          recipientId: savedTherapist.account.id,
+          type: NotificationType.PROFILE,
+          title: 'Therapist account created',
+          body: 'Your Oruma therapist account is ready. Change your temporary password and complete your profile to begin onboarding.',
+          actionUrl: '/profile/therapist?tab=account',
+          metadata: { therapistId: savedTherapist.id },
+        })
+        .catch(() => undefined);
     }
 
     return {
       ...savedTherapist,
-      credentialsSent,
+      credentialsQueued,
     };
   }
 
@@ -149,16 +188,21 @@ export class TherapistService {
       await this.attachNextAvailableSlots(therapists);
 
     return therapistsWithAvailability
-      .filter((therapist) => therapist.nextAvailableSlot !== null)
+      .sort((a, b) => {
+        if (a.nextAvailableSlot && b.nextAvailableSlot) {
+          return a.nextAvailableSlot.getTime() - b.nextAvailableSlot.getTime();
+        }
+        if (a.nextAvailableSlot) return -1;
+        if (b.nextAvailableSlot) return 1;
+        return a.name.localeCompare(b.name);
+      })
       .map((therapist) => this.toPublicTherapist(therapist));
   }
 
   findAllForAdmin(): Promise<Therapist[]> {
-    return this.therapistRepo.find({
-      order: {
-        createdAt: 'DESC',
-      },
-    });
+    return this.adminTherapistQuery()
+      .orderBy('therapist.createdAt', 'DESC')
+      .getMany();
   }
 
   async findOne(id: string): Promise<PublicTherapist> {
@@ -192,35 +236,55 @@ export class TherapistService {
       if (existingUser && existingUser.id !== therapist.account?.id) {
         throw new ConflictException('Email is already registered');
       }
-
-      if (therapist.account) {
-        await this.userService.updateEmail(therapist.account.id, email);
-      }
-
       therapist.email = email;
     }
 
+    const normalizedUpdates = this.normalizeProfileChanges(dto);
     const candidate = {
       ...therapist,
-      ...dto,
+      ...normalizedUpdates,
       email: email ?? therapist.email,
     };
 
-    if (candidate.isActive) this.assertReadyForPublication(candidate);
+    if (dto.isActive === true && therapist.pendingProfileChanges) {
+      throw new BadRequestException(
+        'Review or reject the pending profile changes before publishing',
+      );
+    }
+    if (
+      candidate.isActive ||
+      candidate.verificationStatus === TherapistVerificationStatus.VERIFIED
+    ) {
+      this.assertReadyForPublication(candidate);
+    }
 
+    const previousImagePublicId = therapist.imagePublicId;
+    const previousVoiceIntroPublicId = therapist.voiceIntroPublicId;
     Object.assign(therapist, candidate);
+    this.assertSafeMedia(therapist);
 
-    return this.therapistRepo.save(therapist);
+    const saved = await this.dataSource.transaction(async (manager) => {
+      if (email && therapist.account?.id) {
+        await manager.getRepository(User).update(therapist.account.id, {
+          email,
+        });
+      }
+      return manager.getRepository(Therapist).save(therapist);
+    });
+    await this.deleteReplacedMedia(
+      previousImagePublicId,
+      saved.imagePublicId,
+      previousVoiceIntroPublicId,
+      saved.voiceIntroPublicId,
+    );
+    return saved;
   }
 
   async findForTherapistAccount(user: JwtPayload): Promise<Therapist> {
-    const therapist = await this.therapistRepo.findOne({
-      where: {
-        account: {
-          id: user.userId,
-        },
-      },
-    });
+    const therapist = await this.adminTherapistQuery()
+      .leftJoinAndSelect('therapist.account', 'account')
+      .where('account.id = :userId', { userId: user.userId })
+      .getOne();
 
     if (!therapist) {
       throw new NotFoundException('Therapist profile not found');
@@ -234,24 +298,81 @@ export class TherapistService {
     dto: UpdateTherapistDto,
   ): Promise<Therapist> {
     const therapist = await this.findForTherapistAccount(user);
-    const { email, isActive, verificationStatus, ...profileUpdates } = dto;
+    const previousPendingImagePublicId = therapist.pendingProfileChanges
+      ? this.pendingString(therapist.pendingProfileChanges, 'imagePublicId')
+      : null;
+    const previousPendingVoiceIntroPublicId = therapist.pendingProfileChanges
+      ? this.pendingString(
+          therapist.pendingProfileChanges,
+          'voiceIntroPublicId',
+        )
+      : null;
+    const {
+      email,
+      isActive,
+      verificationStatus,
+      verifiedExperienceHours,
+      engagementRelationship,
+      ...profileUpdates
+    } = dto;
 
     void email;
     void isActive;
     void verificationStatus;
+    void verifiedExperienceHours;
+    void engagementRelationship;
     therapist.pendingProfileChanges =
-      this.removeEmptyProfileChanges(profileUpdates);
+      this.normalizeProfileChanges(profileUpdates);
+    if (Object.keys(therapist.pendingProfileChanges).length === 0) {
+      throw new BadRequestException('Submit at least one profile change');
+    }
+    this.assertSafeMedia({
+      ...therapist,
+      ...therapist.pendingProfileChanges,
+    });
+    this.assertOwnedMedia(
+      {
+        ...therapist,
+        ...therapist.pendingProfileChanges,
+      },
+      user.userId,
+    );
     therapist.pendingProfileSubmittedAt = new Date();
+    if (!therapist.isActive) {
+      therapist.verificationStatus = TherapistVerificationStatus.PENDING;
+    }
 
     const savedTherapist = await this.therapistRepo.save(therapist);
+    const nextPendingImagePublicId = this.pendingString(
+      savedTherapist.pendingProfileChanges ?? {},
+      'imagePublicId',
+    );
+    const nextPendingVoiceIntroPublicId = this.pendingString(
+      savedTherapist.pendingProfileChanges ?? {},
+      'voiceIntroPublicId',
+    );
+    await Promise.allSettled([
+      previousPendingImagePublicId &&
+      previousPendingImagePublicId !== nextPendingImagePublicId &&
+      previousPendingImagePublicId !== savedTherapist.imagePublicId
+        ? this.mediaService.delete(previousPendingImagePublicId, 'image')
+        : Promise.resolve(),
+      previousPendingVoiceIntroPublicId &&
+      previousPendingVoiceIntroPublicId !== nextPendingVoiceIntroPublicId &&
+      previousPendingVoiceIntroPublicId !== savedTherapist.voiceIntroPublicId
+        ? this.mediaService.delete(previousPendingVoiceIntroPublicId, 'video')
+        : Promise.resolve(),
+    ]);
 
-    await this.notificationService.notifyAdmins({
-      type: NotificationType.PROFILE,
-      title: 'Therapist profile needs review',
-      body: `${savedTherapist.name} submitted profile updates for approval.`,
-      actionUrl: '/profile/admin/therapists',
-      metadata: { therapistId: savedTherapist.id },
-    });
+    await this.notificationService
+      .notifyAdmins({
+        type: NotificationType.PROFILE,
+        title: 'Therapist profile needs review',
+        body: `${savedTherapist.name} submitted profile updates for approval.`,
+        actionUrl: '/profile/admin/therapists',
+        metadata: { therapistId: savedTherapist.id },
+      })
+      .catch(() => undefined);
 
     return savedTherapist;
   }
@@ -263,21 +384,37 @@ export class TherapistService {
       throw new BadRequestException('No pending profile changes to approve');
     }
 
+    const candidate = {
+      ...therapist,
+      ...therapist.pendingProfileChanges,
+    };
+    if (therapist.isActive) this.assertReadyForPublication(candidate);
+    this.assertSafeMedia(candidate);
+    const previousImagePublicId = therapist.imagePublicId;
+    const previousVoiceIntroPublicId = therapist.voiceIntroPublicId;
     Object.assign(therapist, therapist.pendingProfileChanges);
     therapist.pendingProfileChanges = null;
     therapist.pendingProfileSubmittedAt = null;
 
     const savedTherapist = await this.therapistRepo.save(therapist);
+    await this.deleteReplacedMedia(
+      previousImagePublicId,
+      savedTherapist.imagePublicId,
+      previousVoiceIntroPublicId,
+      savedTherapist.voiceIntroPublicId,
+    );
 
     if (savedTherapist.account?.id) {
-      await this.notificationService.create({
-        recipientId: savedTherapist.account.id,
-        type: NotificationType.PROFILE,
-        title: 'Profile updates approved',
-        body: 'Your latest therapist profile updates are now live.',
-        actionUrl: '/profile/therapist',
-        metadata: { therapistId: savedTherapist.id },
-      });
+      await this.notificationService
+        .create({
+          recipientId: savedTherapist.account.id,
+          type: NotificationType.PROFILE,
+          title: 'Profile updates approved',
+          body: 'Your latest therapist profile updates are now live.',
+          actionUrl: '/profile/therapist',
+          metadata: { therapistId: savedTherapist.id },
+        })
+        .catch(() => undefined);
     }
 
     return savedTherapist;
@@ -290,20 +427,41 @@ export class TherapistService {
       throw new BadRequestException('No pending profile changes to reject');
     }
 
+    const rejectedImagePublicId = this.pendingString(
+      therapist.pendingProfileChanges,
+      'imagePublicId',
+    );
+    const rejectedVoiceIntroPublicId = this.pendingString(
+      therapist.pendingProfileChanges,
+      'voiceIntroPublicId',
+    );
     therapist.pendingProfileChanges = null;
     therapist.pendingProfileSubmittedAt = null;
+    if (!therapist.isActive) {
+      therapist.verificationStatus = TherapistVerificationStatus.REJECTED;
+    }
 
     const savedTherapist = await this.therapistRepo.save(therapist);
+    await Promise.allSettled([
+      rejectedImagePublicId !== therapist.imagePublicId
+        ? this.mediaService.delete(rejectedImagePublicId, 'image')
+        : Promise.resolve(),
+      rejectedVoiceIntroPublicId !== therapist.voiceIntroPublicId
+        ? this.mediaService.delete(rejectedVoiceIntroPublicId, 'video')
+        : Promise.resolve(),
+    ]);
 
     if (savedTherapist.account?.id) {
-      await this.notificationService.create({
-        recipientId: savedTherapist.account.id,
-        type: NotificationType.PROFILE,
-        title: 'Profile updates need changes',
-        body: 'Your latest therapist profile updates were not approved. Please review and submit again.',
-        actionUrl: '/profile/therapist',
-        metadata: { therapistId: savedTherapist.id },
-      });
+      await this.notificationService
+        .create({
+          recipientId: savedTherapist.account.id,
+          type: NotificationType.PROFILE,
+          title: 'Profile updates need changes',
+          body: 'Your latest therapist profile updates were not approved. Please review and submit again.',
+          actionUrl: '/profile/therapist',
+          metadata: { therapistId: savedTherapist.id },
+        })
+        .catch(() => undefined);
     }
 
     return savedTherapist;
@@ -311,22 +469,58 @@ export class TherapistService {
 
   async remove(id: string): Promise<{ message: string }> {
     const therapist = await this.findOneWithAccount(id);
+    const futureAppointmentCount = await this.appointmentRepo
+      .createQueryBuilder('appointment')
+      .innerJoin('appointment.slot', 'slot')
+      .where('appointment.therapistId = :id', { id })
+      .andWhere('slot.startTime > :now', { now: new Date() })
+      .andWhere('appointment.status IN (:...statuses)', {
+        statuses: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
+      })
+      .getCount();
+    if (futureAppointmentCount > 0) {
+      throw new BadRequestException(
+        'This therapist has future appointments. Cancel or reassign them before archiving the account.',
+      );
+    }
+    const abandonedImagePublicId = therapist.pendingProfileChanges
+      ? this.pendingString(therapist.pendingProfileChanges, 'imagePublicId')
+      : null;
+    const abandonedVoiceIntroPublicId = therapist.pendingProfileChanges
+      ? this.pendingString(
+          therapist.pendingProfileChanges,
+          'voiceIntroPublicId',
+        )
+      : null;
     therapist.archivedAt = therapist.archivedAt ?? new Date();
     therapist.isActive = false;
     therapist.pendingProfileChanges = null;
     therapist.pendingProfileSubmittedAt = null;
-    await this.therapistRepo.save(therapist);
-    if (therapist.account?.id) {
-      await this.userService.setDisabled(therapist.account.id, true);
-    }
-    await this.slotRepo
-      .createQueryBuilder()
-      .update(AvailabilitySlot)
-      .set({ status: SlotStatus.BLOCKED })
-      .where('"therapistId" = :id', { id })
-      .andWhere('status = :status', { status: SlotStatus.AVAILABLE })
-      .andWhere('"startTime" >= :now', { now: new Date() })
-      .execute();
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(Therapist).save(therapist);
+      if (therapist.account?.id) {
+        await manager.getRepository(User).update(therapist.account.id, {
+          disabledAt: new Date(),
+        });
+      }
+      await manager
+        .getRepository(AvailabilitySlot)
+        .createQueryBuilder()
+        .update(AvailabilitySlot)
+        .set({ status: SlotStatus.BLOCKED })
+        .where('"therapistId" = :id', { id })
+        .andWhere('status = :status', { status: SlotStatus.AVAILABLE })
+        .andWhere('"startTime" >= :now', { now: new Date() })
+        .execute();
+    });
+    await Promise.allSettled([
+      abandonedImagePublicId !== therapist.imagePublicId
+        ? this.mediaService.delete(abandonedImagePublicId, 'image')
+        : Promise.resolve(),
+      abandonedVoiceIntroPublicId !== therapist.voiceIntroPublicId
+        ? this.mediaService.delete(abandonedVoiceIntroPublicId, 'video')
+        : Promise.resolve(),
+    ]);
 
     return {
       message: 'Therapist archived successfully',
@@ -337,19 +531,22 @@ export class TherapistService {
     const therapist = await this.findOneWithAccount(id);
     therapist.archivedAt = null;
     therapist.isActive = false;
-    const restored = await this.therapistRepo.save(therapist);
-    if (restored.account?.id) {
-      await this.userService.setDisabled(restored.account.id, false);
-    }
+    const restored = await this.dataSource.transaction(async (manager) => {
+      const saved = await manager.getRepository(Therapist).save(therapist);
+      if (saved.account?.id) {
+        await manager.getRepository(User).update(saved.account.id, {
+          disabledAt: null,
+        });
+      }
+      return saved;
+    });
     return restored;
   }
 
   async getPerformance(): Promise<TherapistPerformance[]> {
-    const therapists = await this.therapistRepo.find({
-      order: {
-        createdAt: 'DESC',
-      },
-    });
+    const therapists = await this.adminTherapistQuery()
+      .orderBy('therapist.createdAt', 'DESC')
+      .getMany();
     const appointments = await this.appointmentRepo.find();
 
     return therapists.map((therapist) => {
@@ -431,18 +628,27 @@ export class TherapistService {
     return `Oruma-${randomBytes(6).toString('base64url')}`;
   }
 
+  serializePrivateProfile<T extends Therapist>(therapist: T) {
+    const { account: _account, ...profile } = therapist;
+    void _account;
+    return profile;
+  }
+
   private toPublicTherapist(therapist: Therapist): PublicTherapist {
+    const legacyTags = splitLegacyTherapistTags(therapist.tags);
     return {
       id: therapist.id,
       name: therapist.name,
       title: therapist.title,
       tags: therapist.tags,
+      areasOfPractice: therapist.areasOfPractice ?? legacyTags.areasOfPractice,
+      languages: therapist.languages ?? legacyTags.languages,
       experience: therapist.experience,
-      group: therapist.group,
       price: therapist.price,
       couplePrice: therapist.couplePrice,
       image: therapist.image,
       voiceIntro: therapist.voiceIntro,
+      voiceIntroTranscript: therapist.voiceIntroTranscript,
       qualifications: therapist.qualifications,
       awardingInstitution: therapist.awardingInstitution,
       verifiedExperienceHours: therapist.verifiedExperienceHours,
@@ -460,10 +666,26 @@ export class TherapistService {
     };
   }
 
-  private removeEmptyProfileChanges(changes: Record<string, unknown>) {
+  private normalizeProfileChanges(changes: object) {
     return Object.fromEntries(
-      Object.entries(changes).filter(([, value]) => value !== undefined),
+      Object.entries(changes)
+        .filter(([, value]) => value !== undefined)
+        .map(([field, value]) => {
+          if (Array.isArray(value)) {
+            return [field, this.normalizeList(value)];
+          }
+          if (typeof value === 'string') {
+            const trimmed = value.trim();
+            return [field, trimmed || null];
+          }
+          return [field, value];
+        }),
     );
+  }
+
+  private normalizeList(values: string[] | null | undefined) {
+    if (!values) return [];
+    return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
   }
 
   private assertReadyForPublication(therapist: Partial<Therapist>) {
@@ -473,46 +695,48 @@ export class TherapistService {
       );
     }
 
+    const legacyTags = splitLegacyTherapistTags(therapist.tags);
     const requiredFields: Array<[string, unknown]> = [
       ['full name', therapist.name],
       ['exact professional role', therapist.title],
       ['qualifications', therapist.qualifications],
       ['awarding institution', therapist.awardingInstitution],
-      ['areas of practice', therapist.tags?.length],
+      [
+        'areas of practice',
+        therapist.areasOfPractice?.length ?? legacyTags.areasOfPractice.length,
+      ],
+      ['languages', therapist.languages?.length ?? legacyTags.languages.length],
       ['consultation type', therapist.consultationType],
       ['session duration', therapist.sessionDurationMinutes],
-      ['consultation price', therapist.price],
+      ['verified experience hours', therapist.verifiedExperienceHours],
       ['engagement relationship', therapist.engagementRelationship],
+      ['consultation price', therapist.price],
     ];
+    if (requiresProfessionalRegistration(therapist.title)) {
+      requiredFields.push(
+        [
+          'professional registration number',
+          therapist.professionalRegistrationNumber,
+        ],
+        ['registration authority', therapist.registrationAuthority],
+      );
+    }
     const missing = requiredFields
       .filter(([, value]) => !value)
       .map(([label]) => label);
 
-    if (
-      /clinical psychologist|psychiatrist|doctor|licensed psychologist|medical practitioner|registered healthcare professional/i.test(
-        therapist.title ?? '',
-      )
-    ) {
-      if (!therapist.professionalRegistrationNumber) {
-        missing.push('professional registration number');
-      }
-      if (!therapist.registrationAuthority) {
-        missing.push('registration authority');
-      }
-    }
-
     if (missing.length > 0) {
       throw new BadRequestException(
-        `Practitioner profile cannot be published until these fields are verified: ${missing.join(', ')}`,
+        `Complete these practitioner profile fields before publishing: ${missing.join(', ')}`,
       );
     }
   }
 
   private async findOneWithAccount(id: string): Promise<Therapist> {
-    const therapist = await this.therapistRepo.findOne({
-      where: { id },
-      relations: ['account'],
-    });
+    const therapist = await this.adminTherapistQuery()
+      .leftJoinAndSelect('therapist.account', 'account')
+      .where('therapist.id = :id', { id })
+      .getOne();
 
     if (!therapist) {
       throw new NotFoundException('Therapist not found');
@@ -521,8 +745,143 @@ export class TherapistService {
     return therapist;
   }
 
+  private adminTherapistQuery() {
+    return this.therapistRepo
+      .createQueryBuilder('therapist')
+      .addSelect([
+        'therapist.email',
+        'therapist.imagePublicId',
+        'therapist.voiceIntroPublicId',
+        'therapist.pendingProfileChanges',
+        'therapist.pendingProfileSubmittedAt',
+        'therapist.archivedAt',
+      ]);
+  }
+
+  private assertSafeMedia(therapist: Partial<Therapist>) {
+    this.assertSafeMediaUrl(
+      therapist.image,
+      therapist.imagePublicId,
+      'profile image',
+    );
+    this.assertSafeMediaUrl(
+      therapist.voiceIntro,
+      therapist.voiceIntroPublicId,
+      'voice introduction',
+    );
+    this.assertMediaPublicId(
+      therapist.image,
+      therapist.imagePublicId,
+      'profile image',
+    );
+    this.assertMediaPublicId(
+      therapist.voiceIntro,
+      therapist.voiceIntroPublicId,
+      'voice introduction',
+    );
+  }
+
+  private assertOwnedMedia(therapist: Partial<Therapist>, accountId: string) {
+    const expectedPrefix = `oruma/therapists/${accountId}/`;
+    for (const [label, publicId] of [
+      ['profile image', therapist.imagePublicId],
+      ['voice introduction', therapist.voiceIntroPublicId],
+    ] as const) {
+      if (publicId && !publicId.startsWith(expectedPrefix)) {
+        throw new BadRequestException(
+          `${label} was not uploaded by this therapist account`,
+        );
+      }
+    }
+  }
+
+  private assertMediaPublicId(
+    url: string | null | undefined,
+    publicId: string | null | undefined,
+    label: string,
+  ) {
+    const isCloudinaryAsset = Boolean(url?.includes('res.cloudinary.com'));
+    if (isCloudinaryAsset && !publicId?.startsWith('oruma/therapists/')) {
+      throw new BadRequestException(
+        `${label} is missing its managed media identifier`,
+      );
+    }
+    if (publicId && !publicId.startsWith('oruma/therapists/')) {
+      throw new BadRequestException(`Invalid ${label} media identifier`);
+    }
+  }
+
+  private async deleteReplacedMedia(
+    previousImagePublicId: string | null | undefined,
+    nextImagePublicId: string | null | undefined,
+    previousVoiceIntroPublicId: string | null | undefined,
+    nextVoiceIntroPublicId: string | null | undefined,
+  ) {
+    await Promise.allSettled([
+      previousImagePublicId && previousImagePublicId !== nextImagePublicId
+        ? this.mediaService.delete(previousImagePublicId, 'image')
+        : Promise.resolve(),
+      previousVoiceIntroPublicId &&
+      previousVoiceIntroPublicId !== nextVoiceIntroPublicId
+        ? this.mediaService.delete(previousVoiceIntroPublicId, 'video')
+        : Promise.resolve(),
+    ]);
+  }
+
+  private pendingString(
+    changes: Record<string, unknown>,
+    key: string,
+  ): string | null {
+    const value = changes[key];
+    return typeof value === 'string' ? value : null;
+  }
+
+  private assertSafeMediaUrl(
+    value: string | null | undefined,
+    publicId: string | null | undefined,
+    label: string,
+  ) {
+    if (!value || value.startsWith('/') || !value.includes('://')) return;
+    let url: URL;
+    try {
+      url = new URL(value);
+    } catch {
+      throw new BadRequestException(`Invalid ${label} URL`);
+    }
+    const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
+    const expectedPrefix = cloudName ? `/${cloudName}/` : '/';
+    if (
+      url.protocol !== 'https:' ||
+      url.hostname !== 'res.cloudinary.com' ||
+      !url.pathname.startsWith(expectedPrefix)
+    ) {
+      throw new BadRequestException(
+        `${label} must be an Oruma-managed media asset`,
+      );
+    }
+    if (publicId) {
+      let decodedPath: string;
+      try {
+        decodedPath = decodeURIComponent(url.pathname);
+      } catch {
+        throw new BadRequestException(`Invalid ${label} URL`);
+      }
+      const publicIdOffset = decodedPath.lastIndexOf(`/${publicId}`);
+      const suffix =
+        publicIdOffset === -1
+          ? null
+          : decodedPath.slice(publicIdOffset + publicId.length + 1);
+      if (suffix === null || (suffix !== '' && !suffix.startsWith('.'))) {
+        throw new BadRequestException(
+          `${label} URL does not match its managed media identifier`,
+        );
+      }
+    }
+  }
+
   private async sendTherapistCredentials(
     therapist: Therapist,
+    email: string,
     temporaryPassword: string,
   ) {
     const loginUrl = this.configService.get<string>(
@@ -535,24 +894,24 @@ export class TherapistService {
       '',
       'Your Oruma therapist account has been created.',
       `Login: ${loginUrl}`,
-      `Email: ${therapist.email}`,
+      `Email: ${email}`,
       `Temporary password: ${temporaryPassword}`,
       '',
-      'Please sign in and keep these credentials secure.',
+      'Please sign in and change this temporary password before using your therapist dashboard.',
     ].join('\n');
 
     await this.providerJobService.enqueueEmail(
       {
-        to: therapist.email ?? '',
+        to: email,
         subject,
         text,
         html: `
         <p>Hello ${therapist.name},</p>
         <p>Your Oruma therapist account has been created.</p>
         <p><strong>Login:</strong> <a href="${loginUrl}">${loginUrl}</a></p>
-        <p><strong>Email:</strong> ${therapist.email}</p>
+        <p><strong>Email:</strong> ${email}</p>
         <p><strong>Temporary password:</strong> ${temporaryPassword}</p>
-        <p>Please sign in and keep these credentials secure.</p>
+        <p>Please sign in and change this temporary password before using your therapist dashboard.</p>
       `,
       },
       { deduplicationKey: `therapist:${therapist.id}:credentials` },

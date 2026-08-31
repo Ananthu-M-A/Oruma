@@ -27,8 +27,8 @@ const sections: PolicySection[] = [
   {
     title: "3. Practitioner responsibility and relationship",
     body: [
-      "Each public practitioner profile should state the person's exact role, verified credentials, areas of practice, consultation type, fee, duration, registration details where legally applicable, and engagement relationship with Oruma.",
-      "Where a profile identifies an independent practitioner, that practitioner is responsible for professional judgment, advice, scope of practice, session delivery, and professional-record obligations. Oruma facilitates discovery, booking, payment, communication, and operational support.",
+      "Each public practitioner profile states the person's exact role, reviewed qualifications, areas of practice, consultation type, fee, and current availability.",
+      "Each practitioner is responsible for professional judgment, advice, scope of practice, session delivery, and professional-record obligations. Oruma facilitates discovery, booking, payment, communication, and operational support.",
       "A profile, testimonial, or service description is not a guarantee of diagnosis, cure, treatment result, or particular outcome.",
     ],
   },
@@ -51,7 +51,7 @@ const sections: PolicySection[] = [
   {
     title: "6. Payments, invoices, cancellation, and refunds",
     body: [
-      "The final amount shown before payment is based on the selected practitioner, service, and any displayed package discount. Payment does not override practitioner availability or create a right to an unavailable service.",
+      "The final amount shown before payment is based on the selected practitioner and service. Any future multi-session plan must identify and schedule every included session before payment. Payment does not override practitioner availability or create a right to an unavailable service.",
       "Online payments may be processed by Razorpay. Oruma sends only non-sensitive booking, invoice, amount, and payment-status information to payment systems; health and consultation content is excluded.",
       "Cancellation eligibility, no-show handling, payment failures, duplicate debits, rescheduling, and refund timelines are governed by the public Cancellation and Refund Policies.",
     ],

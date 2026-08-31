@@ -1,120 +1,167 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
-  IsDate,
   IsEmail,
   IsEnum,
+  IsIn,
   IsInt,
-  IsNumber,
+  IsNotEmpty,
   IsOptional,
   IsString,
+  Max,
+  MaxLength,
   Min,
 } from 'class-validator';
 import { TherapistVerificationStatus } from '../entities/therapist-verification-status.enum';
+import {
+  THERAPIST_CONSULTATION_TYPES,
+  THERAPIST_ENGAGEMENT_RELATIONSHIPS,
+} from '../therapist-profile.constants';
 
 export class UpdateTherapistDto {
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
   name?: string;
 
   @IsOptional()
   @IsEmail()
+  @MaxLength(254)
   email?: string;
 
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
   title?: string;
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(25)
   @IsString({ each: true })
-  tags?: string[];
+  @MaxLength(80, { each: true })
+  tags?: string[] | null;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(25)
+  @IsString({ each: true })
+  @MaxLength(80, { each: true })
+  areasOfPractice?: string[] | null;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(15)
+  @IsString({ each: true })
+  @MaxLength(50, { each: true })
+  languages?: string[] | null;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
+  @Max(80)
   experience?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
-  group?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
   @Min(0)
+  @Max(1_000_000)
   price?: number;
 
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(0)
-  couplePrice?: number;
+  @Max(1_000_000)
+  couplePrice?: number | null;
 
   @IsOptional()
   @IsString()
-  image?: string;
+  @MaxLength(2048)
+  image?: string | null;
 
   @IsOptional()
   @IsString()
-  voiceIntro?: string;
+  @MaxLength(255)
+  imagePublicId?: string | null;
 
   @IsOptional()
   @IsString()
-  qualifications?: string;
+  @MaxLength(2048)
+  voiceIntro?: string | null;
 
   @IsOptional()
   @IsString()
-  awardingInstitution?: string;
+  @MaxLength(255)
+  voiceIntroPublicId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  voiceIntroTranscript?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  qualifications?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  awardingInstitution?: string | null;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  verifiedExperienceHours?: number;
+  @Max(100_000)
+  verifiedExperienceHours?: number | null;
 
   @IsOptional()
   @IsString()
-  professionalRegistrationNumber?: string;
+  @MaxLength(120)
+  professionalRegistrationNumber?: string | null;
 
   @IsOptional()
   @IsString()
-  registrationAuthority?: string;
+  @MaxLength(160)
+  registrationAuthority?: string | null;
 
   @IsOptional()
   @IsString()
-  specialization?: string;
+  @MaxLength(160)
+  specialization?: string | null;
 
   @IsOptional()
-  @IsString()
-  consultationType?: string;
+  @IsIn(THERAPIST_CONSULTATION_TYPES)
+  consultationType?: (typeof THERAPIST_CONSULTATION_TYPES)[number] | null;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
-  sessionDurationMinutes?: number;
+  @Min(15)
+  @Max(180)
+  sessionDurationMinutes?: number | null;
+
+  @IsOptional()
+  @IsIn(THERAPIST_ENGAGEMENT_RELATIONSHIPS)
+  engagementRelationship?:
+    | (typeof THERAPIST_ENGAGEMENT_RELATIONSHIPS)[number]
+    | null;
 
   @IsOptional()
   @IsString()
-  engagementRelationship?: string;
+  @MaxLength(4000)
+  bio?: string | null;
 
   @IsOptional()
   @IsEnum(TherapistVerificationStatus)
   verificationStatus?: TherapistVerificationStatus;
-
-  @IsOptional()
-  @IsString()
-  bio?: string;
-
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  nextAvailableSlot?: Date;
 
   @IsOptional()
   @IsBoolean()

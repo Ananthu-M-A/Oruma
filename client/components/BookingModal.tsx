@@ -36,6 +36,7 @@ import {
   getRazorpayPaymentFailureMessage,
   RAZORPAY_UPI_CHECKOUT_CONFIG,
 } from "../src/lib/razorpay";
+import { getTherapistBookingModes } from "../src/lib/therapistProfileOptions";
 
 const isPaymentBypassEnabled =
   import.meta.env.DEV && import.meta.env.VITE_PAYMENT_BYPASS_ENABLED === "true";
@@ -103,6 +104,7 @@ export default function BookingModal({
   const [bookingOtpLoading, setBookingOtpLoading] = useState(false);
   const [bookingDevCode, setBookingDevCode] = useState("");
   const dialogRef = useRef<HTMLDivElement>(null);
+  const bookingModes = getTherapistBookingModes(therapist?.consultationType);
   const [formData, setFormData] = useState({
     service: "Individual Therapy",
     sessionCount: 1,
@@ -148,8 +150,9 @@ export default function BookingModal({
       date: initialSlot ? getSlotDateLabel(initialSlot) : "",
       time: initialSlot ? getSlotTimeLabel(initialSlot) : "",
       email: currentUser?.email ?? prev.email,
+      mode: getTherapistBookingModes(therapist?.consultationType)[0] ?? "",
     }));
-  }, [initialSlot, isOpen]);
+  }, [initialSlot, isOpen, therapist?.consultationType]);
 
   useEffect(() => {
     if (!isOpen || !therapist?.id) return;
@@ -213,8 +216,7 @@ export default function BookingModal({
 
   if (!isOpen) return null;
 
-  const isGroup1 = therapist?.group === 1;
-  const canBookCoupleTherapy = !isGroup1 && Boolean(therapist?.couplePrice);
+  const canBookCoupleTherapy = Boolean(therapist?.couplePrice);
   const sessionPrice =
     formData.service === "Couple Therapy"
       ? Number(therapist?.couplePrice ?? therapist?.price ?? 0)
@@ -573,7 +575,7 @@ export default function BookingModal({
                   <option>Individual Therapy</option>
                   {canBookCoupleTherapy && <option>Couple Therapy</option>}
                 </select>
-                {isGroup1 && (
+                {!canBookCoupleTherapy && (
                   <p className="text-[10px] text-orange-600 font-bold mt-2 flex items-center gap-1">
                     <LucideIcon name="info" size={10} /> Couple therapy is
                     available with eligible professionals.
@@ -583,7 +585,7 @@ export default function BookingModal({
 
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Session package
+                  Session
                 </label>
                 <div className="grid gap-3">
                   {SESSION_PACKAGE_OPTIONS.map((option) => {
@@ -785,8 +787,10 @@ export default function BookingModal({
                 <legend className="text-sm font-bold text-gray-700">
                   Mode of Therapy
                 </legend>
-                <div className="grid grid-cols-3 gap-3">
-                  {["Video", "Audio", "Chat"].map((mode) => (
+                <div
+                  className={`grid gap-3 ${bookingModes.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}
+                >
+                  {bookingModes.map((mode) => (
                     <button
                       key={mode}
                       type="button"
@@ -798,6 +802,11 @@ export default function BookingModal({
                     </button>
                   ))}
                 </div>
+                {bookingModes.length === 0 && (
+                  <p className="rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-800">
+                    This professional has not configured an online session mode.
+                  </p>
+                )}
               </fieldset>
               {!getCurrentUser() && (
                 <div className="rounded-xl border border-[#B7C8A3] bg-[#F5F8F7] p-4">
@@ -892,10 +901,7 @@ export default function BookingModal({
                     </div>
                     <div className="flex items-center gap-3 text-sm text-[#064F4B] font-medium">
                       <LucideIcon name="clock" size={16} />
-                      <span>
-                        {formData.time} · {therapist?.sessionDurationMinutes}{" "}
-                        minutes
-                      </span>
+                      <span>{formData.time}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-[#064F4B] font-medium">
                       <LucideIcon name="badge-indian-rupee" size={16} />
@@ -978,9 +984,9 @@ export default function BookingModal({
                   className="mt-1 h-4 w-4"
                 />
                 <span>
-                  I confirm the practitioner, service, date, time, duration,
-                  amount, cancellation and refund terms, and agree to the Terms
-                  and Privacy Policy.
+                  I confirm the practitioner, service, date, time, amount,
+                  cancellation and refund terms, and agree to the Terms and
+                  Privacy Policy.
                 </span>
               </label>
               <p className="text-center text-xs text-gray-400">

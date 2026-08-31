@@ -11,24 +11,9 @@ describe('calculateSessionPackagePricing', () => {
     });
   });
 
-  it('applies the 4-session care package offer', () => {
-    expect(calculateSessionPackagePricing(1500, 4)).toEqual({
-      sessionCount: 4,
-      packageName: '4-session care package',
-      discountPercent: 10,
-      originalAmount: 6000,
-      offerAmount: 5400,
-    });
-  });
-
-  it('applies the 8-session care package offer', () => {
-    expect(calculateSessionPackagePricing(1500, 8)).toEqual({
-      sessionCount: 8,
-      packageName: '8-session care package',
-      discountPercent: 15,
-      originalAmount: 12000,
-      offerAmount: 10200,
-    });
+  it('rejects multi-session packages until every session can be scheduled', () => {
+    expect(calculateSessionPackagePricing(1500, 4)).toBeNull();
+    expect(calculateSessionPackagePricing(1500, 8)).toBeNull();
   });
 
   it('rejects unsupported package sizes', () => {

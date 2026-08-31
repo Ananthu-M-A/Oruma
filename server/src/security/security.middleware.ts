@@ -146,6 +146,18 @@ export function requireProductionSecrets() {
   if (databaseSync === 'true') {
     throw new Error('Production must not run with DATABASE_SYNC=true.');
   }
+
+  const missingMediaSecrets = [
+    'CLOUDINARY_CLOUD_NAME',
+    'CLOUDINARY_UPLOAD_PRESET',
+    'CLOUDINARY_API_KEY',
+    'CLOUDINARY_API_SECRET',
+  ].filter((key) => !process.env[key]);
+  if (missingMediaSecrets.length > 0) {
+    throw new Error(
+      `Production media management requires: ${missingMediaSecrets.join(', ')}`,
+    );
+  }
 }
 
 function isWebhookRequest(req: Request) {
