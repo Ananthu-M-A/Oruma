@@ -1,4 +1,4 @@
-export type SessionPackageOption = {
+type SessionPackageOption = {
   sessionCount: 1;
   discountPercent: number;
   label: string;

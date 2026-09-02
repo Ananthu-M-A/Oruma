@@ -1,6 +1,3 @@
-import React from "react";
-import { LucideIcon } from "@site-builder/icons";
-
 export default function FollowUpHero() {
   return (
     <section className="pt-40 lg:pt-52 pb-20 bg-white">

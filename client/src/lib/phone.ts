@@ -1,4 +1,4 @@
-export type CountryOption = {
+type CountryOption = {
   label: string;
   dialCode: string;
   example: string;

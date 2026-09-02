@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { LucideIcon } from "@site-builder/icons";
 import Navbar from "../components/Navbar";
@@ -17,12 +17,6 @@ import {
 } from "../src/lib/therapists";
 import { applyTherapistNotFoundSeo, applyTherapistSeo } from "../src/lib/seo";
 import { splitTherapistTags } from "../src/lib/therapistProfileOptions";
-
-export const meta = {
-  title: "Verified Practitioner Profile | Oruma",
-  description:
-    "Review verified practitioner details, fees, duration, availability, and request an online Oruma booking.",
-};
 
 function mapForBooking(therapist: Therapist) {
   return {

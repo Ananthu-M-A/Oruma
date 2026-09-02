@@ -6,7 +6,7 @@ const SITE_URL = businessConfig.website;
 const SITE_NAME = businessConfig.brandName;
 const DEFAULT_SOCIAL_IMAGE = `${SITE_URL}/assets/home-lady-striped-shirt-v2.webp`;
 
-export type PageSeo = {
+type PageSeo = {
   title: string;
   description: string;
   canonicalPath?: string;

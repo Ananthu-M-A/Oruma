@@ -1,4 +1,3 @@
-import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import FloatingActions from "../components/FloatingActions";
@@ -38,12 +37,6 @@ import TraumaMechanism from "../components/TraumaMechanism";
 // Global Components
 import AnxietyHowItWorks from "../components/AnxietyHowItWorks";
 import TherapistGrid from "../components/TherapistGrid";
-
-export const meta = {
-  title: "Relationship, Breakup & Mental Health Concerns | oruma.me",
-  description:
-    "Specialized support for relationship issues, breakup recovery, anxiety, postpartum depression, student wellness, and trauma recovery.",
-};
 
 export default function ConcernsPage() {
   return (
@@ -136,13 +129,13 @@ export default function ConcernsPage() {
 
           <div className="rounded-[4rem] overflow-hidden aspect-[4/5] shadow-2xl relative group border-8 border-[#F5F8F7]">
             <img
-              src="https://images.unsplash.com/photo-1516585427167-9f4af9627e6c?auto=format&fit=crop&q=80&w=800"
+              src="/assets/breakup-healing-hero.webp"
               alt="Reflective healing from breakup"
               loading="lazy"
               decoding="async"
-              className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-110"
+              className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110"
             />
-            <div className="absolute inset-0 bg-[#064F4B]/5 transition-all duration-1000" />
+            <div className="absolute inset-0 bg-[#064F4B]/20 mix-blend-multiply group-hover:bg-transparent transition-all duration-1000" />
 
             <div className="absolute top-8 inset-x-8 z-20">
               <div className="p-6 bg-[#064F4B]/40 backdrop-blur-md rounded-[2.5rem] border border-white/20 transform group-hover:-translate-y-1 transition-transform duration-700">

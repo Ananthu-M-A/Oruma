@@ -1,6 +1,6 @@
 import rawBusinessConfig from "../../../config/business.json";
 
-export type BusinessConfig = typeof rawBusinessConfig;
+type BusinessConfig = typeof rawBusinessConfig;
 
 const placeholderPattern =
   /\[(?:required|verification required)\]|\b(?:todo|tbd|placeholder|example)\b/i;

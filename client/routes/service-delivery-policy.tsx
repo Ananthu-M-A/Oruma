@@ -1,11 +1,5 @@
-import React from "react";
 import PolicyPage, { PolicySection } from "../components/PolicyPage";
 import { businessConfig } from "../src/config/business";
-
-export const meta = {
-  title: `Service Delivery Policy | ${businessConfig.brandName}`,
-  description: `How ${businessConfig.brandName} confirms and digitally delivers online counselling and wellness bookings.`,
-};
 
 const sections: PolicySection[] = [
   {

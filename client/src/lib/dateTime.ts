@@ -109,7 +109,7 @@ export function addMinutesToIstInput(value: string, minutes: number) {
   return toIstDateTimeInputValue(date.getTime() + minutes * 60_000);
 }
 
-export function getIstDateKey(value: DateValue) {
+function getIstDateKey(value: DateValue) {
   const date = asValidDate(value);
   if (!date) return "";
 

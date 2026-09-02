@@ -1,21 +1,13 @@
-import React from "react";
 import Navbar from "../../components/Navbar";
 import FollowUpHero from "../../components/FollowUpHero";
 import ServicesSnapshot from "../../components/ServicesSnapshot";
 import TherapistGrid from "../../components/TherapistGrid";
-import ActionBanner from "../../components/ActionBanner";
 import FollowUpFAQ from "../../components/FollowUpFAQ";
 import Footer from "../../components/Footer";
 import { createWhatsAppUrl } from "../../src/config/business";
 import FloatingActions from "../../components/FloatingActions";
 import { LucideIcon } from "@site-builder/icons";
 import ServiceScopeNotice from "../../components/ServiceScopeNotice";
-
-export const meta = {
-  title: "Follow Up Sessions | oruma.me",
-  description:
-    "Review availability, duration, fees, and policies before booking a follow-up counselling or wellness session.",
-};
 
 export default function FollowUpPage() {
   return (
@@ -26,29 +18,12 @@ export default function FollowUpPage() {
 
       <FollowUpHero />
 
-      {/* Category Section */}
       <ServicesSnapshot />
 
-      {/* Search Section */}
-      <div className="max-w-7xl mx-auto px-6 mb-12">
-        <div className="relative group max-w-2xl mx-auto">
-          <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-            <LucideIcon name="search" size={18} className="text-[#5F7F7A]" />
-          </div>
-          <input
-            type="text"
-            className="w-full bg-[#F5F8F7] border border-[#E2E8E6] rounded-full py-5 pl-14 pr-8 outline-none focus:ring-4 focus:ring-[#0A7F7A]/5 focus:bg-white focus:border-[#0A7F7A] transition-all text-sm font-medium"
-            placeholder="Search by Therapist name..."
-          />
-        </div>
-      </div>
-
-      {/* First Therapist Batch */}
       <div className="max-w-7xl mx-auto px-6">
         <TherapistGrid />
       </div>
 
-      {/* Yellow "Still Unsure" Banner */}
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-6">
           <div className="bg-[#B7C8A3] rounded-[3rem] p-12 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
@@ -80,11 +55,6 @@ export default function FollowUpPage() {
           </div>
         </div>
       </section>
-
-      {/* Second Therapist Batch */}
-      <div className="max-w-7xl mx-auto px-6 pt-12">
-        <TherapistGrid />
-      </div>
 
       <FollowUpFAQ />
 

@@ -1,11 +1,5 @@
-import React from "react";
 import PolicyPage, { PolicySection } from "../components/PolicyPage";
 import { businessConfig } from "../src/config/business";
-
-export const meta = {
-  title: `Cancellation Policy | ${businessConfig.brandName}`,
-  description: `Cancellation, rescheduling, no-show, technical issue, and practitioner-change rules for ${businessConfig.brandName} bookings.`,
-};
 
 const sections: PolicySection[] = [
   {

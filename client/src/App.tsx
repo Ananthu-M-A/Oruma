@@ -14,7 +14,6 @@ const About = lazy(() => import("../routes/about"));
 const Articles = lazy(() => import("../routes/articles"));
 const Careers = lazy(() => import("../routes/careers"));
 const Concerns = lazy(() => import("../routes/concerns"));
-const AllConcerns = lazy(() => import("../routes/concerns/all-concerns"));
 const Consultation = lazy(() => import("../routes/consultation"));
 const Contact = lazy(() => import("../routes/contact"));
 const FindYourPsychologist = lazy(
@@ -76,7 +75,7 @@ export default function App() {
           <Route path="/articles" element={<Articles />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/concerns" element={<Concerns />} />
-          <Route path="/concerns/all-concerns" element={<AllConcerns />} />
+          <Route path="/concerns/all-concerns" element={<Concerns />} />
           <Route path="/consultation" element={<Consultation />} />
           <Route path="/contact" element={<Contact />} />
           <Route

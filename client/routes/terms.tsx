@@ -1,11 +1,5 @@
-import React from "react";
 import PolicyPage, { PolicySection } from "../components/PolicyPage";
 import { businessConfig } from "../src/config/business";
-
-export const meta = {
-  title: `Terms and Conditions | ${businessConfig.brandName}`,
-  description: `Terms for ${businessConfig.brandName} accounts, practitioner listings, digital bookings, payments, consultations, and support.`,
-};
 
 const sections: PolicySection[] = [
   {

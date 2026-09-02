@@ -1,11 +1,5 @@
-import React from "react";
 import PolicyPage, { PolicySection } from "../components/PolicyPage";
 import { businessConfig } from "../src/config/business";
-
-export const meta = {
-  title: `Refund Policy | ${businessConfig.brandName}`,
-  description: `Refund eligibility, failed-payment handling, reconciliation, and timelines for ${businessConfig.brandName} digital services.`,
-};
 
 const sections: PolicySection[] = [
   {

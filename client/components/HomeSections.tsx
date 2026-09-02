@@ -1,4 +1,3 @@
-import React from "react";
 import { LucideIcon } from "@site-builder/icons";
 import { createWhatsAppUrl } from "../src/config/business";
 
@@ -7,7 +6,7 @@ const supportPathways = [
     title: "Relationship & Marriage",
     description: "Connection, communication, trust and emotional distance",
     icon: "heart-handshake",
-    href: "/concerns/all-concerns#relationship",
+    href: "/concerns#relationship",
     color: "bg-[#F4F0E7]",
   },
   {
@@ -28,7 +27,7 @@ const supportPathways = [
     title: "Emotional Wellbeing",
     description: "Anxiety, stress, self-esteem and life transitions",
     icon: "brain",
-    href: "/concerns/all-concerns#anxiety",
+    href: "/concerns#anxiety",
     color: "bg-[#EAF3F7]",
   },
 ];
@@ -72,13 +71,13 @@ const services = [
 ];
 
 const concerns = [
-  { title: "Relationship Issues", href: "/concerns/all-concerns#relationship" },
-  { title: "Breakup Recovery", href: "/concerns/all-concerns#breakup" },
-  { title: "Anxiety & Stress", href: "/concerns/all-concerns#anxiety" },
+  { title: "Relationship Issues", href: "/concerns#relationship" },
+  { title: "Breakup Recovery", href: "/concerns#breakup" },
+  { title: "Anxiety & Stress", href: "/concerns#anxiety" },
   { title: "Parenting Challenges", href: "/services/parenting-support" },
-  { title: "Teenage Concerns", href: "/concerns/all-concerns#student" },
-  { title: "Trauma & PTSD", href: "/concerns/all-concerns#trauma" },
-  { title: "Emotional Wellbeing", href: "/concerns/all-concerns#depression" },
+  { title: "Teenage Concerns", href: "/concerns#student" },
+  { title: "Trauma & PTSD", href: "/concerns#trauma" },
+  { title: "Emotional Wellbeing", href: "/concerns#depression" },
 ];
 
 const programs = [

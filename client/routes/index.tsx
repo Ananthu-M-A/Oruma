@@ -1,4 +1,3 @@
-import React from "react";
 import Navbar from "../components/Navbar";
 import HeroSection from "../components/HeroSection";
 import TherapistGrid from "../components/TherapistGrid";
@@ -14,12 +13,6 @@ import {
   SupportPathways,
   TestimonialsSection,
 } from "../components/HomeSections";
-
-export const meta = {
-  title: "oruma.me | Together, Gently",
-  description:
-    "Explore Oruma counselling services, common concerns, verified psychologist profiles, learning programs, and online booking support.",
-};
 
 export default function HomePage() {
   return (

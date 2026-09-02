@@ -1,4 +1,3 @@
-import React from "react";
 import Navbar from "../../components/Navbar";
 import ServiceHero from "../../components/ServiceHero";
 import TherapistGrid from "../../components/TherapistGrid";
@@ -8,12 +7,6 @@ import Footer from "../../components/Footer";
 import FloatingActions from "../../components/FloatingActions";
 import { createWhatsAppUrl } from "../../src/config/business";
 import ServiceScopeNotice from "../../components/ServiceScopeNotice";
-
-export const meta = {
-  title: "Individual Counselling | Oruma",
-  description:
-    "Confidential online individual counselling and wellness sessions with clearly identified practitioners.",
-};
 
 export default function IndividualTherapyPage() {
   return (

@@ -1,14 +1,8 @@
-import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import FloatingActions from "../components/FloatingActions";
 import ContactSection from "../components/ContactSection";
 import { businessConfig } from "../src/config/business";
-
-export const meta = {
-  title: `Contact ${businessConfig.brandName} | Booking and Payment Support`,
-  description: `Official support phone, WhatsApp, email, ownership disclosure, and operating address for ${businessConfig.brandName}.`,
-};
 
 export default function ContactPage() {
   return (

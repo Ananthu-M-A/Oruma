@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 import MultiSelectDropdown from "../components/MultiSelectDropdown";
@@ -28,11 +28,6 @@ import {
   therapistQualificationOptions,
   therapistSpecializationOptions,
 } from "../src/lib/therapistProfileOptions";
-
-export const meta = {
-  title: "Manage Therapists | Oruma",
-  description: "Admin therapist permissions, details, and performance.",
-};
 
 export default function AdminTherapistsPage() {
   const [therapists, setTherapists] = useState<Therapist[]>([]);

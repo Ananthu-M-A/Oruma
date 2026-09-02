@@ -52,11 +52,6 @@ import {
   therapistSpecializationOptions,
 } from "../src/lib/therapistProfileOptions";
 
-export const meta = {
-  title: "Therapist Profile | Oruma",
-  description: "Review therapist appointments and account details on Oruma.",
-};
-
 function formatSlot(value?: string) {
   return formatIstDateTime(value, "Time pending");
 }

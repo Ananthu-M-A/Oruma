@@ -1,4 +1,3 @@
-import React from "react";
 import { createWhatsAppUrl } from "../src/config/business";
 import { LucideIcon } from "@site-builder/icons";
 

@@ -1,14 +1,7 @@
-import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { LucideIcon } from "@site-builder/icons";
 import ServiceScopeNotice from "../components/ServiceScopeNotice";
-
-export const meta = {
-  title: "Online Counselling | ORUMA",
-  description:
-    "Review and book digitally delivered online counselling and wellness sessions from home.",
-};
 
 export default function OnlineCounsellingPage() {
   return (

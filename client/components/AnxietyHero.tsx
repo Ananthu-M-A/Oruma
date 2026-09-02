@@ -1,4 +1,3 @@
-import React from "react";
 import { createWhatsAppUrl } from "../src/config/business";
 
 export default function AnxietyHero() {

@@ -34,13 +34,6 @@ export async function getNotifications(accessToken: string) {
   return readResponse<AppNotification[]>(response, "Unable to load notifications.");
 }
 
-export async function getUnreadNotificationCount(accessToken: string) {
-  const response = await fetch(`${API_BASE_URL}/notifications/unread-count`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  return readResponse<{ count: number }>(response, "Unable to load notification count.");
-}
-
 export async function markNotificationRead(accessToken: string, id: string) {
   const response = await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
     method: "PATCH",

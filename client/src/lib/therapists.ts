@@ -43,7 +43,7 @@ export type Therapist = {
   credentialsQueued?: boolean;
 };
 
-export type TherapistPayload = {
+type TherapistPayload = {
   name: string;
   email: string;
   title: string;

@@ -1,22 +1,14 @@
-import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { LucideIcon } from "@site-builder/icons";
 import { createWhatsAppUrl } from "../src/config/business";
-import { availabilityCopy } from "../src/config/publicContent";
 import ServiceScopeNotice from "../components/ServiceScopeNotice";
-
-export const meta = {
-  title: "Remote Online Consultation | Oruma",
-  description:
-    "Book a remote online counselling or wellness consultation, subject to verified practitioner scope and availability.",
-};
 
 function MechanismSection() {
   const steps = [
     {
       title: "Published Availability",
-      desc: availabilityCopy,
+      desc: "Appointments and staff support are available during published operations and depend on practitioner availability.",
       icon: "clock",
     },
     {

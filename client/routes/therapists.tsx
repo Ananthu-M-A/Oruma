@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import FloatingActions from "../components/FloatingActions";
@@ -6,12 +6,6 @@ import TherapistSearchHero from "../components/TherapistSearchHero";
 import TherapistGrid from "../components/TherapistGrid";
 import { LucideIcon } from "@site-builder/icons";
 import { createWhatsAppUrl } from "../src/config/business";
-
-export const meta = {
-  title: "Find a Verified Practitioner | Oruma",
-  description:
-    "Review practitioner roles, verified credentials, fees, duration, and availability before requesting an online session.",
-};
 
 export default function TherapistListingPage() {
   const [query, setQuery] = useState("");

@@ -1,6 +1,5 @@
-import React from 'react';
 
-export default function ServiceHero({ title, subtitle, ...rest }: any) {
+export default function ServiceHero({ title, subtitle }: any) {
   return (
     <section className="pt-40 lg:pt-52 pb-20 bg-[#F5F8F7]">
       <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center">

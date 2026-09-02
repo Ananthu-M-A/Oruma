@@ -12,7 +12,7 @@ Code status checked: 19 August 2026
 - ProfessionalService, Brand, Person-operator, WebSite, WebPage, and practitioner ProfilePage schema use `config/business.json`. The schema identifies Oruma as the brand and RANJINI R as its individual operator; it does not claim an incorporated company or separate legal person.
 - GA4 is loaded only when `VITE_GA_MEASUREMENT_ID` contains a valid `G-...` measurement ID. SPA route changes send `page_view` events.
 - Search Console HTML-tag verification is injected into the built HTML when `VITE_GOOGLE_SITE_VERIFICATION` is set. A Search Console Domain property can instead be verified by DNS without this variable.
-- All 131 local images are WebP. Every image has alternative text and an explicit loading policy; below-the-fold images and YouTube frames are lazy-loaded, while critical hero media is prioritized.
+- All 71 local images are WebP. Every rendered image has alternative text and an explicit loading policy; below-the-fold images and YouTube frames are lazy-loaded, while critical hero media is prioritized.
 - Desktop Chrome and Pixel 7 browser checks cover responsiveness, horizontal overflow, navigation, route metadata, crawler files, and private-route indexing.
 
 ## Production environment

@@ -8,7 +8,6 @@ import { AuthModule } from './auth/auth.module';
 import { TherapistModule } from './therapist/therapist.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { AvailabilityModule } from './availability/availability.module';
-import { MailModule } from './mail/mail.module';
 import { AdminModule } from './admin/admin.module';
 import { PaymentModule } from './payment/payment.module';
 import { TicketModule } from './ticket/ticket.module';
@@ -32,7 +31,6 @@ import { PrivacyModule } from './privacy/privacy.module';
     TherapistModule,
     AppointmentModule,
     AvailabilityModule,
-    MailModule,
     PaymentModule,
     TicketModule,
     CaseSheetModule,

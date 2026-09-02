@@ -1,4 +1,3 @@
-import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import FloatingActions from "../components/FloatingActions";
@@ -8,12 +7,6 @@ import {
   businessLinks,
   createWhatsAppUrl,
 } from "../src/config/business";
-
-export const meta = {
-  title: "Therapists Careers | oruma.me",
-  description:
-    "Learn how counselling and wellness practitioners can submit verifiable credentials for consideration by Oruma.",
-};
 
 export default function CareersPage() {
   const whatsappLink = createWhatsAppUrl(

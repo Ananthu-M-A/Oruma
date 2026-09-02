@@ -1,4 +1,3 @@
-import React from "react";
 import { LucideIcon } from "@site-builder/icons";
 
 export default function ServicesSnapshot() {

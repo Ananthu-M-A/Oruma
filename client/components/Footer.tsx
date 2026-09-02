@@ -1,4 +1,3 @@
-import React from "react";
 import { LucideIcon } from "@site-builder/icons";
 import BusinessIdentityDisclosure from "./BusinessIdentityDisclosure";
 import {

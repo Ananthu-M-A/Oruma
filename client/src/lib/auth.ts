@@ -1,6 +1,6 @@
 export type AuthRole = "PATIENT" | "THERAPIST" | "ADMIN";
 
-export type AuthUser = {
+type AuthUser = {
   userId: string;
   email: string;
   role: AuthRole;
@@ -151,10 +151,6 @@ export function createPrivacyRequest(type: "EXPORT" | "ERASURE" | "CORRECTION", 
 
 export function register(payload: RegisterPayload) {
   return requestAuth("/auth/register", payload);
-}
-
-export function getProfile() {
-  return requestWithAuth<AuthUser>("/auth/profile");
 }
 
 export function getMyAccount() {

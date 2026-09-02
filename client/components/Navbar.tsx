@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { LucideIcon } from "@site-builder/icons";
 import {
   AUTH_CHANGED_EVENT,
@@ -58,14 +58,14 @@ export default function Navbar() {
   const concerns = [
     {
       name: "Relationship Issues",
-      href: "/concerns/all-concerns#relationship",
+      href: "/concerns#relationship",
     },
-    { name: "Breakup Recovery", href: "/concerns/all-concerns#breakup" },
-    { name: "Anxiety & Stress", href: "/concerns/all-concerns#anxiety" },
-    { name: "Postpartum Support", href: "/concerns/all-concerns#postpartum" },
-    { name: "Depression", href: "/concerns/all-concerns#depression" },
-    { name: "Teenage Wellness", href: "/concerns/all-concerns#student" },
-    { name: "Trauma & PTSD", href: "/concerns/all-concerns#trauma" },
+    { name: "Breakup Recovery", href: "/concerns#breakup" },
+    { name: "Anxiety & Stress", href: "/concerns#anxiety" },
+    { name: "Postpartum Support", href: "/concerns#postpartum" },
+    { name: "Depression", href: "/concerns#depression" },
+    { name: "Teenage Wellness", href: "/concerns#student" },
+    { name: "Trauma & PTSD", href: "/concerns#trauma" },
   ];
 
   const programs = [

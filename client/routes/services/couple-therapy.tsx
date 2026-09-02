@@ -1,4 +1,3 @@
-import React from "react";
 import Navbar from "../../components/Navbar";
 import ServiceHero from "../../components/ServiceHero";
 import AssessmentBanner from "../../components/AssessmentBanner";
@@ -10,12 +9,6 @@ import FloatingActions from "../../components/FloatingActions";
 import { createWhatsAppUrl } from "../../src/config/business";
 import CoupleTherapyVideo from "../../components/CoupleTherapyVideo";
 import ServiceScopeNotice from "../../components/ServiceScopeNotice";
-
-export const meta = {
-  title: "Couple Counselling | oruma.me",
-  description:
-    "Review verified practitioner profiles and book confidential online relationship counselling and wellness sessions.",
-};
 
 const bookingChecks = [
   {

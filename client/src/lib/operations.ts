@@ -37,7 +37,7 @@ export type Payment = {
   updatedAt: string;
 };
 
-export type RazorpayOrder = {
+type RazorpayOrder = {
   keyId: string;
   orderId: string;
   amount: number;

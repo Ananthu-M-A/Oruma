@@ -1,14 +1,8 @@
-import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import CoupleTherapySection from "../components/CoupleTherapySection";
 import { LucideIcon } from "@site-builder/icons";
 import ServiceScopeNotice from "../components/ServiceScopeNotice";
-
-export const meta = {
-  title: "Services | ORUMA",
-  description: "Detailed overview of ORUMA's counselling and therapy services.",
-};
 
 const programs = [
   {

@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from "react";
+import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -6,11 +6,6 @@ import PasswordInput from "../components/PasswordInput";
 import { LucideIcon } from "@site-builder/icons";
 import { register } from "../src/lib/auth";
 import { COUNTRY_OPTIONS, formatPhoneNumber, isValidPhoneNumber } from "../src/lib/phone";
-
-export const meta = {
-  title: "Register | Oruma",
-  description: "Create your Oruma account and begin your counselling journey.",
-};
 
 export default function RegisterPage() {
   const navigate = useNavigate();

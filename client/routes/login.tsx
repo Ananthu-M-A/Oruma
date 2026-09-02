@@ -1,15 +1,10 @@
-import React, { FormEvent, useState } from "react";
+import { FormEvent, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PasswordInput from "../components/PasswordInput";
 import { LucideIcon } from "@site-builder/icons";
 import { getCurrentUser, getRedirectPathForRole, login, requestLoginOtp, saveAccessToken, verifyLoginOtp } from "../src/lib/auth";
-
-export const meta = {
-  title: "Login | Oruma",
-  description: "Login to your Oruma account to continue your therapy journey.",
-};
 
 type LocationState = {
   message?: string;

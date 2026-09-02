@@ -1,4 +1,3 @@
-import React from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import FloatingActions from "../../components/FloatingActions";
@@ -7,7 +6,7 @@ import TherapistGrid from "../../components/TherapistGrid";
 import { LucideIcon } from "@site-builder/icons";
 import { createWhatsAppUrl } from "../../src/config/business";
 
-export type SupportingServiceKey =
+type SupportingServiceKey =
   | "parenting-support"
   | "child-teen-counselling"
   | "family-counselling"

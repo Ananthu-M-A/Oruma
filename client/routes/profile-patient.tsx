@@ -37,41 +37,8 @@ import {
 } from "../src/lib/phone";
 import { formatIstDateTime } from "../src/lib/dateTime";
 
-export const meta = {
-  title: "Patient Profile | Oruma",
-  description: "Manage your Oruma patient profile and therapy appointments.",
-};
-
 function formatDate(value?: string) {
   return formatIstDateTime(value, "To be scheduled");
-}
-
-function loadRazorpayCheckout() {
-  if (window.Razorpay) return Promise.resolve();
-
-  return new Promise<void>((resolve, reject) => {
-    const existingScript = document.querySelector<HTMLScriptElement>(
-      'script[src="https://checkout.razorpay.com/v1/checkout.js"]',
-    );
-
-    if (existingScript) {
-      existingScript.addEventListener("load", () => resolve(), { once: true });
-      existingScript.addEventListener(
-        "error",
-        () => reject(new Error("Unable to load Razorpay checkout.")),
-        { once: true },
-      );
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () =>
-      reject(new Error("Unable to load Razorpay checkout."));
-    document.body.appendChild(script);
-  });
 }
 
 function AppointmentCard({

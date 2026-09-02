@@ -1,5 +1,5 @@
 // @refresh reset
-import React, { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
@@ -39,11 +39,6 @@ import {
   updateTicket,
 } from "../src/lib/operations";
 import { formatIstDateTime } from "../src/lib/dateTime";
-
-export const meta = {
-  title: "Admin Profile | Oruma",
-  description: "Admin overview for Oruma appointments and therapist records.",
-};
 
 export default function AdminProfilePage() {
   const user = getCurrentUser();

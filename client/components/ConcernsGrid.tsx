@@ -1,4 +1,3 @@
-import React from "react";
 import { createWhatsAppUrl } from "../src/config/business";
 import { LucideIcon } from "@site-builder/icons";
 
@@ -7,7 +6,7 @@ export default function ConcernsGrid() {
     {
       title: "Performance anxiety issues",
       icon: "zap",
-      href: "/concerns/all-concerns#anxiety",
+      href: "/concerns#anxiety",
     },
     {
       title: "Low desire or mismatched libido",
@@ -17,17 +16,17 @@ export default function ConcernsGrid() {
     {
       title: "Relationship intimacy concerns",
       icon: "heart",
-      href: "/concerns/all-concerns#relationship",
+      href: "/concerns#relationship",
     },
     {
       title: "Healing trauma & past experiences",
       icon: "sparkles",
-      href: "/concerns/all-concerns#trauma",
+      href: "/concerns#trauma",
     },
     {
       title: "Body image & self-esteem blocks",
       icon: "user",
-      href: "/concerns/all-concerns#depression",
+      href: "/concerns#depression",
     },
     {
       title: "Gender dysphoria concerns",
@@ -37,7 +36,7 @@ export default function ConcernsGrid() {
     {
       title: "Postpartum intimacy concerns",
       icon: "baby",
-      href: "/concerns/all-concerns#postpartum",
+      href: "/concerns#postpartum",
     },
     {
       title: "Queer affirmative counseling",

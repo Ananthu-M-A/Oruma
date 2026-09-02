@@ -16,7 +16,7 @@ export function getEarliestBookableSlotTime(now = Date.now()) {
   return Math.ceil((cutoff + 1) / 60_000) * 60_000;
 }
 
-export interface BookingData {
+interface BookingData {
   slotId: string;
   sessionCount?: number;
   contactName?: string;
@@ -76,7 +76,7 @@ export type AppointmentOperationsUpdate = {
   staffNotes?: string;
 };
 
-export interface QuickBookingResponse {
+interface QuickBookingResponse {
   appointment: BookingResponse;
   accessToken: string;
   createdAccount: boolean;
@@ -189,28 +189,6 @@ export async function getMyAppointments(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.message || "Failed to fetch your appointments");
-  }
-
-  return response.json();
-}
-
-export async function getAppointment(
-  appointmentId: string,
-  accessToken: string,
-): Promise<BookingResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/appointments/${appointmentId}`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    },
-  );
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to fetch appointment");
   }
 
   return response.json();

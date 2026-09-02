@@ -1,15 +1,8 @@
-import React from "react";
 import { businessLinks } from "../src/config/business";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import FloatingActions from "../components/FloatingActions";
 import { LucideIcon } from "@site-builder/icons";
-
-export const meta = {
-  title: "Mental Health Articles | oruma.me",
-  description:
-    "Insightful articles on mental wellness, therapy, and self-care. Read the latest from Oruma's experts.",
-};
 
 export default function ArticlesPage() {
   const articles = [

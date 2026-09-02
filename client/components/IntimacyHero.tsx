@@ -1,6 +1,4 @@
-import React from "react";
 import { createWhatsAppUrl } from "../src/config/business";
-import { LucideIcon } from "@site-builder/icons";
 
 export default function IntimacyHero() {
   return (

@@ -10,16 +10,16 @@ Source code for [oruma.me](https://oruma.me), exported from the SiteCanvas platf
 | [React Router 6](https://reactrouter.com) | Client-side routing |
 | [Vite 6](https://vite.dev) | Build tool & dev server |
 | [TypeScript](https://www.typescriptlang.org) | Type safety |
-| [Tailwind CSS](https://tailwindcss.com) | Utility-first CSS (loaded via CDN) |
-| [Lucide Icons](https://lucide.dev) | Icon library (loaded via CDN) |
+| [Tailwind CSS](https://tailwindcss.com) | Utility-first CSS compiled with PostCSS |
+| [Lucide Icons](https://lucide.dev) | Bundled icon library |
 | [Google Fonts](https://fonts.google.com) | Playfair Display (headings) + Inter (body) |
 
 ## Project Structure
 
 ```
 oruma/
-  public/assets/      # Images and static files (131 files)
-  routes/             # Page components (16 pages)
+  public/assets/      # Images and static files
+  routes/             # Page components
     index.tsx          # Homepage
     about.tsx          # About page
     services.tsx       # Services overview
@@ -29,21 +29,18 @@ oruma/
       follow-up.tsx
       sexual-wellness.tsx
     concerns.tsx       # Concerns overview
-    concerns/
-      all-concerns.tsx
     therapists.tsx     # Therapist directory
-    team.tsx           # Team page
     contact.tsx        # Contact page
     consultation.tsx   # Consultation page
     online-counselling.tsx
     articles.tsx       # Articles/blog
     careers.tsx        # Careers page
-  components/          # Reusable UI components (72 files)
+  components/          # Reusable UI components
   src/
     main.tsx           # React entry point
     App.tsx            # Router setup with all routes
     icons.tsx          # Lucide icon component
-  index.html           # HTML shell with CDN links
+  index.html           # HTML shell
   vite.config.ts       # Vite configuration
   tsconfig.json        # TypeScript configuration
   package.json
@@ -95,15 +92,8 @@ The build output goes to the `dist/` directory.
 
 4. Click **Deploy**.
 
-For SPA routing, create `vercel.json` in the project root:
-
-```json
-{
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
-```
+The committed `vercel.json` configures private-route crawler headers,
+therapist-profile rendering, and the SPA fallback.
 
 ### Cloudflare Pages
 
@@ -196,6 +186,6 @@ npx netlify deploy --dir=dist --prod
 
 ## Notes
 
-- **Tailwind CSS** is loaded from the CDN via `<script src="https://cdn.tailwindcss.com">`. For production, consider migrating to a local Tailwind installation with PostCSS for smaller bundle size and better performance.
-- **Assets**: All image URLs are local (`/assets/...`) and fully self-contained.
-- **Icons**: Lucide icons are loaded from a CDN and initialized via a MutationObserver. They render as `<i data-lucide="icon-name">` elements that get replaced with SVGs on page load.
+- **Tailwind CSS** is compiled locally through PostCSS.
+- **Assets**: Static UI images live in `public/assets`; practitioner uploads may use absolute provider URLs.
+- **Icons**: `src/icons.tsx` renders locally bundled Lucide React icons.

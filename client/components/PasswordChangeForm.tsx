@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from "react";
+import { FormEvent, useState } from "react";
 import { LucideIcon } from "@site-builder/icons";
 import PasswordInput from "./PasswordInput";
 import { changePassword, clearAccessToken } from "../src/lib/auth";

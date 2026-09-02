@@ -1,14 +1,8 @@
-import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import FloatingActions from "../components/FloatingActions";
 import BusinessIdentityDisclosure from "../components/BusinessIdentityDisclosure";
 import { businessConfig } from "../src/config/business";
-
-export const meta = {
-  title: `About ${businessConfig.brandName} | Ownership and Services`,
-  description: `Learn who operates ${businessConfig.brandName} and how its individual-owned online counselling and wellness service works.`,
-};
 
 export default function AboutPage() {
   return (

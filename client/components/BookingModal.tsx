@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LucideIcon } from "@site-builder/icons";
 import {
   AvailabilitySlot,
