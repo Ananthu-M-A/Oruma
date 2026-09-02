@@ -86,6 +86,20 @@ export type TherapistPerformance = {
   estimatedCompletedRevenue: number;
 };
 
+function parseTherapistList(data: unknown): Therapist[] {
+  if (Array.isArray(data)) return data as Therapist[];
+
+  if (
+    data &&
+    typeof data === "object" &&
+    Array.isArray((data as { data?: unknown }).data)
+  ) {
+    return (data as { data: Therapist[] }).data;
+  }
+
+  throw new Error("Unable to load therapists. Please try again later.");
+}
+
 export type AvailabilitySlot = {
   id: string;
   startTime: string;
@@ -96,11 +110,7 @@ export type AvailabilitySlot = {
 
 export async function getTherapists() {
   const response = await fetch(`${API_BASE_URL}/therapists`);
-  const data = (await response.json().catch(() => ({}))) as
-    | Therapist[]
-    | {
-        message?: string | string[];
-      };
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
     const message = Array.isArray(
@@ -112,7 +122,7 @@ export async function getTherapists() {
     throw new Error(message);
   }
 
-  return data as Therapist[];
+  return parseTherapistList(data);
 }
 
 export async function getAdminTherapists(accessToken: string) {
