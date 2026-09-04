@@ -157,7 +157,7 @@ export default function Navbar() {
               href="/about"
               className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors"
             >
-              About Us
+              About
             </a>
 
             <div className="relative group/services">
@@ -246,7 +246,7 @@ export default function Navbar() {
               href="/contact"
               className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors"
             >
-              Contact Us
+              Contact
             </a>
             {currentUser ? (
               <div className="flex items-center gap-3">

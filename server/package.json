@@ -22,6 +22,8 @@
     "migration:revert:prod": "typeorm -d dist/src/data-source.js migration:revert",
     "seed:admin": "node dist/seed-admin.js",
     "seed:admin:dev": "ts-node --transpile-only seed-admin.ts",
+    "seed:therapists": "node scripts/upsert-therapists.js",
+    "seed:therapists:check": "node scripts/upsert-therapists.js --check",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
