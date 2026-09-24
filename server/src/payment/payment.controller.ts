@@ -47,6 +47,13 @@ export class PaymentController {
     return this.paymentService.findWebhookEvents();
   }
 
+  @Get('admin/refunds')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  findRefundOperations() {
+    return this.paymentService.findRefundOperations();
+  }
+
   @Patch('admin/webhooks/:id/retry')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -122,7 +129,11 @@ export class PaymentController {
   @Patch(':id/refund')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  refund(@Param('id') id: string, @Body() dto: RefundPaymentDto) {
-    return this.paymentService.refund(id, dto);
+  refund(
+    @Param('id') id: string,
+    @Body() dto: RefundPaymentDto,
+    @Headers('idempotency-key') idempotencyKey?: string,
+  ) {
+    return this.paymentService.refund(id, dto, idempotencyKey);
   }
 }

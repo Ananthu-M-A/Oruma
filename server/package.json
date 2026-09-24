@@ -47,7 +47,7 @@
     "pg": "^8.22.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.30"
+    "typeorm": "^0.3.31"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
@@ -75,7 +75,14 @@
     "typescript-eslint": "^8.61.1"
   },
   "overrides": {
-    "multer": "^2.2.0"
+    "multer": "^2.4.0",
+    "qs": "^6.16.0",
+    "typeorm": {
+      "brace-expansion": "^2.1.4"
+    },
+    "eslint": {
+      "brace-expansion": "^1.1.18"
+    }
   },
   "jest": {
     "moduleFileExtensions": [

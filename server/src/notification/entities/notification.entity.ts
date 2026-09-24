@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -21,8 +22,13 @@ export class Notification {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, { eager: true, onDelete: 'CASCADE' })
-  @Index()
+  @ManyToOne(() => User, {
+    eager: true,
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ foreignKeyConstraintName: 'FK_notification_recipient' })
+  @Index('IDX_notification_recipient')
   recipient: User;
 
   @Column({

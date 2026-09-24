@@ -1,0 +1,12 @@
+*
+!server/
+!server/**
+!config/
+!config/business.json
+server/node_modules
+server/dist
+server/coverage
+server/.env
+server/.env.*
+!server/.env.example
+*.log

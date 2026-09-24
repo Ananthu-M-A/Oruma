@@ -114,7 +114,7 @@ export default {
     const apiBase = (
       process.env.ORUMA_API_URL ||
       process.env.VITE_API_URL ||
-      ""
+      "https://api.oruma.me"
     ).replace(/\/$/, "");
     if (!/^[0-9a-f-]{36}$/i.test(id)) {
       return new Response(renderUnavailableHead(html), {

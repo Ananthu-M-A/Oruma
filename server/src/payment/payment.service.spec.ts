@@ -1,9 +1,14 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { createHmac } from 'crypto';
 import { PaymentService } from './payment.service';
 import { PaymentStatus } from './entities/payment-status.enum';
 import { Role } from '../user/entities/user.entity';
 import { Payment } from './entities/payment.entity';
+import { PaymentRefundStatus } from './entities/payment-refund.entity';
 
 describe('PaymentService', () => {
   const secret = 'test_razorpay_secret';
@@ -12,6 +17,22 @@ describe('PaymentService', () => {
     email: 'patient@example.com',
     role: Role.PATIENT,
   };
+
+  beforeEach(() => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        id: 'pay_123',
+        order_id: 'order_123',
+        amount: 120000,
+        currency: 'INR',
+        status: 'captured',
+        captured: true,
+      }),
+    } as unknown as Response);
+  });
+
+  afterEach(() => jest.restoreAllMocks());
 
   const createService = (payment: Record<string, unknown>) => {
     const paymentRepo = {
@@ -48,9 +69,11 @@ describe('PaymentService', () => {
     };
     const webhookEventRepo = {};
     const configService = {
-      get: jest.fn((key: string) =>
-        key === 'RAZORPAY_KEY_SECRET' ? secret : undefined,
-      ),
+      get: jest.fn((key: string) => {
+        if (key === 'RAZORPAY_KEY_SECRET') return secret;
+        if (key === 'RAZORPAY_KEY_ID') return 'rzp_test_key';
+        return undefined;
+      }),
     };
     const notificationService = {
       create: jest.fn().mockResolvedValue({}),
@@ -64,6 +87,7 @@ describe('PaymentService', () => {
       paymentRepo as never,
       appointmentRepo as never,
       webhookEventRepo as never,
+      {} as never,
       dataSource as never,
       configService as never,
       notificationService as never,
@@ -86,6 +110,7 @@ describe('PaymentService', () => {
   it('queues booking notifications after the first successful Razorpay verification', async () => {
     const payment = {
       id: 'payment-1',
+      amount: 1200,
       status: PaymentStatus.PENDING,
       appointment: {
         id: 'appointment-1',
@@ -130,6 +155,7 @@ describe('PaymentService', () => {
   it('does not duplicate booking notifications when payment is already paid', async () => {
     const payment = {
       id: 'payment-1',
+      amount: 1200,
       status: PaymentStatus.PAID,
       appointment: {
         id: 'appointment-1',
@@ -242,6 +268,7 @@ describe('PaymentService', () => {
       paymentRepo as never,
       appointmentRepo as never,
       {} as never,
+      {} as never,
       dataSource as never,
       configService as never,
       notificationService as never,
@@ -289,6 +316,7 @@ describe('PaymentService', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
       configService as never,
       {} as never,
       {} as never,
@@ -316,5 +344,90 @@ describe('PaymentService', () => {
       refunds: 200,
       pending: 1200,
     });
+  });
+
+  it('reconciles a previously requested Razorpay refund instead of submitting it again', async () => {
+    const payment = {
+      id: 'payment-1',
+      provider: 'razorpay',
+      providerPaymentId: 'pay_123',
+      status: PaymentStatus.PAID,
+    };
+    const operation = {
+      id: 'refund-1',
+      status: PaymentRefundStatus.REQUESTED,
+      receipt: 'oru_rfnd_existing',
+    };
+    const { service } = createService(payment);
+    const reserveRefundOperation = jest.fn().mockResolvedValue({
+      payment,
+      operation,
+      shouldSubmit: false,
+    });
+    const reconcileUncertainRefund = jest.fn().mockResolvedValue(payment);
+    Object.assign(service, {
+      reserveRefundOperation,
+      reconcileUncertainRefund,
+    });
+
+    await expect(
+      service.refund('payment-1', { amount: 500 }, 'same-refund-key'),
+    ).resolves.toBe(payment);
+
+    expect(reconcileUncertainRefund).toHaveBeenCalledWith(payment, operation, {
+      amount: 500,
+    });
+  });
+
+  it('marks an ambiguous Razorpay error unknown rather than allowing a blind retry', async () => {
+    const payment = {
+      id: 'payment-1',
+      provider: 'razorpay',
+      providerPaymentId: 'pay_123',
+      status: PaymentStatus.PAID,
+      appointment: { id: 'appointment-1' },
+    };
+    const operation = {
+      id: 'refund-1',
+      status: PaymentRefundStatus.REQUESTED,
+      receipt: 'oru_rfnd_existing',
+    };
+    const refundRepo = { update: jest.fn().mockResolvedValue(undefined) };
+    const configService = {
+      get: jest.fn((key: string) =>
+        key === 'RAZORPAY_KEY_ID' ? 'rzp_test_key' : secret,
+      ),
+    };
+    const service = new PaymentService(
+      {} as never,
+      {} as never,
+      {} as never,
+      refundRepo as never,
+      {} as never,
+      configService as never,
+      {} as never,
+      {} as never,
+    );
+    Object.assign(service, {
+      reserveRefundOperation: jest.fn().mockResolvedValue({
+        payment,
+        operation,
+        shouldSubmit: true,
+      }),
+    });
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: jest.fn().mockResolvedValue({ error: { description: 'timeout' } }),
+    } as unknown as Response);
+
+    await expect(
+      service.refund('payment-1', { amount: 500 }, 'ambiguous-refund-key'),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+
+    expect(refundRepo.update).toHaveBeenCalledWith(
+      { id: operation.id },
+      expect.objectContaining({ status: PaymentRefundStatus.UNKNOWN }),
+    );
   });
 });

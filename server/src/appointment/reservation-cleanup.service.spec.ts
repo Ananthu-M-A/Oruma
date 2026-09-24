@@ -42,7 +42,7 @@ describe('ReservationCleanupService', () => {
     };
     const service = new ReservationCleanupService(
       dataSource as never,
-      {} as never,
+      { get: jest.fn((_key: string, fallback: string) => fallback) } as never,
       {} as never,
     );
     const now = new Date();

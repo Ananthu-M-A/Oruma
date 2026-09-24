@@ -9,8 +9,10 @@ import { AppModule } from '../src/app.module';
 import { AvailabilitySlot } from '../src/availability/entities/availability-slot.entity';
 import { SlotStatus } from '../src/availability/entities/slot-status.enum';
 import { Payment } from '../src/payment/entities/payment.entity';
+import { PaymentRefund } from '../src/payment/entities/payment-refund.entity';
 import { PaymentWebhookEvent } from '../src/payment/entities/payment-webhook-event.entity';
 import { Therapist } from '../src/therapist/entities/therapist.entity';
+import { TherapistVerificationStatus } from '../src/therapist/entities/therapist-verification-status.enum';
 import { Role, User } from '../src/user/entities/user.entity';
 
 process.env.NODE_ENV = 'test';
@@ -91,6 +93,9 @@ databaseDescribe('Full application with PostgreSQL (e2e)', () => {
         isActive: true,
         price: 1200,
         title: 'Psychologist',
+        consultationType: 'Video',
+        sessionDurationMinutes: 60,
+        verificationStatus: TherapistVerificationStatus.VERIFIED,
       }),
     );
     const startsAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
@@ -128,7 +133,7 @@ databaseDescribe('Full application with PostgreSQL (e2e)', () => {
 
   beforeEach(async () => {
     await dataSource.query(
-      'TRUNCATE TABLE "audit_event", "privacy_request", "payment_webhook_event", "provider_job", "notification", "case_sheet", "payment", "appointment", "availability_slot", "therapist", "login_otp", "ticket", "user" RESTART IDENTITY CASCADE',
+      'TRUNCATE TABLE "audit_event", "privacy_request", "payment_webhook_event", "payment_refund", "provider_job", "notification", "case_sheet", "payment", "appointment", "availability_slot", "therapist", "login_otp", "ticket", "user" RESTART IDENTITY CASCADE',
     );
     await seedApplication();
   });
@@ -154,6 +159,7 @@ databaseDescribe('Full application with PostgreSQL (e2e)', () => {
     const bookingPayload = {
       slotId: slot.id,
       service: 'Individual Therapy',
+      mode: 'Video',
       contactEmail: 'patient-one@oruma.test',
     };
     const responses = await Promise.all([
@@ -194,6 +200,26 @@ databaseDescribe('Full application with PostgreSQL (e2e)', () => {
         where: { appointment: { id: appointmentId } },
       }),
     ).toBe(1);
+
+    const paymentId = bodyAs<{ id: string }>(payments[0]).id;
+    const refundKey = 'e2e-refund-operation-1';
+    await request(app.getHttpServer())
+      .patch(`/payments/${paymentId}/refund`)
+      .set(bearer(adminToken))
+      .set('Idempotency-Key', refundKey)
+      .send({ amount: 1200 })
+      .expect(200);
+    await request(app.getHttpServer())
+      .patch(`/payments/${paymentId}/refund`)
+      .set(bearer(adminToken))
+      .set('Idempotency-Key', refundKey)
+      .send({ amount: 1200 })
+      .expect(200);
+    expect(
+      await dataSource.getRepository(PaymentRefund).count({
+        where: { idempotencyKey: refundKey },
+      }),
+    ).toBe(1);
   });
 
   it('requires contact OTP verification before a quick booking', async () => {
@@ -215,6 +241,7 @@ databaseDescribe('Full application with PostgreSQL (e2e)', () => {
       .send({
         slotId: slot.id,
         contactEmail: 'new-patient@oruma.test',
+        mode: 'Video',
         verificationToken,
       })
       .expect(201);
@@ -258,6 +285,7 @@ databaseDescribe('Full application with PostgreSQL (e2e)', () => {
       .send({
         slotId: slot.id,
         contactEmail: 'patient-one@oruma.test',
+        mode: 'Video',
       })
       .expect(201);
     const appointmentId = bodyAs<BookingBody>(appointmentResponse).id;
@@ -278,6 +306,7 @@ databaseDescribe('Full application with PostgreSQL (e2e)', () => {
       .send({
         slotId: slot.id,
         contactEmail: 'patient-one@oruma.test',
+        mode: 'Video',
       })
       .expect(201);
     const appointmentId = bodyAs<BookingBody>(appointmentResponse).id;
@@ -302,8 +331,8 @@ databaseDescribe('Full application with PostgreSQL (e2e)', () => {
       .set(bearer(patientOneToken))
       .expect(200)
       .expect((response: Response) => {
-        const body = bodyAs<{ user: { email: string } }>(response);
-        expect(body.user.email).toBe('patient-one@oruma.test');
+        const body = bodyAs<{ account: { email: string } }>(response);
+        expect(body.account.email).toBe('patient-one@oruma.test');
       });
   });
 });

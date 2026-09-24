@@ -94,7 +94,7 @@ D:\TOOLS\PostgreSQL\18\bin\psql.exe -U postgres
 ```
 
 ```sql
-CREATE USER teamoruma WITH PASSWORD 'Pswd4teamorum@';
+CREATE USER teamoruma WITH PASSWORD '<strong-local-password>';
 CREATE DATABASE oruma OWNER teamoruma;
 GRANT ALL PRIVILEGES ON DATABASE oruma TO teamoruma;
 ```
@@ -102,7 +102,7 @@ GRANT ALL PRIVILEGES ON DATABASE oruma TO teamoruma;
 Verify the app credentials:
 
 ```powershell
-$env:PGPASSWORD='Pswd4teamorum@'
+$env:PGPASSWORD='<strong-local-password>'
 D:\TOOLS\PostgreSQL\18\bin\psql.exe -h 127.0.0.1 -U teamoruma -d oruma -c "select current_database(), current_user;"
 ```
 

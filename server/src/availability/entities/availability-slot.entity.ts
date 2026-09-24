@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 
 import { Therapist } from '../../therapist/entities/therapist.entity';
@@ -16,8 +17,10 @@ export class AvailabilitySlot {
 
   @ManyToOne(() => Therapist, {
     eager: true,
+    nullable: false,
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ foreignKeyConstraintName: 'FK_availability_therapist' })
   therapist: Therapist;
 
   @Column({

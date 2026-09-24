@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -26,6 +27,7 @@ export enum PrivacyRequestStatus {
 export class PrivacyRequest {
   @PrimaryGeneratedColumn('uuid') id: string;
   @ManyToOne(() => User, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ foreignKeyConstraintName: 'FK_privacy_requester' })
   requester: User | null;
   @Column({ type: 'varchar' }) type: PrivacyRequestType;
   @Column({ type: 'varchar', default: PrivacyRequestStatus.PENDING })

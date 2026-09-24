@@ -82,6 +82,7 @@ async function bootstrap() {
       'Content-Type',
       'X-Requested-With',
       'X-Request-ID',
+      'Idempotency-Key',
     ],
     exposedHeaders: ['X-Request-ID'],
     maxAge: 600,

@@ -60,6 +60,16 @@ export class ReservationCleanupService {
   }
 
   expireReservations(now: Date) {
+    const configuredGraceMinutes = Number(
+      this.configService.get<string>(
+        'PAYMENT_RECONCILIATION_GRACE_MINUTES',
+        '15',
+      ),
+    );
+    const graceMinutes = Number.isFinite(configuredGraceMinutes)
+      ? Math.max(0, configuredGraceMinutes)
+      : 15;
+    const gatewayCutoff = new Date(now.getTime() - graceMinutes * 60_000);
     return this.dataSource.transaction(async (manager) => {
       const repository = manager.getRepository(Appointment);
       const appointments = await repository
@@ -74,6 +84,15 @@ export class ReservationCleanupService {
         })
         .andWhere('appointment.reservationExpiresAt IS NOT NULL')
         .andWhere('appointment.reservationExpiresAt <= :now', { now })
+        .andWhere(
+          `(NOT EXISTS (
+            SELECT 1 FROM "payment" pending_payment
+            WHERE pending_payment."appointmentId" = appointment.id
+              AND pending_payment.status = :pendingStatus
+              AND pending_payment."providerOrderId" IS NOT NULL
+          ) OR appointment."reservationExpiresAt" <= :gatewayCutoff)`,
+          { pendingStatus: PaymentStatus.PENDING, gatewayCutoff },
+        )
         .andWhere(
           `NOT EXISTS (
           SELECT 1 FROM "payment" payment

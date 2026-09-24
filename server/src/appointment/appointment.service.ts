@@ -745,12 +745,32 @@ export class AppointmentService {
 
   private async persistCancellation(appointment: Appointment) {
     return this.dataSource.transaction(async (manager) => {
-      if (appointment.slot?.id) {
+      const appointmentRepository = manager.getRepository(Appointment);
+      const lockedAppointment = await appointmentRepository
+        .createQueryBuilder('appointment')
+        .setLock('pessimistic_write', undefined, ['appointment'])
+        .leftJoinAndSelect('appointment.slot', 'slot')
+        .leftJoinAndSelect('appointment.patient', 'patient')
+        .leftJoinAndSelect('appointment.therapist', 'therapist')
+        .where('appointment.id = :id', { id: appointment.id })
+        .getOne();
+      if (!lockedAppointment)
+        throw new NotFoundException('Appointment not found');
+      if (lockedAppointment.status === AppointmentStatus.CANCELLED) {
+        return lockedAppointment;
+      }
+      if (lockedAppointment.status === AppointmentStatus.COMPLETED) {
+        throw new BadRequestException(
+          'A completed appointment cannot be cancelled',
+        );
+      }
+
+      if (lockedAppointment.slot?.id) {
         const slot = await manager
           .getRepository(AvailabilitySlot)
           .createQueryBuilder('slot')
           .setLock('pessimistic_write', undefined, ['slot'])
-          .where('slot.id = :slotId', { slotId: appointment.slot.id })
+          .where('slot.id = :slotId', { slotId: lockedAppointment.slot.id })
           .getOne();
 
         if (slot?.status === SlotStatus.BOOKED) {
@@ -759,15 +779,16 @@ export class AppointmentService {
         }
       }
 
-      appointment.status = AppointmentStatus.CANCELLED;
-      appointment.meetingLink = null;
-      appointment.meetingLinkAddedAt = null;
-      appointment.meetingLinkSentAt = null;
-      appointment.reminderSentAt = null;
-      appointment.reservationExpiresAt = null;
-      appointment.cancelledAt = new Date();
-      appointment.cancellationReason = 'Cancelled by user or administrator';
-      return manager.getRepository(Appointment).save(appointment);
+      lockedAppointment.status = AppointmentStatus.CANCELLED;
+      lockedAppointment.meetingLink = null;
+      lockedAppointment.meetingLinkAddedAt = null;
+      lockedAppointment.meetingLinkSentAt = null;
+      lockedAppointment.reminderSentAt = null;
+      lockedAppointment.reservationExpiresAt = null;
+      lockedAppointment.cancelledAt = new Date();
+      lockedAppointment.cancellationReason =
+        'Cancelled by user or administrator';
+      return appointmentRepository.save(lockedAppointment);
     });
   }
 

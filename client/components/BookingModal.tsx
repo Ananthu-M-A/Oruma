@@ -9,7 +9,6 @@ import {
 import {
   createAppointment,
   createQuickAppointment,
-  cancelAppointment,
   isBookingLeadTimeBypassEnabled,
   POST_PAYMENT_NOTICE_KEY,
 } from "../src/lib/booking";
@@ -429,24 +428,19 @@ export default function BookingModal({
             }, 1000);
           } catch (err) {
             setSubmitError(
-              err instanceof Error ? err.message : "Unable to verify payment.",
+              `${
+                err instanceof Error ? err.message : "Unable to verify payment."
+              } Your booking remains reserved while the server reconciles the gateway result; do not make a second payment.`,
             );
-            if (appointmentId) {
-              await cancelAppointment(appointmentId, accessToken!);
-            }
           } finally {
             setIsSubmitting(false);
           }
         },
         modal: {
-          ondismiss: async () => {
-            if (
-              !paymentCompleted &&
-              !paymentVerificationStarted &&
-              appointmentId
-            ) {
-              await cancelAppointment(appointmentId, accessToken!).catch(
-                () => undefined,
+          ondismiss: () => {
+            if (!paymentCompleted && !paymentVerificationStarted) {
+              setSubmitError(
+                "Checkout was closed. The booking remains reserved temporarily so a delayed bank confirmation can be reconciled safely.",
               );
             }
             setIsSubmitting(false);
@@ -466,11 +460,6 @@ export default function BookingModal({
           ? error.message
           : "Failed to book appointment. Please try again.",
       );
-      if (appointmentId && accessToken) {
-        await cancelAppointment(appointmentId, accessToken).catch(
-          () => undefined,
-        );
-      }
       setIsSubmitting(false);
     }
   }

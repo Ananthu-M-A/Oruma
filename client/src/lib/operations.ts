@@ -148,12 +148,14 @@ export async function refundPayment(
     receipt?: string;
     speed?: "normal" | "optimum";
   },
+  idempotencyKey: string,
 ) {
   const response = await fetch(`${API_BASE_URL}/payments/${id}/refund`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
+      "Idempotency-Key": idempotencyKey,
     },
     body: JSON.stringify(payload),
   });

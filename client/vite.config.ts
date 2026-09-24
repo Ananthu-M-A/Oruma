@@ -13,6 +13,17 @@ function escapeHtmlAttribute(value: string) {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const configuredApiUrl = env.VITE_API_URL?.trim();
+  if (
+    mode === "production" &&
+    configuredApiUrl &&
+    (!configuredApiUrl.startsWith("https://") ||
+      /localhost|127\.0\.0\.1/i.test(configuredApiUrl))
+  ) {
+    throw new Error(
+      "Production VITE_API_URL must be an HTTPS public API origin.",
+    );
+  }
   const businessConfig = JSON.parse(
     fs.readFileSync(path.resolve(__dirname, "../config/business.json"), "utf8"),
   ) as {

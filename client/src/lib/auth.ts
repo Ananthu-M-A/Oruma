@@ -46,7 +46,13 @@ type AuthResponse = {
   message?: string;
 };
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "/api";
+const configuredApiBaseUrl = import.meta.env.VITE_API_URL?.trim().replace(
+  /\/$/,
+  "",
+);
+export const API_BASE_URL =
+  configuredApiBaseUrl ||
+  (import.meta.env.PROD ? "https://api.oruma.me" : "/api");
 const ACCESS_TOKEN_KEY = "oruma_access_token";
 export const AUTH_CHANGED_EVENT = "oruma-auth-changed";
 

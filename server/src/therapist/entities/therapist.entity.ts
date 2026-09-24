@@ -124,7 +124,7 @@ export class Therapist {
     nullable: true,
     onDelete: 'SET NULL',
   })
-  @JoinColumn()
+  @JoinColumn({ foreignKeyConstraintName: 'FK_therapist_account' })
   account: User | null;
 
   @CreateDateColumn()

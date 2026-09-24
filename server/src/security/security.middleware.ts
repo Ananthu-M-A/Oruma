@@ -158,6 +158,46 @@ export function requireProductionSecrets() {
       `Production media management requires: ${missingMediaSecrets.join(', ')}`,
     );
   }
+
+  const missingEmailSecrets = ['RESEND_API_KEY', 'EMAIL_FROM'].filter(
+    (key) => !process.env[key]?.trim(),
+  );
+  if (missingEmailSecrets.length > 0) {
+    throw new Error(
+      `Production email delivery requires: ${missingEmailSecrets.join(', ')}`,
+    );
+  }
+
+  const missingPaymentSecrets = [
+    'RAZORPAY_KEY_ID',
+    'RAZORPAY_KEY_SECRET',
+    'RAZORPAY_WEBHOOK_SECRET',
+  ].filter((key) => !process.env[key]?.trim());
+  if (missingPaymentSecrets.length > 0) {
+    throw new Error(
+      `Production Razorpay processing requires: ${missingPaymentSecrets.join(', ')}`,
+    );
+  }
+  if (!process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_')) {
+    throw new Error(
+      'Production Razorpay processing requires a Live Mode RAZORPAY_KEY_ID.',
+    );
+  }
+
+  if (process.env.PROVIDER_WORKER_ENABLED === 'false') {
+    throw new Error('Production requires PROVIDER_WORKER_ENABLED=true.');
+  }
+  if (process.env.RESERVATION_CLEANUP_ENABLED === 'false') {
+    throw new Error('Production requires RESERVATION_CLEANUP_ENABLED=true.');
+  }
+  if (process.env.PAYMENT_BYPASS_ENABLED === 'true') {
+    throw new Error('Production must not enable PAYMENT_BYPASS_ENABLED.');
+  }
+  if (process.env.BOOKING_LEAD_TIME_BYPASS_ENABLED === 'true') {
+    throw new Error(
+      'Production must not enable BOOKING_LEAD_TIME_BYPASS_ENABLED.',
+    );
+  }
 }
 
 function isWebhookRequest(req: Request) {
@@ -173,9 +213,12 @@ function isSensitivePath(path: string) {
     '/media',
     '/notifications',
     '/payments',
+    '/privacy',
     '/profile',
     '/tickets',
+    '/user',
     '/users',
+    '/admin',
   ].some((prefix) => path.startsWith(prefix));
 }
 

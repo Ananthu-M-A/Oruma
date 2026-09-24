@@ -1,5 +1,5 @@
 // @refresh reset
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
@@ -65,6 +65,7 @@ export default function AdminProfilePage() {
     reference: "",
   });
   const [refundForm, setRefundForm] = useState<Record<string, string>>({});
+  const refundRequestKeys = useRef<Record<string, string>>({});
   const [ticketNotes, setTicketNotes] = useState<Record<string, string>>({});
   const [appointmentDrafts, setAppointmentDrafts] = useState<
     Record<string, { meetingLink: string; staffNotes: string }>
@@ -184,7 +185,12 @@ export default function AdminProfilePage() {
     setNotice("");
 
     try {
-      await refundPayment(token, payment.id, { amount });
+      const requestFingerprint = `${payment.id}:${amount}`;
+      const idempotencyKey =
+        refundRequestKeys.current[requestFingerprint] ?? crypto.randomUUID();
+      refundRequestKeys.current[requestFingerprint] = idempotencyKey;
+      await refundPayment(token, payment.id, { amount }, idempotencyKey);
+      delete refundRequestKeys.current[requestFingerprint];
       setRefundForm((current) => ({ ...current, [payment.id]: "" }));
       setNotice("Refund initiated to the original payment method.");
       await loadAdminData();

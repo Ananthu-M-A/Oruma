@@ -49,6 +49,7 @@ export class MailService {
           html: input.html,
           text: input.text,
         }),
+        signal: AbortSignal.timeout(10_000),
       });
     } catch (error) {
       this.logger.error(

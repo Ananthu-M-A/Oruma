@@ -38,9 +38,12 @@ const candidates = [
 function loadBusinessConfig(): BusinessConfig {
   const configPath = candidates.find(existsSync);
   if (!configPath) {
-    console.warn(
-      '[business-config] config/business.json was not found. Identity-dependent features must not be published until it is restored.',
-    );
+    const message =
+      'config/business.json was not found. Identity-dependent features must not be published until it is restored.';
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`[business-config] ${message}`);
+    }
+    console.warn(`[business-config] ${message}`);
     return {
       brandName: 'Oruma',
       website: '',
@@ -68,7 +71,9 @@ function loadBusinessConfig(): BusinessConfig {
   const config = JSON.parse(readFileSync(configPath, 'utf8')) as BusinessConfig;
   const warnings = validateBusinessConfig(config);
   if (warnings.length) {
-    console.warn(`[business-config] ${warnings.join(' ')}`);
+    const message = `[business-config] ${warnings.join(' ')}`;
+    if (process.env.NODE_ENV === 'production') throw new Error(message);
+    console.warn(message);
   }
   return config;
 }
