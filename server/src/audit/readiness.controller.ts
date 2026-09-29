@@ -36,16 +36,38 @@ export class ReadinessController {
     };
     try {
       await this.dataSource.query('SELECT 1');
+      const [schema] = (await this.dataSource.query(`SELECT
+        to_regclass('public.migrations') IS NOT NULL AS "migrations",
+        to_regclass('public.provider_job') IS NOT NULL AS "providerJob",
+        to_regclass('public.payment_webhook_event') IS NOT NULL AS "paymentWebhookEvent"
+      `)) as Array<{
+        migrations: boolean;
+        providerJob: boolean;
+        paymentWebhookEvent: boolean;
+      }>;
+      const schemaReady = Boolean(
+        schema?.migrations && schema.providerJob && schema.paymentWebhookEvent,
+      );
+      if (!schemaReady) {
+        throw new ServiceUnavailableException({
+          status: 'not_ready',
+          database: 'available',
+          schema: 'not_ready',
+          providers,
+        });
+      }
       if (strict && Object.values(providers).some((value) => !value)) {
         throw new ServiceUnavailableException({
           status: 'not_ready',
           database: 'available',
+          schema: 'ready',
           providers,
         });
       }
       return {
         status: 'ready',
         database: 'available',
+        schema: 'ready',
         providers,
         timestamp: new Date().toISOString(),
       };
@@ -54,6 +76,7 @@ export class ReadinessController {
       throw new ServiceUnavailableException({
         status: 'not_ready',
         database: 'unavailable',
+        schema: 'unknown',
         providers,
       });
     }

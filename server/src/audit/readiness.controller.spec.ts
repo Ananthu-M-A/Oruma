@@ -15,7 +15,16 @@ describe('ReadinessController', () => {
 
   const createController = (values = configuredValues) => {
     const dataSource = {
-      query: jest.fn().mockResolvedValue([{ '?column?': 1 }]),
+      query: jest
+        .fn()
+        .mockResolvedValueOnce([{ '?column?': 1 }])
+        .mockResolvedValueOnce([
+          {
+            migrations: true,
+            providerJob: true,
+            paymentWebhookEvent: true,
+          },
+        ]),
     };
     const configService = {
       get: jest.fn((key: string, fallback?: string) => values[key] ?? fallback),
@@ -34,6 +43,7 @@ describe('ReadinessController', () => {
     const response = await controller.ready();
     expect(response.status).toBe('ready');
     expect(response.database).toBe('available');
+    expect(response.schema).toBe('ready');
     expect(response.providers.email).toBe(true);
     expect(response.providers.razorpay).toBe(true);
     expect(response.providers.razorpayWebhook).toBe(true);
@@ -58,9 +68,31 @@ describe('ReadinessController', () => {
 
   it('fails readiness when PostgreSQL is unavailable', async () => {
     const { controller, dataSource } = createController();
+    dataSource.query.mockReset();
     dataSource.query.mockRejectedValue(new Error('database unavailable'));
     await expect(controller.ready()).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
+  });
+
+  it('fails readiness when required migrations have not been applied', async () => {
+    const { controller, dataSource } = createController();
+    dataSource.query.mockReset();
+    dataSource.query
+      .mockResolvedValueOnce([{ '?column?': 1 }])
+      .mockResolvedValueOnce([
+        {
+          migrations: false,
+          providerJob: false,
+          paymentWebhookEvent: false,
+        },
+      ]);
+
+    await expect(controller.ready()).rejects.toMatchObject({
+      response: expect.objectContaining({
+        database: 'available',
+        schema: 'not_ready',
+      }),
+    });
   });
 });

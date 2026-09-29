@@ -42,9 +42,16 @@ function loadEnvFile() {
 
 loadEnvFile();
 process.env.TZ = IST_TIME_ZONE;
+const migrationDatabaseUrl = process.env.DATABASE_MIGRATION_URL?.trim();
+const readMigrationEnv = (key: string) => {
+  if (key === 'DATABASE_URL' && migrationDatabaseUrl) {
+    return migrationDatabaseUrl;
+  }
+  return process.env[key];
+};
 
 export default new DataSource({
-  ...getDatabaseConnectionOptions((key) => process.env[key]),
+  ...getDatabaseConnectionOptions(readMigrationEnv),
   entities: [
     Appointment,
     LoginOtp,
