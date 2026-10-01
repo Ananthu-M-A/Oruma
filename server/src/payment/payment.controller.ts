@@ -68,6 +68,16 @@ export class PaymentController {
     return this.paymentService.findForPatient(req.user);
   }
 
+  @Get('razorpay/order/:orderId/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PATIENT)
+  getRazorpayOrderStatus(
+    @Param('orderId') orderId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.paymentService.getRazorpayOrderStatus(orderId, req.user);
+  }
+
   @Get(':id/invoice')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.PATIENT)

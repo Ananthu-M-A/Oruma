@@ -139,6 +139,12 @@ The browser client is allowed through `CLIENT_ORIGIN`. For multiple origins, use
 CLIENT_ORIGIN=http://localhost:5173,https://your-client-domain.com
 ```
 
+In Razorpay Live Mode, configure the webhook URL as
+`https://api.oruma.me/payments/razorpay/webhook`, use the same secret as
+`RAZORPAY_WEBHOOK_SECRET`, and subscribe to `payment.captured` and
+`payment.failed`. The client polls the authenticated order-status endpoint
+while Checkout is open, but webhooks remain the source of truth.
+
 ## Invoice Generation
 
 Paid and refunded payments can be opened as printable HTML invoices from the patient and admin dashboards. The invoice endpoint is authenticated at:

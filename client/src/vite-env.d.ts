@@ -40,6 +40,10 @@ type RazorpayCheckoutOptions = {
     razorpay_payment_id: string;
     razorpay_signature: string;
   }) => void;
+  timeout?: number;
+  retry?: {
+    enabled: boolean;
+  };
   modal?: {
     ondismiss?: () => void;
   };

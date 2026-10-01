@@ -204,6 +204,29 @@ describe('PaymentService', () => {
     expect(paymentRepo.save).not.toHaveBeenCalled();
   });
 
+  it('returns Razorpay order status only for the owning patient', async () => {
+    const payment = {
+      providerOrderId: 'order_123',
+      status: PaymentStatus.PAID,
+      updatedAt: new Date('2026-10-01T12:00:00.000Z'),
+    };
+    const { service, paymentRepo } = createService(payment);
+
+    await expect(
+      service.getRazorpayOrderStatus('order_123', patient),
+    ).resolves.toEqual({
+      orderId: 'order_123',
+      status: PaymentStatus.PAID,
+      updatedAt: payment.updatedAt,
+    });
+    expect(paymentRepo.findOne).toHaveBeenCalledWith({
+      where: {
+        providerOrderId: 'order_123',
+        patient: { id: 'patient-1' },
+      },
+    });
+  });
+
   it('completes the post-payment flow when the development bypass is enabled', async () => {
     const appointment = {
       id: 'appointment-1',

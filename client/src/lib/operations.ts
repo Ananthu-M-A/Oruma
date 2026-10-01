@@ -48,6 +48,12 @@ type RazorpayOrder = {
   discountPercent?: number;
 };
 
+export type RazorpayOrderStatus = {
+  orderId: string;
+  status: "PENDING" | "PAID" | "REFUNDED" | "FAILED";
+  updatedAt: string;
+};
+
 export type Ticket = {
   id: string;
   createdBy: { id: string; email: string; fullName?: string | null } | null;
@@ -175,6 +181,24 @@ export async function createRazorpayOrder(
     body: JSON.stringify({ appointmentId }),
   });
   return readResponse<RazorpayOrder>(response, "Unable to start payment.");
+}
+
+export async function getRazorpayOrderStatus(
+  accessToken: string,
+  orderId: string,
+  signal?: AbortSignal,
+) {
+  const response = await fetch(
+    `${API_BASE_URL}/payments/razorpay/order/${encodeURIComponent(orderId)}/status`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal,
+    },
+  );
+  return readResponse<RazorpayOrderStatus>(
+    response,
+    "Unable to check payment status.",
+  );
 }
 
 export async function completeDevelopmentPayment(

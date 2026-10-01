@@ -164,6 +164,23 @@ export class PaymentService {
     });
   }
 
+  async getRazorpayOrderStatus(orderId: string, user: JwtPayload) {
+    const payment = await this.paymentRepo.findOne({
+      where: {
+        providerOrderId: orderId,
+        patient: { id: user.userId },
+      },
+    });
+
+    if (!payment) throw new NotFoundException('Payment not found');
+
+    return {
+      orderId: payment.providerOrderId,
+      status: payment.status,
+      updatedAt: payment.updatedAt,
+    };
+  }
+
   async getInvoice(id: string, user: JwtPayload) {
     const payment = await this.paymentRepo.findOne({ where: { id } });
 

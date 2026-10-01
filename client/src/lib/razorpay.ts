@@ -9,6 +9,10 @@ export const RAZORPAY_UPI_CHECKOUT_CONFIG: RazorpayCheckoutConfig = {
   },
 };
 
+export const RAZORPAY_CHECKOUT_TIMEOUT_SECONDS = 10 * 60;
+export const RAZORPAY_STATUS_POLL_INTERVAL_MS = 2_000;
+export const RAZORPAY_STATUS_POLL_WINDOW_MS = 15 * 60_000;
+
 export function getRazorpayCheckoutDescription(bookingReference: string) {
   const safeReference = bookingReference
     .replace(/[^a-zA-Z0-9_-]/g, "")

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getRazorpayCheckoutDescription,
   getRazorpayPaymentFailureMessage,
+  RAZORPAY_CHECKOUT_TIMEOUT_SECONDS,
   RAZORPAY_UPI_CHECKOUT_CONFIG,
 } from "./razorpay";
 
@@ -12,6 +13,10 @@ describe("Razorpay UPI checkout", () => {
         hide: [{ method: "upi", flows: ["collect"] }],
       },
     });
+  });
+
+  it("limits a checkout session to less than the booking reservation window", () => {
+    expect(RAZORPAY_CHECKOUT_TIMEOUT_SECONDS).toBe(600);
   });
 
   it("explains merchant payment-method activation failures", () => {

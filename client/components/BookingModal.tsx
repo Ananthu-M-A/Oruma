@@ -23,6 +23,7 @@ import {
 import {
   completeDevelopmentPayment,
   createRazorpayOrder,
+  getRazorpayOrderStatus,
   verifyRazorpayPayment,
 } from "../src/lib/operations";
 import {
@@ -33,6 +34,9 @@ import {
 import {
   getRazorpayCheckoutDescription,
   getRazorpayPaymentFailureMessage,
+  RAZORPAY_CHECKOUT_TIMEOUT_SECONDS,
+  RAZORPAY_STATUS_POLL_INTERVAL_MS,
+  RAZORPAY_STATUS_POLL_WINDOW_MS,
   RAZORPAY_UPI_CHECKOUT_CONFIG,
 } from "../src/lib/razorpay";
 import { getTherapistBookingModes } from "../src/lib/therapistProfileOptions";
@@ -103,6 +107,8 @@ export default function BookingModal({
   const [bookingOtpLoading, setBookingOtpLoading] = useState(false);
   const [bookingDevCode, setBookingDevCode] = useState("");
   const dialogRef = useRef<HTMLDivElement>(null);
+  const paymentPollTimerRef = useRef<number | null>(null);
+  const paymentPollAbortRef = useRef<AbortController | null>(null);
   const bookingModes = getTherapistBookingModes(therapist?.consultationType);
   const [formData, setFormData] = useState({
     service: "Individual Therapy",
@@ -115,6 +121,15 @@ export default function BookingModal({
     phone: "",
     mode: "Video",
   });
+
+  useEffect(() => {
+    return () => {
+      paymentPollAbortRef.current?.abort();
+      if (paymentPollTimerRef.current !== null) {
+        window.clearTimeout(paymentPollTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -311,6 +326,13 @@ export default function BookingModal({
     const isQuickBooking = !currentUser || !accessToken;
     let paymentCompleted = false;
     let paymentVerificationStarted = false;
+    let paymentFailed = false;
+
+    paymentPollAbortRef.current?.abort();
+    if (paymentPollTimerRef.current !== null) {
+      window.clearTimeout(paymentPollTimerRef.current);
+      paymentPollTimerRef.current = null;
+    }
 
     try {
       setSubmitError("");
@@ -395,6 +417,99 @@ export default function BookingModal({
       }
 
       const order = await createRazorpayOrder(accessToken!, appointmentId);
+      const pollController = new AbortController();
+      const pollStartedAt = Date.now();
+      paymentPollAbortRef.current = pollController;
+
+      const stopPaymentStatusPolling = () => {
+        pollController.abort();
+        if (paymentPollAbortRef.current === pollController) {
+          paymentPollAbortRef.current = null;
+        }
+        if (paymentPollTimerRef.current !== null) {
+          window.clearTimeout(paymentPollTimerRef.current);
+          paymentPollTimerRef.current = null;
+        }
+      };
+      const showPaymentConfirmed = () => {
+        if (paymentCompleted) return;
+        paymentCompleted = true;
+        stopPaymentStatusPolling();
+        setPaymentStatus("Paid");
+        setSubmitSuccess(true);
+        setSubmitError("");
+        setIsSubmitting(false);
+        window.setTimeout(() => {
+          onClose();
+          redirectToPatientProfile(
+            `Payment confirmed for booking ${appointmentId}. Staff will confirm the appointment and send joining instructions.`,
+          );
+        }, 1000);
+      };
+      const showPaymentRefunded = () => {
+        if (paymentCompleted) return;
+        paymentCompleted = true;
+        stopPaymentStatusPolling();
+        setPaymentStatus("Refunded");
+        setSubmitError(
+          "The payment was received after the booking could no longer be completed, so a refund was initiated. Check your patient profile for details.",
+        );
+        setIsSubmitting(false);
+      };
+      const pollPaymentStatus = async () => {
+        if (pollController.signal.aborted || paymentCompleted) return;
+
+        try {
+          const result = await getRazorpayOrderStatus(
+            accessToken!,
+            order.orderId,
+            pollController.signal,
+          );
+          if (result.status === "PAID") {
+            showPaymentConfirmed();
+            return;
+          }
+          if (result.status === "REFUNDED") {
+            showPaymentRefunded();
+            return;
+          }
+          if (result.status === "FAILED" && !paymentFailed) {
+            paymentFailed = true;
+            setPaymentStatus("Payment failed");
+            setSubmitError(
+              "The payment was not completed. If money was debited, do not pay again while the gateway confirmation is being reconciled.",
+            );
+            setIsSubmitting(false);
+          }
+        } catch {
+          if (pollController.signal.aborted) return;
+          // Checkout callbacks remain the immediate path while polling retries
+          // transient network or webhook delays.
+        }
+
+        if (
+          !pollController.signal.aborted &&
+          !paymentCompleted &&
+          Date.now() - pollStartedAt < RAZORPAY_STATUS_POLL_WINDOW_MS
+        ) {
+          paymentPollTimerRef.current = window.setTimeout(
+            pollPaymentStatus,
+            RAZORPAY_STATUS_POLL_INTERVAL_MS,
+          );
+          return;
+        }
+
+        if (!paymentCompleted && !paymentFailed) {
+          setPaymentStatus("Confirmation delayed");
+          setSubmitError(
+            "Payment confirmation is taking longer than expected. If money was debited, do not pay again; check your patient profile or contact support with the booking reference.",
+          );
+          setIsSubmitting(false);
+        }
+        stopPaymentStatusPolling();
+      };
+
+      void pollPaymentStatus();
       const checkout = new window.Razorpay({
         key: order.keyId,
         amount: Math.round(order.amount * 100),
@@ -407,25 +522,22 @@ export default function BookingModal({
           email: formData.email,
           contact: formData.phone,
         },
+        timeout: RAZORPAY_CHECKOUT_TIMEOUT_SECONDS,
+        retry: { enabled: false },
         config: RAZORPAY_UPI_CHECKOUT_CONFIG,
         handler: async (response) => {
           paymentVerificationStarted = true;
           try {
-            await verifyRazorpayPayment(accessToken!, {
+            const verifiedPayment = await verifyRazorpayPayment(accessToken!, {
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
             });
-            paymentCompleted = true;
-            setPaymentStatus("Paid");
-            setSubmitSuccess(true);
-            setSubmitError("");
-            setTimeout(() => {
-              onClose();
-              redirectToPatientProfile(
-                `Payment confirmed for booking ${appointmentId}. Staff will confirm the appointment and send joining instructions.`,
-              );
-            }, 1000);
+            if (verifiedPayment.status === "REFUNDED") {
+              showPaymentRefunded();
+            } else {
+              showPaymentConfirmed();
+            }
           } catch (err) {
             setSubmitError(
               `${
@@ -438,7 +550,12 @@ export default function BookingModal({
         },
         modal: {
           ondismiss: () => {
-            if (!paymentCompleted && !paymentVerificationStarted) {
+            if (
+              !paymentCompleted &&
+              !paymentVerificationStarted &&
+              !paymentFailed
+            ) {
+              setPaymentStatus("Awaiting confirmation");
               setSubmitError(
                 "Checkout was closed. The booking remains reserved temporarily so a delayed bank confirmation can be reconciled safely.",
               );
@@ -449,8 +566,10 @@ export default function BookingModal({
       });
 
       checkout.on("payment.failed", (response) => {
+        paymentFailed = true;
         setPaymentStatus("Payment failed");
         setSubmitError(getRazorpayPaymentFailureMessage(response));
+        setIsSubmitting(false);
       });
 
       checkout.open();
