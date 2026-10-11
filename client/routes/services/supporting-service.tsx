@@ -4,7 +4,7 @@ import FloatingActions from "../../components/FloatingActions";
 import ServiceScopeNotice from "../../components/ServiceScopeNotice";
 import TherapistGrid from "../../components/TherapistGrid";
 import { LucideIcon } from "@site-builder/icons";
-import { createWhatsAppUrl } from "../../src/config/business";
+import { createSupportEmailUrl } from "../../src/config/business";
 import { therapistDirectoryHref } from "../../src/lib/concerns";
 
 type SupportingServiceKey =
@@ -205,7 +205,7 @@ export default function SupportingServicePage({
   serviceKey: SupportingServiceKey;
 }) {
   const service = serviceContent[serviceKey];
-  const whatsappLink = createWhatsAppUrl(service.message);
+  const emailLink = createSupportEmailUrl(service.message);
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-white font-body text-[#2E3E3C]">
@@ -236,12 +236,10 @@ export default function SupportingServicePage({
                 See matching practitioners <LucideIcon name="arrow-right" size={17} />
               </a>
               <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={emailLink}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-[#064F4B]/25 bg-white px-8 py-4 text-sm font-black text-[#064F4B] transition hover:border-[#0A7F7A]"
               >
-                <LucideIcon name="message-circle" size={17} /> Ask Oruma
+                <LucideIcon name="mail" size={17} /> Email about this service
               </a>
             </div>
           </div>
@@ -365,7 +363,7 @@ export default function SupportingServicePage({
             specialtyAreas={service.specialtyAreas}
             maxItems={3}
             emptyTitle={`No ${service.title.toLowerCase()} practitioners are listed right now.`}
-            emptyDescription="No current profiles list these areas of practice. Check back later or use the page-specific Ask Oruma message to request a match."
+            emptyDescription="No current profiles list these areas of practice. Check back later or email Oruma with this page-specific request to ask about a suitable match."
           />
         </div>
       </section>

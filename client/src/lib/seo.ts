@@ -27,6 +27,10 @@ export const publicSeoRoutes: Record<string, PageSeo> = {
     title: `Mental Wellness Articles & Resources | ${SITE_NAME}`,
     description: `Read general educational articles from ${SITE_NAME} about emotional wellbeing, relationships, stress, and self-care.`,
   },
+  "/resources": {
+    title: `Mental Wellness Resources | ${SITE_NAME}`,
+    description: `Explore articles, booking information, practitioner resources, and service details from ${SITE_NAME}.`,
+  },
   "/careers": {
     title: `Practitioner Applications | ${SITE_NAME}`,
     description: `Review the ${SITE_NAME} practitioner verification and application process for online counselling and wellness services.`,
@@ -78,7 +82,7 @@ export const publicSeoRoutes: Record<string, PageSeo> = {
   },
   "/contact": {
     title: `Contact ${SITE_NAME} | Online Counselling Support`,
-    description: `Contact ${SITE_NAME} by phone, WhatsApp, or email for online counselling, practitioner selection, booking, payment, and refund support.`,
+    description: `Contact ${SITE_NAME} by email for online counselling, practitioner selection, booking, payment, and refund support.`,
   },
   "/find-your-psychologist": {
     title: `Find the Right Psychologist | ${SITE_NAME}`,
@@ -111,6 +115,18 @@ export const publicSeoRoutes: Record<string, PageSeo> = {
   "/programs": {
     title: `Courses, Workshops and Webinars | ${SITE_NAME}`,
     description: `Explore courses, offline workshops, webinars, and events created and hosted by ${SITE_NAME}.`,
+  },
+  "/programs/courses": {
+    title: `Wellbeing Courses | ${SITE_NAME}`,
+    description: `Explore learning courses from ${SITE_NAME} about relationships, parenting, emotional wellbeing, and personal growth.`,
+  },
+  "/programs/workshops": {
+    title: `Wellbeing Workshops | ${SITE_NAME}`,
+    description: `Explore in-person learning and wellbeing workshops hosted by ${SITE_NAME}.`,
+  },
+  "/programs/webinars": {
+    title: `Wellbeing Webinars and Events | ${SITE_NAME}`,
+    description: `Explore online talks, expert conversations, and wellbeing events offered by ${SITE_NAME}.`,
   },
   "/services/couple-therapy": {
     title: `Online Couple and Relationship Counselling | ${SITE_NAME}`,

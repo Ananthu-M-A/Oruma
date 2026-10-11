@@ -29,7 +29,6 @@ function mapForBooking(therapist: Therapist) {
 type TherapistGridProps = {
   nextDayOnly?: boolean;
   searchQuery?: string;
-  maxFee?: number | null;
   maxItems?: number;
   specialtyAreas?: string[];
   preferredLanguage?: string;
@@ -41,7 +40,6 @@ type TherapistGridProps = {
 export default function TherapistGrid({
   nextDayOnly = false,
   searchQuery = "",
-  maxFee = null,
   maxItems,
   specialtyAreas = [],
   preferredLanguage = "",
@@ -107,13 +105,14 @@ export default function TherapistGrid({
   };
 
   const filteredTherapists = therapists.filter((therapist) => {
-    if (maxFee && therapist.price > maxFee) return false;
-
     const legacyTags = splitTherapistTags(therapist.tags);
+    const areasOfPractice = Array.isArray(therapist.areasOfPractice)
+      ? therapist.areasOfPractice.filter((area): area is string => typeof area === "string")
+      : [];
     const therapistAreas = [
       therapist.specialization,
-      ...(therapist.areasOfPractice?.length
-        ? therapist.areasOfPractice
+      ...(areasOfPractice.length
+        ? areasOfPractice
         : legacyTags.areasOfPractice),
     ]
       .filter(Boolean)
@@ -136,8 +135,11 @@ export default function TherapistGrid({
 
     if (preferredLanguage.trim()) {
       const legacyTags = splitTherapistTags(therapist.tags);
-      const languages = therapist.languages?.length
-        ? therapist.languages
+      const therapistLanguages = Array.isArray(therapist.languages)
+        ? therapist.languages.filter((language): language is string => typeof language === "string")
+        : [];
+      const languages = therapistLanguages.length
+        ? therapistLanguages
         : legacyTags.languages;
       if (
         !languages.some(
@@ -157,8 +159,9 @@ export default function TherapistGrid({
       therapist.title,
       therapist.specialization,
       therapist.qualifications,
-      ...(therapist.areasOfPractice ?? therapist.tags ?? []),
-      ...(therapist.languages ?? []),
+      ...(Array.isArray(therapist.areasOfPractice) ? therapist.areasOfPractice : []),
+      ...(Array.isArray(therapist.tags) ? therapist.tags : []),
+      ...(Array.isArray(therapist.languages) ? therapist.languages : []),
     ]
       .filter(Boolean)
       .join(" ")

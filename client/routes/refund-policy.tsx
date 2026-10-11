@@ -51,7 +51,7 @@ const sections: PolicySection[] = [
   {
     title: "7. Contact and governing terms",
     body: [
-      `Refund support: ${businessConfig.emails.refund} or ${businessConfig.supportPhone.display}.`,
+      `Refund support: ${businessConfig.emails.refund}.`,
       "Appointment timestamps use Indian Standard Time. This policy operates with the Cancellation and Service Delivery Policies and applicable Indian law.",
     ],
   },

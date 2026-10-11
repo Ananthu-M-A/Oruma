@@ -1,7 +1,7 @@
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { LucideIcon } from "@site-builder/icons";
-import { createWhatsAppUrl } from "../src/config/business";
+import { createSupportEmailUrl } from "../src/config/business";
 import ServiceScopeNotice from "../components/ServiceScopeNotice";
 
 function MechanismSection() {
@@ -66,7 +66,7 @@ function MechanismSection() {
 }
 
 export default function NRIConsultationPage() {
-  const whatsappLink = createWhatsAppUrl(
+  const emailLink = createSupportEmailUrl(
     [
       "Hello, I am outside India and would like information about an online Oruma consultation.",
       "Please confirm whether service is available in my country, how time zones and appointment times work, which practitioners can see international clients, session fees and currency, payment options, and the steps to book.",
@@ -110,7 +110,7 @@ export default function NRIConsultationPage() {
                 <div className="relative group">
                   <div className="absolute -inset-1 bg-gradient-to-r from-[#00D494] to-[#B7C8A3] rounded-full blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
                   <a
-                    href={whatsappLink}
+                    href={emailLink}
                     className="relative bg-white text-[#064F4B] px-12 py-6 rounded-full font-black text-sm uppercase tracking-[0.2em] hover:bg-[#064F4B] hover:text-white transition-all shadow-2xl flex items-center gap-3"
                   >
                     Ask about a remote session
@@ -287,7 +287,7 @@ export default function NRIConsultationPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <a
-                href={whatsappLink}
+                href={emailLink}
                 className="w-full sm:w-auto bg-[#00D494] text-[#064F4B] px-16 py-7 rounded-full font-black text-sm uppercase tracking-[0.2em] hover:bg-white hover:scale-105 transition-all shadow-2xl active:scale-95"
               >
                 Ask about a remote session

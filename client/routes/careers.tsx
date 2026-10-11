@@ -4,20 +4,17 @@ import FloatingActions from "../components/FloatingActions";
 import { LucideIcon } from "@site-builder/icons";
 import {
   businessConfig,
-  businessLinks,
-  createWhatsAppUrl,
+  createSupportEmailUrl,
 } from "../src/config/business";
 
 export default function CareersPage() {
-  const whatsappLink = createWhatsAppUrl(
+  const emailLink = createSupportEmailUrl(
     [
       "Hello, I am a counselling or wellness practitioner interested in joining Oruma.",
       "Please share the eligibility and verification requirements, professional documents needed, how area of practice and scope are reviewed, expected timeline, and whether the role is independent or employed.",
       "My professional role and qualification are [add a short summary].",
     ].join("\n"),
   );
-  const emailLink = businessLinks.supportEmail;
-
   return (
     <main className="min-h-screen bg-white font-body text-[#2E3E3C] overflow-x-hidden">
       <Navbar />
@@ -26,7 +23,7 @@ export default function CareersPage() {
       {/* Hero Section */}
       <section className="pt-32 md:pt-48 pb-20 bg-[#F5F8F7] relative">
         <div className="absolute top-0 right-0 w-1/3 h-full bg-[#0A7F7A]/5 -skew-x-12 transform origin-right" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="max-w-3xl">
             <div className="inline-block bg-[#0A7F7A] text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-6">
               Join Our Team
@@ -47,12 +44,22 @@ export default function CareersPage() {
                 Apply Now
               </a>
               <a
-                href={whatsappLink}
+                href={emailLink}
                 className="bg-white text-[#0A7F7A] border-2 border-[#0A7F7A] px-10 py-[1.125rem] rounded-full font-black text-lg hover:bg-[#F5F8F7] transition-all active:scale-95"
               >
                 Quick Enquiry
               </a>
             </div>
+          </div>
+          <div className="relative mt-10 aspect-[4/3] w-full overflow-hidden rounded-[2.5rem] border-8 border-white shadow-2xl shadow-[#064F4B]/10 lg:mt-0">
+            <img
+              src="/assets/hero-therapist-professional.webp"
+              alt="A practitioner in a welcoming professional setting"
+              loading="eager"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#064F4B]/25 via-transparent to-transparent" />
           </div>
         </div>
       </section>

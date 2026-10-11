@@ -3,7 +3,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import FloatingActions from "../components/FloatingActions";
 import { LucideIcon } from "@site-builder/icons";
-import { createWhatsAppUrl } from "../src/config/business";
+import { createSupportEmailUrl } from "../src/config/business";
 import { therapistDirectoryHref } from "../src/lib/concerns";
 
 const supportAreaFilters: Record<string, string[]> = {
@@ -50,7 +50,7 @@ export default function FindYourPsychologistPage() {
     language,
     sessionFor,
   );
-  const whatsappLink = createWhatsAppUrl(
+  const emailLink = createSupportEmailUrl(
     [
       "Hello, I would like help finding a suitable Oruma practitioner.",
       `Support area: ${supportArea || "not sure yet"}`,
@@ -194,7 +194,7 @@ export default function FindYourPsychologistPage() {
                 Find matching support <LucideIcon name="arrow-right" size={17} />
               </button>
               <p className="text-center text-xs font-medium leading-5 text-[#6C827E]">
-                You can review practitioner profiles first, or review a prefilled WhatsApp message before sending it. See Oruma’s <a href="/privacy-policy" className="font-bold text-[#0A7F7A] underline">privacy policy</a>.
+                You can review practitioner profiles first, or send Oruma a prefilled email with your selected preferences. See Oruma’s <a href="/privacy-policy" className="font-bold text-[#0A7F7A] underline">privacy policy</a>.
               </p>
             </form>
 
@@ -217,9 +217,7 @@ export default function FindYourPsychologistPage() {
                     <LucideIcon name="arrow-right" size={16} />
                   </a>
                   <a
-                    href={whatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={emailLink}
                     className="inline-flex items-center justify-center gap-2 rounded-full border border-[#064F4B]/20 bg-white px-6 py-3 text-sm font-black text-[#064F4B] transition hover:border-[#0A7F7A]"
                   >
                     Ask Oruma with these details

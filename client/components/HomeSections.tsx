@@ -1,5 +1,5 @@
 import { LucideIcon } from "@site-builder/icons";
-import { createWhatsAppUrl } from "../src/config/business";
+import { createSupportEmailUrl } from "../src/config/business";
 import { concernPaths } from "../src/lib/concerns";
 
 const supportPathways = [
@@ -104,7 +104,7 @@ const programs = [
     description:
       "Structured psychology-based learning created to support practical, lasting growth.",
     action: "Explore Courses",
-    href: "/programs#courses",
+    href: "/programs/courses",
     icon: "graduation-cap",
     color: "bg-[#EFF2D9]",
   },
@@ -114,7 +114,7 @@ const programs = [
     description:
       "Thoughtful group experiences designed for learning, reflection and connection.",
     action: "View Workshops",
-    href: "/programs#workshops",
+    href: "/programs/workshops",
     icon: "users",
     color: "bg-[#FAE8DE]",
   },
@@ -124,7 +124,7 @@ const programs = [
     description:
       "Live online conversations and expert-led sessions from the Oruma community.",
     action: "Explore Webinars",
-    href: "/programs#webinars",
+    href: "/programs/webinars",
     icon: "video",
     color: "bg-[#EEE9F7]",
   },
@@ -298,8 +298,8 @@ export function CounsellingServices() {
               href={service.href}
               className={`group flex min-h-[190px] flex-col items-center justify-center rounded-[1.5rem] border border-white/80 bg-gradient-to-br ${service.color} px-3 py-6 text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#064F4B]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A7F7A]`}
             >
-              <span className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80 ${service.iconColor} shadow-sm transition group-hover:scale-105`}>
-                <LucideIcon name={service.icon} size={24} />
+              <span className={`mb-1 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/75 ${service.iconColor} shadow-sm transition-transform duration-300 group-hover:rotate-3 group-hover:scale-110`}>
+                <LucideIcon name={service.icon} size={30} />
               </span>
               <h3 className="mt-4 text-sm font-black leading-5 text-[#123E3A] sm:text-base">
                 {service.title}
@@ -371,15 +371,16 @@ export function ProgramsSection() {
           {programs.map((program) => (
             <a
               key={program.title}
-              id={program.title === "Oruma Courses" ? "courses-home" : undefined}
               href={program.href}
               className={`${program.color} group flex min-h-[290px] flex-col rounded-[2rem] border border-[#064F4B]/5 p-7 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-[#064F4B]/10 sm:p-8`}
             >
-              <div className="flex items-start justify-between gap-4">
-                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80 text-[#064F4B] shadow-sm">
-                  <LucideIcon name={program.icon} size={27} />
+              <div className="relative flex h-28 items-center justify-center overflow-hidden rounded-2xl bg-white/55 sm:h-32">
+                <span className="absolute -right-5 -top-8 h-28 w-28 rounded-full bg-white/45" />
+                <span className="absolute -bottom-12 -left-3 h-32 w-32 rounded-full bg-white/35" />
+                <span className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white/85 text-[#064F4B] shadow-sm transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-3">
+                  <LucideIcon name={program.icon} size={30} />
                 </span>
-                <LucideIcon name="arrow-right" size={20} className="text-[#064F4B] transition-transform group-hover:translate-x-1" />
+                <LucideIcon name="arrow-right" size={20} className="absolute right-4 top-4 text-[#064F4B]/70 transition-transform group-hover:translate-x-1" />
               </div>
               <p className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-[#0A7F7A]">
                 {program.eyebrow}
@@ -432,7 +433,7 @@ export function TestimonialsSection() {
 }
 
 export function FinalBookingSection() {
-  const whatsappLink = createWhatsAppUrl(
+  const emailLink = createSupportEmailUrl(
     [
       "Hello, I am looking for online counselling through Oruma.",
       "Please help me identify the right service and practitioners, with their professional roles, session fees, upcoming availability, and booking steps.",
@@ -454,7 +455,7 @@ export function FinalBookingSection() {
             Your healing journey can begin today.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base font-medium leading-7 text-white/70">
-            Browse available psychologists or talk to the Oruma team on WhatsApp.
+            Browse practitioner profiles or email the Oruma care team.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <a
@@ -464,12 +465,10 @@ export function FinalBookingSection() {
               <LucideIcon name="calendar-check" size={18} /> Book a Session
             </a>
             <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={emailLink}
               className="inline-flex items-center justify-center gap-2 rounded-full border border-white/35 px-7 py-4 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-white hover:text-[#064F4B]"
             >
-              <LucideIcon name="message-circle" size={18} /> Chat on WhatsApp
+              <LucideIcon name="mail" size={18} /> Email Oruma
             </a>
           </div>
         </div>

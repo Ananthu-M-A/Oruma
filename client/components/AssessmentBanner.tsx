@@ -1,4 +1,4 @@
-import { createWhatsAppUrl } from "../src/config/business";
+import { createSupportEmailUrl } from "../src/config/business";
 
 export default function AssessmentBanner({
   service,
@@ -34,7 +34,7 @@ export default function AssessmentBanner({
           </div>
         </div>
         <a
-          href={createWhatsAppUrl(message)}
+          href={createSupportEmailUrl(message)}
           className="whitespace-nowrap bg-[#1A1A1A] text-white px-8 py-3.5 rounded-full font-bold hover:bg-black transition-all shadow-lg"
         >
           Start assessment ›

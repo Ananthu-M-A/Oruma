@@ -147,19 +147,19 @@ test("legal routes are public, crawlable, and disclose the individual operator",
   }
 });
 
-test("official contact links match the centralized phone, WhatsApp, and email", async ({
+test("public contact directs support enquiries to email", async ({
   page,
 }) => {
   await page.goto("/contact");
   await expect(
-    page.getByRole("link", { name: "+91-8157039987", exact: true }).first(),
-  ).toHaveAttribute("href", "tel:+918157039987");
-  await expect(
     page.locator('a[href^="mailto:oruma9987@gmail.com"]').first(),
   ).toContainText("oruma9987@gmail.com");
   await expect(
-    page.locator('a[href^="https://wa.me/918157039987"]').first(),
-  ).toBeVisible();
+    page.locator('a[href^="tel:"]'),
+  ).toHaveCount(0);
+  await expect(
+    page.locator('a[href^="https://wa.me/"]'),
+  ).toHaveCount(0);
   await expect(
     page.getByRole("link", { name: "Browse and book online", exact: true }),
   ).toHaveAttribute("href", "/therapists");

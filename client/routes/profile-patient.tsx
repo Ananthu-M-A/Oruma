@@ -36,6 +36,7 @@ import {
   parsePhoneInput,
 } from "../src/lib/phone";
 import { formatIstDateTime } from "../src/lib/dateTime";
+import { createWhatsAppUrl } from "../src/config/business";
 
 function formatDate(value?: string) {
   return formatIstDateTime(value, "To be scheduled");
@@ -63,9 +64,17 @@ function AppointmentCard({
   const canOpenInvoice =
     payment?.status === "PAID" || payment?.status === "REFUNDED";
   const canCancel = canPatientCancelAppointment(appointment, policyNow);
+  const canOpenBookingChat = isPaid && appointment.status !== "CANCELLED";
+  const bookingChatLink = createWhatsAppUrl(
+    [
+      "Hello ORUMA care team, I have a paid appointment and need help with this booking.",
+      `Booking reference: ${appointment.id.slice(0, 8).toUpperCase()}`,
+      "Please check the booking and tell me whether confirmation or session joining details are still needed.",
+    ].join("\n"),
+  );
   const careTeamUpdate = (() => {
     if (appointment.status === "PENDING") {
-      return "Payment received and booking recorded. Our care team is confirming the appointment and will contact you from the official ORUMA WhatsApp number.";
+      return "Payment received and booking recorded. Our care team is confirming the appointment. You can email us with questions, or use the booking-specific WhatsApp option below.";
     }
     if (appointment.status !== "CONFIRMED") return null;
     if (!appointment.meetingLink) {
@@ -74,7 +83,7 @@ function AppointmentCard({
     if (appointment.meetingLinkSentAt) {
       return `Your secure Zoom link is ready below and was shared by the care team on ${formatDate(appointment.meetingLinkSentAt)}.`;
     }
-    return "Your secure Zoom link is ready below. The care team will also share it through the official ORUMA WhatsApp number.";
+    return "Your secure Zoom link is ready below. The care team will share booking updates by email; use the booking-specific WhatsApp option below if you need help.";
   })();
 
   return (
@@ -122,6 +131,17 @@ function AppointmentCard({
             >
               <LucideIcon name="video" size={14} />
               Join session
+            </a>
+          )}
+          {canOpenBookingChat && (
+            <a
+              href={bookingChatLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-[#B9E7CD] bg-[#EAF8EF] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#12683B]"
+            >
+              <LucideIcon name="message-circle" size={14} />
+              WhatsApp about this booking
             </a>
           )}
           {canCancel && (

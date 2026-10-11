@@ -10,6 +10,8 @@ const programs = [
     title: "NRI Consultation",
     desc: "Online booking information for Indians living abroad, subject to practitioner availability.",
     icon: "globe",
+    image: "/assets/hero-therapist-professional.webp",
+    imageAlt: "A practitioner in a welcoming professional setting",
     color: "bg-[#0A7F7A] text-white",
     details: [
       "Flexible Time Zone Slots",
@@ -25,6 +27,8 @@ const programs = [
     title: "Individual Therapy",
     desc: "Confidential 1-on-1 sessions for personal growth and emotional health.",
     icon: "user",
+    image: "/assets/home-lady-striped-shirt-v2.webp",
+    imageAlt: "A woman smiling outdoors during a moment of wellbeing",
     color: "bg-[#0A7F7A]/10 text-[#0A7F7A]",
     details: [
       "Anxiety & Panic Attacks",
@@ -40,6 +44,8 @@ const programs = [
     title: "Couple Therapy",
     desc: "Restore trust and improve communication in your relationship.",
     icon: "users",
+    image: "/assets/relationship-healing-connection-v2.webp",
+    imageAlt: "A couple sharing a supportive moment together",
     color: "bg-[#B7C8A3]/20 text-[#064F4B]",
     details: [
       "Relationship Wellness Tools",
@@ -55,6 +61,8 @@ const programs = [
     title: "Parenting Support",
     desc: "Practical, collaborative support for parents and caregivers.",
     icon: "users",
+    image: "/assets/postpartum-new.webp",
+    imageAlt: "A parent caring for a young child",
     color: "bg-[#EFF2D9] text-[#607D2E]",
     details: [
       "Parent-Child Communication",
@@ -70,6 +78,8 @@ const programs = [
     title: "Child & Teen Counselling",
     desc: "Age-appropriate support with caregiver involvement where appropriate.",
     icon: "user-round-check",
+    image: "/assets/student-wellness-v2-overwhelmed.webp",
+    imageAlt: "Students facing academic pressure and emotional concerns",
     color: "bg-[#EEE9F7] text-[#064F4B]",
     details: [
       "Academic Stress",
@@ -85,6 +95,8 @@ const programs = [
     title: "Family Counselling",
     desc: "Structured conversations for communication, change and connection.",
     icon: "heart",
+    image: "/assets/home-lady-striped-shirt-v2.webp",
+    imageAlt: "A woman reflecting in a calm outdoor setting",
     color: "bg-[#FBEDE3] text-[#0A7F7A]",
     details: [
       "Family Communication",
@@ -100,6 +112,8 @@ const programs = [
     title: "Postpartum Support",
     desc: "Specialized care for new mothers navigating emotional shifts.",
     icon: "baby",
+    image: "/assets/postpartum-new.webp",
+    imageAlt: "A new mother caring for her baby",
     color: "bg-orange-50 text-orange-600",
     details: [
       "Postpartum Depression (PPD)",
@@ -115,6 +129,8 @@ const programs = [
     title: "Sexual Wellness",
     desc: "Confidential support for intimacy, communication and sexual wellbeing.",
     icon: "sparkles",
+    image: "/assets/professional-portrait.webp",
+    imageAlt: "A practitioner seated in a calm counselling space",
     color: "bg-[#EAF3F7] text-[#0A7F7A]",
     details: [
       "Intimacy & Communication",
@@ -168,10 +184,20 @@ export default function ServicesPage() {
                   id={p.id}
                   className="bg-white p-8 md:p-12 rounded-[3.5rem] border border-gray-100 hover:border-[#0A7F7A]/30 hover:shadow-2xl transition-all duration-700 flex flex-col md:flex-row gap-10 scroll-mt-32"
                 >
-                  <div
-                    className={`w-20 h-20 shrink-0 ${p.color} rounded-[2rem] flex items-center justify-center`}
-                  >
-                    <LucideIcon name={p.icon} size={40} />
+                  <div className="relative h-44 w-full shrink-0 overflow-hidden rounded-[1.75rem] bg-[#EAF3F7] md:h-auto md:min-h-[360px] md:w-48">
+                    <img
+                      src={p.image}
+                      alt={p.imageAlt}
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#064F4B]/35 to-transparent" />
+                    <span
+                      className={`absolute bottom-4 left-4 flex h-12 w-12 items-center justify-center rounded-2xl ${p.color} shadow-lg`}
+                    >
+                      <LucideIcon name={p.icon} size={25} />
+                    </span>
                   </div>
                   <div className="flex-grow">
                     <h3 className="text-2xl font-black text-[#1A2E2C] mb-3 uppercase tracking-tighter">

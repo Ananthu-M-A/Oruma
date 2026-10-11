@@ -879,7 +879,7 @@ export default function BookingModal({
               </label>
               <label className="block space-y-1">
                 <span className="text-sm font-bold text-gray-700">
-                  WhatsApp number for care-team contact
+                  Phone number for booking records and payment
                 </span>
                 <input
                   type="tel"
@@ -923,8 +923,8 @@ export default function BookingModal({
                   </p>
                   <p className="mt-1 text-xs text-[#5F7F7A]">
                     We will send a six-digit verification code to{" "}
-                    {bookingIdentifier || "your email"}. Staff will use WhatsApp
-                    only for appointment support and joining instructions.
+                    {bookingIdentifier || "your email"}. Booking updates and
+                    joining instructions are shared through your email and patient dashboard.
                   </p>
                   {!bookingVerificationToken && !bookingOtpRequested && (
                     <button
@@ -1117,8 +1117,8 @@ export default function BookingModal({
                 Appointment booked successfully.
               </p>
               <p className="text-xs text-green-600 mt-1">
-                Your booking is recorded on ORUMA. The care team will contact
-                you manually on WhatsApp with confirmation and joining details.
+                Your booking is recorded on ORUMA. The care team will send
+                confirmation and joining details by email and through your patient dashboard.
               </p>
             </div>
           )}

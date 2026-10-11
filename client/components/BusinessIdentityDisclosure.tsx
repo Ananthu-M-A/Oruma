@@ -38,9 +38,6 @@ export default function BusinessIdentityDisclosure({
         <a className={link} href={businessLinks.supportEmail}>
           {businessConfig.emails.support}
         </a>
-        <a className={link} href={businessLinks.supportPhone}>
-          {businessConfig.supportPhone.display}
-        </a>
       </p>
       {businessConfig.gstin && (
         <p className={muted}>GSTIN: {businessConfig.gstin}</p>

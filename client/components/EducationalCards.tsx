@@ -1,4 +1,6 @@
 
+import { therapistDirectoryHref } from "../src/lib/concerns";
+
 export default function EducationalCards() {
   const facts = [
     { title: 'Fact 01', text: 'Sexual wellness is a combination of physical, emotional, and social well-being in relation to sexuality.' },
@@ -25,7 +27,7 @@ export default function EducationalCards() {
         </div>
 
         <a
-          href="/therapists"
+          href={therapistDirectoryHref(["Sexual Wellness"])}
           className="inline-block bg-[#1A1A1A] text-white px-10 py-4 rounded-full font-bold shadow-xl shadow-black/10"
         >
           Book consultation

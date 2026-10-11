@@ -1,14 +1,7 @@
-import { createWhatsAppUrl } from "../src/config/business";
 import { LucideIcon } from "@site-builder/icons";
+import { therapistDirectoryHref } from "../src/lib/concerns";
 
 export default function AnxietyMechanism() {
-  const whatsappLink = createWhatsAppUrl(
-    [
-      "Hello, I have reviewed Oruma's anxiety and stress support information.",
-      "Please recommend practitioners whose profiles list anxiety, stress, or overthinking and share their role, fees, next available times, and booking steps.",
-      "Preferred language: [add language if relevant].",
-    ].join("\n"),
-  );
   const steps = [
     { icon: "shield", title: "Safe Space" },
     { icon: "user-check", title: "Expert Guidance" },
@@ -40,7 +33,7 @@ export default function AnxietyMechanism() {
         </div>
 
         <a
-          href={whatsappLink}
+          href={therapistDirectoryHref(["Anxiety", "Stress & Burnout"])}
           className="inline-block mt-12 bg-[#0A7F7A] text-white px-10 py-3.5 rounded-full font-bold text-sm hover:bg-[#064F4B] shadow-xl shadow-[#0A7F7A]/20 transition-all hover:scale-105 active:scale-95"
         >
           Get Therapy

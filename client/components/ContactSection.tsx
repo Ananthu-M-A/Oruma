@@ -5,12 +5,12 @@ import BusinessIdentityDisclosure from "./BusinessIdentityDisclosure";
 import {
   businessConfig,
   businessLinks,
-  createPageWhatsAppUrl,
+  createPageSupportEmailUrl,
 } from "../src/config/business";
 
 export default function ContactSection() {
   const { pathname } = useLocation();
-  const whatsappLink = createPageWhatsAppUrl(
+  const emailLink = createPageSupportEmailUrl(
     pathname,
     "directing my question to the right care team and sharing the steps, fees, and information needed to resolve it",
   );
@@ -25,19 +25,14 @@ export default function ContactSection() {
                 Official contact details
               </h2>
               <p className="mt-5 text-lg leading-relaxed text-[#B7C8A3]">
-                Use these channels for service, practitioner, booking, payment,
-                cancellation, and refund support. They are not emergency
-                services.
+                Email the care team about services, practitioners, booking,
+                payment, cancellation, and refund support. Email is not an
+                emergency service.
               </p>
               <dl className="mt-10 space-y-7">
                 <ContactItem icon="mail" label="Customer support">
                   <a href={businessLinks.supportEmail}>
                     {businessConfig.emails.support}
-                  </a>
-                </ContactItem>
-                <ContactItem icon="phone" label="Phone and WhatsApp">
-                  <a href={businessLinks.supportPhone}>
-                    {businessConfig.supportPhone.display}
                   </a>
                 </ContactItem>
                 <ContactItem icon="map-pin" label="Operating address">
@@ -66,13 +61,11 @@ export default function ContactSection() {
             </p>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={emailLink}
                 className="inline-flex items-center justify-center gap-3 rounded-full bg-[#0A7F7A] px-7 py-4 font-black text-white"
               >
-                <LucideIcon name="message-square" size={22} />
-                WhatsApp support
+                <LucideIcon name="mail" size={22} />
+                Email the care team
               </a>
               <a
                 href="/therapists"

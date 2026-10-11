@@ -44,6 +44,7 @@ export default function Navbar() {
   };
 
   const services = [
+    { name: "All Services", href: "/services" },
     { name: "Individual Therapy", href: "/services/individual-therapy" },
     { name: "Couple Therapy", href: "/services/couple-therapy" },
     { name: "Parenting Support", href: "/services/parenting-support" },
@@ -57,6 +58,7 @@ export default function Navbar() {
   ];
 
   const concerns = [
+    { name: "All Concerns", href: "/concerns" },
     {
       name: "Relationship Issues",
       href: concernPaths.relationship,
@@ -71,12 +73,13 @@ export default function Navbar() {
   ];
 
   const programs = [
-    { name: "Oruma Courses", href: "/programs#courses" },
-    { name: "Offline Workshops", href: "/programs#workshops" },
-    { name: "Webinars & Events", href: "/programs#webinars" },
+    { name: "Oruma Courses", href: "/programs/courses" },
+    { name: "Offline Workshops", href: "/programs/workshops" },
+    { name: "Webinars & Events", href: "/programs/webinars" },
   ];
 
   const resources = [
+    { name: "All Resources", href: "/resources" },
     { name: "Articles", href: "/articles" },
     { name: "About Oruma", href: "/about" },
     { name: "Join as a Practitioner", href: "/careers" },
@@ -163,9 +166,9 @@ export default function Navbar() {
             </a>
 
             <div className="relative group/services">
-              <button className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
+              <a href="/services" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
                 Services <LucideIcon name="chevron-down" size={12} />
-              </button>
+              </a>
               <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover/services:opacity-100 group-hover/services:visible transition-all duration-300">
                 <div className="bg-white border border-gray-100 shadow-2xl rounded-b-2xl p-4 min-w-[220px]">
                   {services.map((s) => (
@@ -182,9 +185,9 @@ export default function Navbar() {
             </div>
 
             <div className="relative group/concerns">
-              <button className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
+              <a href="/concerns" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
                 Concerns <LucideIcon name="chevron-down" size={12} />
-              </button>
+              </a>
               <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover/concerns:opacity-100 group-hover/concerns:visible transition-all duration-300">
                 <div className="bg-white border border-gray-100 shadow-2xl rounded-b-2xl p-4 min-w-[220px]">
                   {concerns.map((c) => (
@@ -208,9 +211,9 @@ export default function Navbar() {
             </a>
 
             <div className="relative group/programs">
-              <button className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
+              <a href="/programs" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
                 Programs <LucideIcon name="chevron-down" size={12} />
-              </button>
+              </a>
               <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover/programs:opacity-100 group-hover/programs:visible transition-all duration-300">
                 <div className="bg-white border border-gray-100 shadow-2xl rounded-b-2xl p-4 min-w-[220px]">
                   {programs.map((program) => (
@@ -227,9 +230,9 @@ export default function Navbar() {
             </div>
 
             <div className="relative group/resources">
-              <button className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
+              <a href="/resources" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
                 Resources <LucideIcon name="chevron-down" size={12} />
-              </button>
+              </a>
               <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover/resources:opacity-100 group-hover/resources:visible transition-all duration-300">
                 <div className="bg-white border border-gray-100 shadow-2xl rounded-b-2xl p-4 min-w-[220px]">
                   {resources.map((resource) => (

@@ -1,5 +1,5 @@
-import { createWhatsAppUrl } from "../src/config/business";
 import { LucideIcon } from "@site-builder/icons";
+import { therapistDirectoryHref } from "../src/lib/concerns";
 
 export default function CoupleTherapySection() {
   return (
@@ -44,9 +44,7 @@ export default function CoupleTherapySection() {
 
           <div className="flex justify-center">
             <a
-              href={createWhatsAppUrl(
-                "Hello, I need information about couple counselling sessions.",
-              )}
+              href={therapistDirectoryHref(["Relationship Issues", "Couple Therapy"])}
               className="inline-flex items-center gap-3 bg-[#1A1A1A] text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#A3B899] transition-all duration-300 shadow-2xl shadow-black/10 active:scale-95"
             >
               Book a Session <LucideIcon name="arrow-right" size={18} />

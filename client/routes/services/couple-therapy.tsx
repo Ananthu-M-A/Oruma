@@ -6,9 +6,11 @@ import WhyChooseService from "../../components/WhyChooseService";
 import FAQSection from "../../components/FAQSection";
 import Footer from "../../components/Footer";
 import FloatingActions from "../../components/FloatingActions";
-import { createWhatsAppUrl } from "../../src/config/business";
+import { createSupportEmailUrl } from "../../src/config/business";
 import CoupleTherapyVideo from "../../components/CoupleTherapyVideo";
 import ServiceScopeNotice from "../../components/ServiceScopeNotice";
+
+const coupleTherapyAreas = ["Relationship Issues", "Couple Therapy"];
 
 const bookingChecks = [
   {
@@ -35,7 +37,9 @@ export default function CoupleTherapyPage() {
       <ServiceHero
         title="Connect, Re-build, Bond Together"
         subtitle="Online relationship counselling can provide a structured setting to discuss communication and shared concerns. Review the selected practitioner's verified profile before booking."
-        img="/assets/couple-therapy-new-hero-image.webp"
+        img="/assets/relationship-healing-connection-v2.webp"
+        imageAlt="A couple offering each other comfort and support"
+        specialtyAreas={coupleTherapyAreas}
       />
 
       <AssessmentBanner service="couple" />
@@ -46,7 +50,7 @@ export default function CoupleTherapyPage() {
             Available Practitioners
           </h2>
           <TherapistGrid
-            specialtyAreas={["Relationship Issues", "Couple Therapy"]}
+            specialtyAreas={coupleTherapyAreas}
             emptyTitle="No couple counselling practitioners are listed right now."
             emptyDescription="No current profiles list couple or relationship work. Use the page-specific Ask booking support message to request a suitable match."
           />
@@ -77,7 +81,7 @@ export default function CoupleTherapyPage() {
 
           <div className="mt-16">
             <a
-              href={createWhatsAppUrl(
+              href={createSupportEmailUrl(
                 [
                   "Hello, my partner and I are considering an online couple counselling session.",
                   "Please share practitioner profiles for our concern, their professional role and scope, session fees, next available times, and the steps to book together.",

@@ -23,7 +23,7 @@ const sections: PolicySection[] = [
     title: "3. Confidentiality—not complete anonymity",
     body: [
       "Oruma protects personal and wellness information through limited access, role controls, authentication, and operational confidentiality. No online service can promise complete anonymity or absolute security.",
-      "A person may make a general initial enquiry without describing a health concern, but email, telephone, WhatsApp, and similar channels reveal account or contact identifiers to their providers and to Oruma staff handling the enquiry.",
+      "A person may make a general initial enquiry without describing a health concern. Public enquiries are handled by email. A booking-specific WhatsApp chat is available in the patient dashboard only after payment for an appointment is complete and reveals contact identifiers to the messaging provider and authorised care-team staff.",
       "Bookings and paid consultations are identified services because Oruma collects customer contact details, booking information, payment references, and records needed to deliver and support the service.",
     ],
   },

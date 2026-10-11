@@ -48,7 +48,7 @@ const sections: PolicySection[] = [
     title: "7. Emergency disclaimer and contact",
     body: [
       "Oruma is not an emergency service. For immediate danger, self-harm risk, or medical emergency, contact local emergency services or a nearby hospital.",
-      `Cancellation support: ${businessConfig.emails.cancellation} or ${businessConfig.supportPhone.display}. Appointment times use Indian Standard Time.`,
+      `Cancellation support: ${businessConfig.emails.cancellation}. Appointment times use Indian Standard Time.`,
     ],
   },
 ];

@@ -1,13 +1,7 @@
-import { createWhatsAppUrl } from "../src/config/business";
 import { LucideIcon } from "@site-builder/icons";
+import { therapistDirectoryHref } from "../src/lib/concerns";
 
 export default function TraumaMechanism() {
-  const whatsappLink = createWhatsAppUrl(
-    [
-      "Hello, I have reviewed Oruma's trauma and PTSD support information.",
-      "Please send profiles for practitioners listing trauma-informed care, with role and scope, fees, next available times, and booking steps.",
-    ].join("\n"),
-  );
   const steps = [
     { icon: "shield-check", title: "Safe Boundaries" },
     { icon: "user-check", title: "Specialized Trauma Care" },
@@ -39,7 +33,7 @@ export default function TraumaMechanism() {
         </div>
 
         <a
-          href={whatsappLink}
+          href={therapistDirectoryHref(["Trauma & PTSD"])}
           className="inline-block mt-12 bg-[#0A7F7A] text-white px-10 py-3.5 rounded-full font-bold text-sm hover:bg-[#064F4B] shadow-xl shadow-[#0A7F7A]/20 transition-all hover:scale-105 active:scale-95"
         >
           Get Therapy

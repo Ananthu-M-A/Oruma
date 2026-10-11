@@ -87,17 +87,51 @@ export type TherapistPerformance = {
 };
 
 function parseTherapistList(data: unknown): Therapist[] {
-  if (Array.isArray(data)) return data as Therapist[];
+  const records = Array.isArray(data)
+    ? data
+    : data &&
+        typeof data === "object" &&
+        Array.isArray((data as { data?: unknown }).data)
+      ? (data as { data: unknown[] }).data
+      : null;
 
-  if (
-    data &&
-    typeof data === "object" &&
-    Array.isArray((data as { data?: unknown }).data)
-  ) {
-    return (data as { data: Therapist[] }).data;
-  }
+  if (records) return records.map(normalizeTherapistRecord);
 
   throw new Error("Unable to load therapists. Please try again later.");
+}
+
+function normalizeStringList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string");
+  }
+  if (typeof value !== "string") return [];
+
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+  if (trimmed.startsWith("[")) {
+    try {
+      const parsed: unknown = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((item): item is string => typeof item === "string");
+      }
+    } catch {
+      // Fall back to the legacy comma-separated representation.
+    }
+  }
+  return trimmed.split(/[,;\n]/).map((item) => item.trim()).filter(Boolean);
+}
+
+function normalizeTherapistRecord(value: unknown): Therapist {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Unable to load therapist. Please try again later.");
+  }
+  const therapist = value as Therapist;
+  return {
+    ...therapist,
+    tags: normalizeStringList(therapist.tags),
+    areasOfPractice: normalizeStringList(therapist.areasOfPractice),
+    languages: normalizeStringList(therapist.languages),
+  };
 }
 
 export type AvailabilitySlot = {
@@ -147,7 +181,7 @@ export async function getAdminTherapists(accessToken: string) {
     throw new Error(message);
   }
 
-  return data as Therapist[];
+  return parseTherapistList(data);
 }
 
 export async function getTherapistPerformance(accessToken: string) {
@@ -204,7 +238,7 @@ async function writeTherapist(
     throw new Error(message);
   }
 
-  return data as Therapist;
+  return normalizeTherapistRecord(data);
 }
 
 export function createTherapist(
@@ -320,7 +354,7 @@ export async function getTherapist(id: string) {
     throw new Error(message);
   }
 
-  const therapist = data as Therapist;
+  const therapist = normalizeTherapistRecord(data);
   if (!therapist.isActive)
     throw new Error("This therapist profile is currently unavailable.");
 

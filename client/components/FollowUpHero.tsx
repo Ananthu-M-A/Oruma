@@ -30,24 +30,18 @@ export default function FollowUpHero() {
         </div>
 
         <div className="relative flex justify-center lg:justify-end">
-          {/* Arch Illustration Replicated with CSS/SVG */}
-          <div className="relative w-full max-w-sm aspect-[4/5] bg-[#00E0A1] rounded-t-full flex items-center justify-center shadow-2xl overflow-hidden">
-            {/* Inner White Arch */}
-            <div className="absolute bottom-0 w-1/2 h-2/3 bg-white rounded-t-full mb-[-10%]" />
-
-            {/* Magnifying Glass Illustration Icon */}
-            <div className="relative z-10 w-48 h-48 bg-white/20 rounded-full backdrop-blur-md flex items-center justify-center border border-white/30 rotate-12">
-              <div className="w-24 h-24 border-8 border-black rounded-full relative">
-                <div className="absolute bottom-[-20px] right-[-20px] w-4 h-12 bg-black rounded-full rotate-45 origin-top" />
-              </div>
-            </div>
-
-            {/* Background decorative dots */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none">
-              <div className="absolute top-20 left-10 w-4 h-4 bg-black rounded-full" />
-              <div className="absolute top-40 right-10 w-8 h-8 bg-black rounded-full" />
-              <div className="absolute bottom-20 left-20 w-6 h-6 bg-black rounded-full" />
-            </div>
+          <div className="relative aspect-[4/5] w-full max-w-sm overflow-hidden rounded-t-full rounded-b-[2.5rem] border-[10px] border-[#E6F1E9] bg-[#E6F1E9] shadow-2xl">
+            <img
+              src="/assets/hero-therapist-professional.webp"
+              alt="A practitioner ready to continue supporting existing clients"
+              loading="eager"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#064F4B]/65 via-transparent to-transparent" />
+            <p className="absolute inset-x-6 bottom-7 text-center font-heading text-xl font-bold text-white drop-shadow">
+              Continue with care that knows your journey
+            </p>
           </div>
         </div>
       </div>

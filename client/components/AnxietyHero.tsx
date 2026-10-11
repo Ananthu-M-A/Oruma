@@ -1,14 +1,6 @@
-import { createWhatsAppUrl } from "../src/config/business";
+import { therapistDirectoryHref } from "../src/lib/concerns";
 
 export default function AnxietyHero() {
-  const whatsappLink = createWhatsAppUrl(
-    [
-      "Hello, I am looking for support with anxiety, overthinking, or stress.",
-      "Please share practitioners whose profiles list these concerns, their professional role and scope, session fee, next available times, and how to book.",
-      "My preferred language is [add language if relevant].",
-    ].join("\n"),
-  );
-
   return (
     <section className="relative w-full overflow-hidden bg-white border-t border-gray-100">
       <div className="flex flex-col lg:flex-row-reverse min-h-[600px]">
@@ -29,7 +21,7 @@ export default function AnxietyHero() {
             you calm your nervous system and rediscover your inner peace.
           </p>
           <a
-            href={whatsappLink}
+            href={therapistDirectoryHref(["Anxiety", "Stress & Burnout"])}
             className="bg-white text-[#064F4B] px-12 py-5 rounded-full font-black text-sm uppercase tracking-widest hover:bg-[#B7C8A3] transition-all shadow-2xl shadow-black/20 active:scale-95"
           >
             Start Healing

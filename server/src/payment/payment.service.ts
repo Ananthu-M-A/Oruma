@@ -1742,7 +1742,7 @@ export class PaymentService {
         <p><strong>Operated by:</strong> ${this.escapeHtml(businessConfig.operatorLegalName)}</p>
         <p>${this.escapeHtml(businessConfig.serviceDescription)}</p>
         <p>${this.escapeHtml(businessAddress)}</p>
-        <p>${this.escapeHtml(businessConfig.emails.support)} · ${this.escapeHtml(businessConfig.supportPhone.display)}</p>
+        <p>${this.escapeHtml(businessConfig.emails.support)}</p>
         ${businessConfig.gstin ? `<p>GSTIN: ${this.escapeHtml(businessConfig.gstin)}</p>` : ''}
       </div>
     </header>

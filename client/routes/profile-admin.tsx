@@ -1088,7 +1088,7 @@ function AppointmentOperationsCard({
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={!isConfirmed || !phone || isSaving}
+                disabled={!isPaid || !isConfirmed || !phone || isSaving}
                 onClick={() => onOpenWhatsApp("confirmation")}
                 className={`${statusButtonClass} bg-[#25D366] text-[#063E2A]`}
               >
@@ -1163,7 +1163,7 @@ function AppointmentOperationsCard({
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={!appointment.meetingLink || !phone || isSaving}
+                disabled={!isPaid || !appointment.meetingLink || !phone || isSaving}
                 onClick={() => onOpenWhatsApp("meeting-link")}
                 className={`${statusButtonClass} bg-[#25D366] text-[#063E2A]`}
               >
@@ -1197,7 +1197,7 @@ function AppointmentOperationsCard({
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={!appointment.meetingLinkSentAt || !phone || isSaving}
+                disabled={!isPaid || !appointment.meetingLinkSentAt || !phone || isSaving}
                 onClick={() => onOpenWhatsApp("reminder")}
                 className={`${statusButtonClass} bg-[#25D366] text-[#063E2A]`}
               >

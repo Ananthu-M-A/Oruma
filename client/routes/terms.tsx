@@ -54,7 +54,7 @@ const sections: PolicySection[] = [
     title: "7. Privacy and communications",
     body: [
       "Use of personal and wellness information is governed by the Privacy Policy. Paid consultations and bookings are identified services and are not anonymous.",
-      "Oruma may send verification codes, booking updates, payment status, joining instructions, and support responses through the dashboard, email, telephone, or the official WhatsApp number.",
+      "Oruma sends verification codes, booking updates, payment status, joining instructions, and general support responses through email and the patient dashboard. A booking-specific WhatsApp chat is available in the patient dashboard only after payment for an appointment is complete.",
     ],
   },
   {

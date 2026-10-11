@@ -1,14 +1,11 @@
-import { useLocation } from "react-router-dom";
 import { LucideIcon } from "@site-builder/icons";
 import BusinessIdentityDisclosure from "./BusinessIdentityDisclosure";
 import {
   businessConfig,
   businessLinks,
-  createPageWhatsAppUrl,
 } from "../src/config/business";
 
 export default function Footer() {
-  const { pathname } = useLocation();
   const sections = [
     {
       title: "Services",
@@ -64,14 +61,6 @@ export default function Footer() {
       label: "YouTube",
     },
     { icon: "mail", href: businessLinks.supportEmail, label: "Email support" },
-    {
-      icon: "message-square",
-      href: createPageWhatsAppUrl(
-        pathname,
-        "confirming which practitioner or service suits my need, the session fee, the next available time, and how to book",
-      ),
-      label: "WhatsApp support",
-    },
   ];
 
   return (

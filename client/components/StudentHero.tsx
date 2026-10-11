@@ -1,14 +1,6 @@
-import { createWhatsAppUrl } from "../src/config/business";
+import { therapistDirectoryHref } from "../src/lib/concerns";
 
 export default function StudentHero() {
-  const whatsappLink = createWhatsAppUrl(
-    [
-      "Hello, I am a parent or guardian looking for counselling for a child or teenager.",
-      "Please share practitioners who work with academic stress, behaviour, emotions, or peer concerns, along with their role, experience, fee, and next available times.",
-      "Please also explain consent, privacy, and how a parent or guardian is involved.",
-    ].join("\n"),
-  );
-
   return (
     <section className="relative w-full overflow-hidden bg-white border-t border-gray-100">
       <div className="flex flex-col lg:flex-row min-h-[600px]">
@@ -29,7 +21,11 @@ export default function StudentHero() {
             support for academic stress and digital wellness.
           </p>
           <a
-            href={whatsappLink}
+            href={therapistDirectoryHref([
+              "Child Behaviour",
+              "Teenage Concerns",
+              "Academic Stress",
+            ])}
             className="bg-[#064F4B] text-white px-12 py-5 rounded-full font-black text-sm uppercase tracking-widest hover:bg-white hover:text-[#064F4B] transition-all shadow-2xl active:scale-95"
           >
             Start Counselling

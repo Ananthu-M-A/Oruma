@@ -1,13 +1,6 @@
-import { createWhatsAppUrl } from "../src/config/business";
+import { therapistDirectoryHref } from "../src/lib/concerns";
 
 export default function PostpartumHero() {
-  const whatsappLink = createWhatsAppUrl(
-    [
-      "Hello, I am looking for emotional support after pregnancy.",
-      "Please share practitioners who work with postpartum adjustment and mood changes, their role and scope, session fees, next available times, and what to expect in an initial session.",
-    ].join("\n"),
-  );
-
   return (
     <section className="relative w-full overflow-hidden bg-white border-t border-gray-100">
       <div className="flex flex-col lg:flex-row min-h-[600px]">
@@ -25,7 +18,7 @@ export default function PostpartumHero() {
             postpartum period.
           </p>
           <a
-            href={whatsappLink}
+            href={therapistDirectoryHref(["Postpartum Support"])}
             className="bg-[#B7C8A3] text-[#064F4B] px-10 py-5 rounded-full font-black text-lg hover:scale-105 transition-all shadow-2xl shadow-black/20 active:scale-95"
           >
             Get Specialized Support

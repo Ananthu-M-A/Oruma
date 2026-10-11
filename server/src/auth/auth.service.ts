@@ -150,7 +150,7 @@ export class AuthService {
     const normalized = this.normalizeIdentifier(dto.identifier);
     if (!this.isEmail(normalized)) {
       throw new BadRequestException(
-        'Use your email for verification. WhatsApp is handled manually by the care team.',
+        'Use your email for verification. Booking updates are sent by email and shown in the patient dashboard.',
       );
     }
     if (requireAccount) {

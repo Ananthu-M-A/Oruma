@@ -432,7 +432,7 @@ export class AppointmentService {
             'Payment status: Paid',
             'Staff will confirm the appointment and send joining instructions.',
             `Service delivery, cancellation, and refund information: ${policyUrl}`,
-            `Support: ${businessConfig.emails.support} | ${businessConfig.supportPhone.display}`,
+            `Support: ${businessConfig.emails.support}`,
           ].join('\n'),
           html: `
           <p>Your ${businessConfig.brandName} booking and payment have been received.</p>
@@ -444,7 +444,7 @@ export class AppointmentService {
           <p><strong>Payment status:</strong> Paid</p>
           <p>Staff will confirm the appointment and send joining instructions.</p>
           <p><a href="${policyUrl}">Service delivery, cancellation, and refund information</a></p>
-          <p>Support: ${businessConfig.emails.support} · ${businessConfig.supportPhone.display}</p>
+          <p>Support: ${businessConfig.emails.support}</p>
         `,
         },
         { deduplicationKey: `appointment:${appointment.id}:request:email` },

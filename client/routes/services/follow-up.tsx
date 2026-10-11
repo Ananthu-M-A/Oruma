@@ -4,7 +4,7 @@ import ServicesSnapshot from "../../components/ServicesSnapshot";
 import TherapistGrid from "../../components/TherapistGrid";
 import FollowUpFAQ from "../../components/FollowUpFAQ";
 import Footer from "../../components/Footer";
-import { createWhatsAppUrl } from "../../src/config/business";
+import { createSupportEmailUrl } from "../../src/config/business";
 import FloatingActions from "../../components/FloatingActions";
 import { LucideIcon } from "@site-builder/icons";
 import ServiceScopeNotice from "../../components/ServiceScopeNotice";
@@ -32,7 +32,7 @@ export default function FollowUpPage() {
                 Still Unsure About What Help to Take?
               </h2>
               <a
-                href={createWhatsAppUrl(
+                href={createSupportEmailUrl(
                   [
                     "Hello, I have a question about booking a follow-up counselling session.",
                     "Please explain how to select the practitioner from my earlier appointment, check the follow-up fee, and view their next available times.",

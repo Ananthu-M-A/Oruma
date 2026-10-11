@@ -6,11 +6,10 @@ import FloatingActions from "../components/FloatingActions";
 import TherapistSearchHero from "../components/TherapistSearchHero";
 import TherapistGrid from "../components/TherapistGrid";
 import { LucideIcon } from "@site-builder/icons";
-import { createWhatsAppUrl } from "../src/config/business";
+import { createSupportEmailUrl } from "../src/config/business";
 
 export default function TherapistListingPage() {
   const [query, setQuery] = useState("");
-  const [maxFee, setMaxFee] = useState("");
   const [nextDayOnly, setNextDayOnly] = useState(false);
   const [searchParams] = useSearchParams();
   const specialtyAreas = (searchParams.get("areas") ?? "")
@@ -19,13 +18,12 @@ export default function TherapistListingPage() {
     .filter(Boolean);
   const preferredLanguage = searchParams.get("language") ?? "";
   const sessionFor = searchParams.get("sessionFor") ?? "";
-  const whatsappLink = createWhatsAppUrl(
+  const emailLink = createSupportEmailUrl(
     [
       "Hello, I have reviewed Oruma’s practitioner profiles and would like help choosing a suitable match.",
       `Areas I am looking for: ${query.trim() || specialtyAreas.join(", ") || "not sure yet"}`,
       `Session is for: ${sessionFor || "myself"}`,
       `Preferred language: ${preferredLanguage || "no preference"}`,
-      `Maximum fee: ${maxFee ? `Rs.${Number(maxFee).toLocaleString("en-IN")}` : "flexible"}`,
       `Availability: ${nextDayOnly ? "tomorrow if possible" : "any published available time"}`,
       "Please share matching profile links, professional roles and scope, fees, next available times, and the steps needed to book.",
     ].join("\n"),
@@ -80,20 +78,7 @@ export default function TherapistListingPage() {
                 placeholder="Search by therapist name, title, or specialization..."
               />
             </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-              <label>
-                <span className="sr-only">Maximum fee</span>
-                <select
-                  value={maxFee}
-                  onChange={(event) => setMaxFee(event.target.value)}
-                  className="w-full rounded-full border border-[#E2E8E6] bg-[#F5F8F7] px-5 py-4 text-sm font-black text-[#064F4B] outline-none focus:border-[#0A7F7A] focus:bg-white"
-                >
-                  <option value="">Any fee</option>
-                  <option value="1000">Up to Rs.1,000</option>
-                  <option value="1500">Up to Rs.1,500</option>
-                  <option value="2500">Up to Rs.2,500</option>
-                </select>
-              </label>
+            <div className="mt-4">
               <label className="inline-flex items-center gap-3 rounded-full border border-[#E2E8E6] bg-[#F5F8F7] px-5 py-4 text-sm font-black text-[#064F4B]">
                 <input
                   type="checkbox"
@@ -117,7 +102,6 @@ export default function TherapistListingPage() {
 
           <TherapistGrid
             searchQuery={query}
-            maxFee={maxFee ? Number(maxFee) : null}
             nextDayOnly={nextDayOnly}
             specialtyAreas={specialtyAreas}
             preferredLanguage={preferredLanguage}
@@ -131,7 +115,7 @@ export default function TherapistListingPage() {
               Can't find what you're looking for?
             </p>
             <a
-              href={whatsappLink}
+              href={emailLink}
               className="inline-flex items-center gap-2 bg-[#064F4B] text-[#FFFFFF] px-10 py-5 rounded-full font-black hover:scale-105 transition-all shadow-xl shadow-[#064F4B]/20 uppercase tracking-widest text-xs"
             >
               Let us help you choose <LucideIcon name="arrow-right" size={18} />

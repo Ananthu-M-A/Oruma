@@ -1,4 +1,4 @@
-import { createWhatsAppUrl } from "../src/config/business";
+import { therapistDirectoryHref } from "../src/lib/concerns";
 
 export default function IntimacyHero() {
   return (
@@ -16,13 +16,7 @@ export default function IntimacyHero() {
             your concerns through our Ivade initiative.
           </p>
           <a
-            href={createWhatsAppUrl(
-              [
-                "Hello, I am looking for confidential sexual wellness counselling.",
-                "Please share suitable practitioner profiles, their professional role and scope, session fees, next available times, and how privacy is handled before booking.",
-                "My question is about [add a short concern, if comfortable].",
-              ].join("\n"),
-            )}
+            href={therapistDirectoryHref(["Sexual Wellness"])}
             className="bg-[#1A1A1A] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-black transition-all shadow-xl shadow-black/10 inline-block"
           >
             Book consultation

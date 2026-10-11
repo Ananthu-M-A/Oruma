@@ -1,14 +1,6 @@
-import { createWhatsAppUrl } from "../src/config/business";
+import { therapistDirectoryHref } from "../src/lib/concerns";
 
 export default function RelationshipHero() {
-  const whatsappLink = createWhatsAppUrl(
-    [
-      "Hello, my partner and I are considering relationship counselling.",
-      "Please share practitioners who list relationship or couple work, their professional role and scope, session fee, next available times, and steps to book an initial conversation.",
-      "We would also like to know whether both partners attend the first session.",
-    ].join("\n"),
-  );
-
   return (
     <section className="relative w-full overflow-hidden bg-white border-t border-gray-100">
       <div className="flex flex-col lg:flex-row min-h-[600px]">
@@ -31,7 +23,7 @@ export default function RelationshipHero() {
             bond.
           </p>
           <a
-            href={whatsappLink}
+            href={therapistDirectoryHref(["Relationship Issues", "Couple Therapy"])}
             className="bg-white text-[#0A7F7A] px-12 py-5 rounded-full font-black text-sm uppercase tracking-widest hover:bg-[#B7C8A3] hover:text-[#064F4B] transition-all shadow-2xl shadow-black/20 active:scale-95"
           >
             Start Your Journey

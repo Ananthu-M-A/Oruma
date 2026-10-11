@@ -66,7 +66,17 @@ export function createWhatsAppUrl(message: string) {
   return `https://wa.me/${businessConfig.whatsappPhone.digits}?text=${encodeURIComponent(message)}`;
 }
 
-const whatsappPageTopics: Record<string, string> = {
+export function createSupportEmailUrl(message: string, subject?: string) {
+  const firstLine = message.trim().split(/\r?\n/, 1)[0] ?? "";
+  const generatedSubject = firstLine.replace(/^hello,?\s*/i, "").trim();
+  const query = new URLSearchParams({
+    subject: (subject || generatedSubject || "Oruma support enquiry").slice(0, 120),
+    body: message,
+  });
+  return `${businessLinks.supportEmail}?${query.toString()}`;
+}
+
+const supportEmailPageTopics: Record<string, string> = {
   "/": "choosing counselling or wellness support",
   "/about": "learning how Oruma's services work",
   "/articles": "reading Oruma's emotional wellbeing articles",
@@ -99,22 +109,27 @@ const whatsappPageTopics: Record<string, string> = {
   "/services/sexual-wellness": "sexual wellness counselling",
   "/services/follow-up": "an existing counselling follow-up booking",
   "/programs": "Oruma courses, workshops, or webinars",
+  "/programs/courses": "Oruma courses",
+  "/programs/workshops": "Oruma offline workshops",
+  "/programs/webinars": "Oruma webinars and events",
+  "/resources": "Oruma resources and information",
   "/careers": "applying as an Oruma practitioner",
   "/contact": "a service, booking, payment, cancellation, or refund question",
 };
 
-export function createPageWhatsAppUrl(pathname: string, request: string) {
+export function createPageSupportEmailUrl(pathname: string, request: string) {
   const pageTopic =
-    whatsappPageTopics[pathname] ??
+    supportEmailPageTopics[pathname] ??
     (pathname.startsWith("/therapists/")
       ? "reviewing a specific practitioner profile"
       : "an Oruma counselling or wellness service");
-  return createWhatsAppUrl(
+  return createSupportEmailUrl(
     [
-      `Hello, I am viewing the Oruma page about ${pageTopic}.`,
+      `Hello Oruma, I am viewing the page about ${pageTopic}.`,
       `I would like help with ${request}.`,
-      "Please tell me the most relevant next step and what information you need to answer this.",
+      "Please reply to this email with the relevant next step and any information needed to help.",
     ].join("\n"),
+    `Enquiry about ${pageTopic}`,
   );
 }
 

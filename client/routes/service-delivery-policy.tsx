@@ -62,7 +62,7 @@ const sections: PolicySection[] = [
   {
     title: "9. Support channels",
     body: [
-      `Support is available through the patient dashboard, ${businessConfig.emails.support}, ${businessConfig.supportPhone.display}, and the official WhatsApp number ${businessConfig.whatsappPhone.display}. These are support channels, not emergency services.`,
+      `General support is available by email at ${businessConfig.emails.support} and through the patient dashboard. A booking-specific WhatsApp chat is available in the dashboard only after payment for an appointment is complete. These are support channels, not emergency services.`,
     ],
   },
 ];

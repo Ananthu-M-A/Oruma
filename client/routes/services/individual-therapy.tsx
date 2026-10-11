@@ -5,8 +5,23 @@ import WhyChooseService from "../../components/WhyChooseService";
 import FAQSection from "../../components/FAQSection";
 import Footer from "../../components/Footer";
 import FloatingActions from "../../components/FloatingActions";
-import { createWhatsAppUrl } from "../../src/config/business";
 import ServiceScopeNotice from "../../components/ServiceScopeNotice";
+import { therapistDirectoryHref } from "../../src/lib/concerns";
+
+const individualTherapyAreas = [
+  "Anxiety",
+  "Stress & Burnout",
+  "Depression",
+  "Emotional Wellbeing",
+  "Trauma & PTSD",
+  "Breakup Recovery",
+  "Grief & Loss",
+  "Postpartum Support",
+  "Sexual Wellness",
+  "Self-esteem",
+  "Workplace Stress",
+  "LGBTQIA+ Affirmative Support",
+];
 
 export default function IndividualTherapyPage() {
   return (
@@ -18,7 +33,9 @@ export default function IndividualTherapyPage() {
       <ServiceHero
         title="Transforming Struggles into Personal Strength"
         subtitle="Individual therapy provides a safe, confidential space where you can explore your thoughts and feelings with a professional who truly listens."
-        img="https://images.unsplash.com/photo-1527689368864-3a821dbccc48?auto=format&fit=crop&q=80&w=800"
+        img="/assets/home-lady-striped-shirt-v2.webp"
+        imageAlt="A woman smiling outdoors during a moment of personal wellbeing"
+        specialtyAreas={individualTherapyAreas}
       />
 
       <section className="py-20 bg-[#F5F8F7]">
@@ -27,20 +44,7 @@ export default function IndividualTherapyPage() {
             Available Therapists
           </h2>
           <TherapistGrid
-            specialtyAreas={[
-              "Anxiety",
-              "Stress & Burnout",
-              "Depression",
-              "Emotional Wellbeing",
-              "Trauma & PTSD",
-              "Breakup Recovery",
-              "Grief & Loss",
-              "Postpartum Support",
-              "Sexual Wellness",
-              "Self-esteem",
-              "Workplace Stress",
-              "LGBTQIA+ Affirmative Support",
-            ]}
+            specialtyAreas={individualTherapyAreas}
             emptyTitle="No individual counselling practitioners match these areas right now."
             emptyDescription="No current profiles list these areas of practice. Check back for updated availability or ask Oruma for help finding a match."
           />
@@ -88,13 +92,7 @@ export default function IndividualTherapyPage() {
 
           <div className="mt-20">
             <a
-              href={createWhatsAppUrl(
-                [
-                  "Hello, I am considering an individual counselling session.",
-                  "Please share practitioners whose profiles list my concern, their professional role and scope, session fee, next available times, and the steps to book.",
-                  "My support area is [add a short concern, or say not sure yet]. Preferred language: [add if relevant].",
-                ].join("\n"),
-              )}
+              href={therapistDirectoryHref(individualTherapyAreas)}
               className="bg-[#064F4B] text-white px-16 py-6 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-[#064F4B]/20 hover:scale-105 transition-all"
             >
               Start Your Journey

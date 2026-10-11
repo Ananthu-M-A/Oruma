@@ -1,14 +1,6 @@
-import { createWhatsAppUrl } from "../src/config/business";
+import { therapistDirectoryHref } from "../src/lib/concerns";
 
 export default function TraumaHero() {
-  const whatsappLink = createWhatsAppUrl(
-    [
-      "Hello, I am looking for trauma-informed counselling after a difficult experience.",
-      "Please share practitioners whose profiles list trauma or PTSD, their professional role and scope, session fee, next available times, and how to book.",
-      "I will share personal details only with a practitioner after reviewing their profile.",
-    ].join("\n"),
-  );
-
   return (
     <section className="relative w-full overflow-hidden bg-white border-t border-gray-100">
       <div className="flex flex-col lg:flex-row-reverse min-h-[600px]">
@@ -30,7 +22,7 @@ export default function TraumaHero() {
             peace.
           </p>
           <a
-            href={whatsappLink}
+            href={therapistDirectoryHref(["Trauma & PTSD"])}
             className="bg-white text-[#064F4B] px-12 py-5 rounded-full font-black text-sm uppercase tracking-widest hover:bg-[#B7C8A3] transition-all shadow-2xl shadow-black/20 active:scale-95"
           >
             Start Healing

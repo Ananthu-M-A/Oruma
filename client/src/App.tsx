@@ -30,6 +30,8 @@ const ServiceDeliveryPolicy = lazy(
 );
 const Register = lazy(() => import("../routes/register"));
 const Programs = lazy(() => import("../routes/programs"));
+const ProgramDetail = lazy(() => import("../routes/program-detail"));
+const Resources = lazy(() => import("../routes/resources"));
 const Services = lazy(() => import("../routes/services"));
 const CoupleTherapy = lazy(() => import("../routes/services/couple-therapy"));
 const FollowUp = lazy(() => import("../routes/services/follow-up"));
@@ -94,6 +96,8 @@ export default function App() {
           <Route path="/cancellation-policy" element={<CancellationPolicy />} />
           <Route path="/register" element={<Register />} />
           <Route path="/programs" element={<Programs />} />
+          <Route path="/programs/:programSlug" element={<ProgramDetail />} />
+          <Route path="/resources" element={<Resources />} />
           <Route
             path="/service-delivery-policy"
             element={<ServiceDeliveryPolicy />}

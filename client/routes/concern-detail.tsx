@@ -23,7 +23,6 @@ import TraumaHero from "../components/TraumaHero";
 import TraumaMechanism from "../components/TraumaMechanism";
 import TraumaSymptoms from "../components/TraumaSymptoms";
 import { concernPaths, therapistDirectoryHref } from "../src/lib/concerns";
-import { createWhatsAppUrl } from "../src/config/business";
 
 function RelationshipContent() {
   return (
@@ -47,14 +46,6 @@ function RelationshipContent() {
 }
 
 function BreakupContent() {
-  const bookingLink = createWhatsAppUrl(
-    [
-      "Hello, I am looking for individual counselling while recovering from a breakup.",
-      "Please share practitioner profiles listing breakup recovery or grief and loss, their role and scope, session fee, next available times, and booking steps.",
-      "I would prefer to discuss personal details after choosing a practitioner.",
-    ].join("\n"),
-  );
-
   return (
     <section className="relative z-10 border-t border-gray-100 bg-white">
       <div className="bg-[#064F4B] px-6 py-24 text-center text-white">
@@ -99,7 +90,7 @@ function BreakupContent() {
             ))}
           </ul>
           <a
-            href={bookingLink}
+            href={therapistDirectoryHref(["Breakup Recovery", "Grief & Loss"])}
             className="mt-10 inline-block rounded-full bg-[#064F4B] px-10 py-5 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-[#064F4B]/20 transition hover:bg-[#0A7F7A] active:scale-95"
           >
             Start Your Recovery

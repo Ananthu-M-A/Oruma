@@ -1,6 +1,5 @@
-import { createWhatsAppUrl } from "../src/config/business";
 import { LucideIcon } from "@site-builder/icons";
-import { concernPaths } from "../src/lib/concerns";
+import { concernPaths, therapistDirectoryHref } from "../src/lib/concerns";
 
 export default function ConcernsGrid() {
   const concerns = [
@@ -46,14 +45,6 @@ export default function ConcernsGrid() {
     },
   ];
 
-  const bookingLink = createWhatsAppUrl(
-    [
-      "Hello, I am looking for confidential sexual wellness or intimacy counselling.",
-      "Please share practitioner profiles that list this area, their professional role and scope, session fees, next available times, and booking steps.",
-      "My question relates to [add a short concern, if comfortable].",
-    ].join("\n"),
-  );
-
   return (
     <section className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-6 text-center">
@@ -84,7 +75,7 @@ export default function ConcernsGrid() {
         </div>
 
         <a
-          href={bookingLink}
+          href={therapistDirectoryHref(["Sexual Wellness"])}
           className="inline-block mt-16 bg-[#064F4B] text-white px-10 py-4 rounded-full font-black shadow-xl shadow-[#064F4B]/20 hover:bg-[#0A7F7A] transition-all active:scale-95"
         >
           Book Consultation
