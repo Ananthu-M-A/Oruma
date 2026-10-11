@@ -414,7 +414,7 @@ function matchesPracticeArea(therapistAreas: string[], requestedAreas: string[])
         therapistArea === normalizedArea ||
         therapistArea.includes(normalizedArea) ||
         normalizedArea.includes(therapistArea) ||
-        areaWords.some((word) => therapistWords.has(word))
+        [...areaWords].some((word) => therapistWords.has(word))
       );
     });
   });
