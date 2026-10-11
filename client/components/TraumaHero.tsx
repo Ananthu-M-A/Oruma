@@ -2,7 +2,11 @@ import { createWhatsAppUrl } from "../src/config/business";
 
 export default function TraumaHero() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help choosing a counselling or wellness service.",
+    [
+      "Hello, I am looking for trauma-informed counselling after a difficult experience.",
+      "Please share practitioners whose profiles list trauma or PTSD, their professional role and scope, session fee, next available times, and how to book.",
+      "I will share personal details only with a practitioner after reviewing their profile.",
+    ].join("\n"),
   );
 
   return (

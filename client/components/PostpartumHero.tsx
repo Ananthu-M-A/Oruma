@@ -2,7 +2,10 @@ import { createWhatsAppUrl } from "../src/config/business";
 
 export default function PostpartumHero() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I need information about postpartum counselling and wellness support.",
+    [
+      "Hello, I am looking for emotional support after pregnancy.",
+      "Please share practitioners who work with postpartum adjustment and mood changes, their role and scope, session fees, next available times, and what to expect in an initial session.",
+    ].join("\n"),
   );
 
   return (

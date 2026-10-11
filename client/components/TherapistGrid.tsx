@@ -31,6 +31,9 @@ type TherapistGridProps = {
   searchQuery?: string;
   maxFee?: number | null;
   maxItems?: number;
+  specialtyAreas?: string[];
+  preferredLanguage?: string;
+  sessionFor?: string;
   emptyTitle?: string;
   emptyDescription?: string;
 };
@@ -40,6 +43,9 @@ export default function TherapistGrid({
   searchQuery = "",
   maxFee = null,
   maxItems,
+  specialtyAreas = [],
+  preferredLanguage = "",
+  sessionFor = "",
   emptyTitle = "No therapists are available right now.",
   emptyDescription = "Please check back soon or contact Oruma directly.",
 }: TherapistGridProps) {
@@ -90,8 +96,58 @@ export default function TherapistGrid({
     setIsModalOpen(true);
   };
 
+  const requiredAreasBySessionFor: Record<string, string[]> = {
+    "Me and my partner": ["Relationship Issues", "Couple Therapy"],
+    "My child or teenager": [
+      "Child Behaviour",
+      "Teenage Concerns",
+      "Academic Stress",
+    ],
+    "My family": ["Family Counselling", "Parenting Challenges"],
+  };
+
   const filteredTherapists = therapists.filter((therapist) => {
     if (maxFee && therapist.price > maxFee) return false;
+
+    const legacyTags = splitTherapistTags(therapist.tags);
+    const therapistAreas = [
+      therapist.specialization,
+      ...(therapist.areasOfPractice?.length
+        ? therapist.areasOfPractice
+        : legacyTags.areasOfPractice),
+    ]
+      .filter(Boolean)
+      .map(normalizePracticeArea);
+
+    if (
+      specialtyAreas.length > 0 &&
+      !matchesPracticeArea(therapistAreas, specialtyAreas)
+    ) {
+      return false;
+    }
+
+    const requiredSessionAreas = requiredAreasBySessionFor[sessionFor];
+    if (
+      requiredSessionAreas &&
+      !matchesPracticeArea(therapistAreas, requiredSessionAreas)
+    ) {
+      return false;
+    }
+
+    if (preferredLanguage.trim()) {
+      const legacyTags = splitTherapistTags(therapist.tags);
+      const languages = therapist.languages?.length
+        ? therapist.languages
+        : legacyTags.languages;
+      if (
+        !languages.some(
+          (language) =>
+            language.toLowerCase() === preferredLanguage.trim().toLowerCase(),
+        )
+      ) {
+        return false;
+      }
+    }
 
     const normalizedQuery = searchQuery.trim().toLowerCase();
     if (!normalizedQuery) return true;
@@ -323,6 +379,45 @@ export default function TherapistGrid({
       />
     </div>
   );
+}
+
+function normalizePracticeArea(value: string) {
+  return value.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function getPracticeAreaWords(value: string) {
+  const ignoredWords = new Set([
+    "and",
+    "or",
+    "the",
+    "for",
+    "with",
+    "support",
+    "issues",
+    "concerns",
+    "therapy",
+    "counselling",
+    "counseling",
+  ]);
+  return new Set(
+    value.split(/\s+/).filter((word) => word.length > 2 && !ignoredWords.has(word)),
+  );
+}
+
+function matchesPracticeArea(therapistAreas: string[], requestedAreas: string[]) {
+  return requestedAreas.some((area) => {
+    const normalizedArea = normalizePracticeArea(area);
+    const areaWords = getPracticeAreaWords(normalizedArea);
+    return therapistAreas.some((therapistArea) => {
+      const therapistWords = getPracticeAreaWords(therapistArea);
+      return (
+        therapistArea === normalizedArea ||
+        therapistArea.includes(normalizedArea) ||
+        normalizedArea.includes(therapistArea) ||
+        areaWords.some((word) => therapistWords.has(word))
+      );
+    });
+  });
 }
 
 function InfoItem({

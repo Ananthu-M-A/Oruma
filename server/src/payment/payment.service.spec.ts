@@ -227,6 +227,106 @@ describe('PaymentService', () => {
     });
   });
 
+  it('reconciles a captured order directly when the webhook is delayed', async () => {
+    const payment = {
+      id: 'payment-1',
+      providerOrderId: 'order_123',
+      providerPaymentId: null,
+      amount: 1200,
+      status: PaymentStatus.PENDING,
+      updatedAt: new Date('2026-10-01T12:00:00.000Z'),
+      appointment: {
+        id: 'appointment-1',
+        status: 'PENDING',
+        contactEmail: 'patient@example.com',
+        reservationExpiresAt: new Date('2026-10-01T12:15:00.000Z'),
+      },
+      patient: { id: 'patient-1', email: 'patient@example.com' },
+      notes: null,
+    };
+    const { service, paymentRepo } = createService(payment);
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        items: [
+          {
+            id: 'pay_123',
+            order_id: 'order_123',
+            amount: 120000,
+            currency: 'INR',
+            status: 'captured',
+            captured: true,
+          },
+        ],
+      }),
+    } as unknown as Response);
+
+    await expect(
+      service.getRazorpayOrderStatus('order_123', patient),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        orderId: 'order_123',
+        status: PaymentStatus.PAID,
+      }),
+    );
+    expect(paymentRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerPaymentId: 'pay_123',
+        status: PaymentStatus.PAID,
+      }),
+    );
+  });
+
+  it('reconciles a provider-side failure when Checkout cannot report it', async () => {
+    const payment = {
+      id: 'payment-1',
+      providerOrderId: 'order_123',
+      providerPaymentId: null,
+      amount: 1,
+      status: PaymentStatus.PENDING,
+      updatedAt: new Date('2026-10-01T18:02:00.000Z'),
+      appointment: { id: 'appointment-1', status: 'PENDING' },
+      patient: { id: 'patient-1', email: 'patient@example.com' },
+      notes: null,
+    };
+    const { service, paymentRepo } = createService(payment);
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        items: [
+          {
+            id: 'pay_failed',
+            order_id: 'order_123',
+            amount: 100,
+            currency: 'INR',
+            status: 'failed',
+            captured: false,
+            method: 'upi',
+            error_reason: 'payment_risk_check_failed',
+            error_description:
+              'Payment blocked as website does not match registered website(s)',
+            created_at: 1790877771,
+          },
+        ],
+      }),
+    } as unknown as Response);
+
+    await expect(
+      service.getRazorpayOrderStatus('order_123', patient),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        orderId: 'order_123',
+        status: PaymentStatus.FAILED,
+      }),
+    );
+    expect(paymentRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerPaymentId: 'pay_failed',
+        status: PaymentStatus.FAILED,
+      }),
+    );
+  });
+
   it('completes the post-payment flow when the development bypass is enabled', async () => {
     const appointment = {
       id: 'appointment-1',

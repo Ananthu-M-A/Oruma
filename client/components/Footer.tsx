@@ -1,12 +1,14 @@
+import { useLocation } from "react-router-dom";
 import { LucideIcon } from "@site-builder/icons";
 import BusinessIdentityDisclosure from "./BusinessIdentityDisclosure";
 import {
   businessConfig,
   businessLinks,
-  createWhatsAppUrl,
+  createPageWhatsAppUrl,
 } from "../src/config/business";
 
 export default function Footer() {
+  const { pathname } = useLocation();
   const sections = [
     {
       title: "Services",
@@ -64,7 +66,10 @@ export default function Footer() {
     { icon: "mail", href: businessLinks.supportEmail, label: "Email support" },
     {
       icon: "message-square",
-      href: createWhatsAppUrl("Hello, I need help with an Oruma booking."),
+      href: createPageWhatsAppUrl(
+        pathname,
+        "confirming which practitioner or service suits my need, the session fee, the next available time, and how to book",
+      ),
       label: "WhatsApp support",
     },
   ];

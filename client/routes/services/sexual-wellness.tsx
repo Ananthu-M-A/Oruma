@@ -21,7 +21,7 @@ export default function SexualWellnessPage() {
       {/* Added Ivade Section */}
       <CoupleTherapyVideo />
 
-      <AssessmentBanner />
+      <AssessmentBanner service="sexual-wellness" />
 
       <ConcernsGrid />
 

@@ -35,6 +35,38 @@ export const publicSeoRoutes: Record<string, PageSeo> = {
     title: `Counselling and Wellness Concerns | ${SITE_NAME}`,
     description: `Explore general counselling and wellness topics and review verified practitioner profiles on ${SITE_NAME}.`,
   },
+  "/concerns/relationship-marriage": {
+    title: `Relationship & Marriage Counselling | ${SITE_NAME}`,
+    description: `Find compassionate online relationship and marriage counselling for communication, trust, conflict, and emotional connection with ${SITE_NAME}.`,
+  },
+  "/concerns/breakup-recovery": {
+    title: `Breakup Recovery Counselling | ${SITE_NAME}`,
+    description: `Explore supportive online counselling to process a breakup, navigate grief, rebuild confidence, and establish healthy boundaries after loss with ${SITE_NAME}.`,
+  },
+  "/concerns/anxiety-stress": {
+    title: `Anxiety & Stress Counselling | ${SITE_NAME}`,
+    description: `Learn about online counselling support for persistent worry, anxiety symptoms, daily stress, and practical steps toward emotional balance with ${SITE_NAME}.`,
+  },
+  "/concerns/emotional-wellbeing": {
+    title: `Emotional Wellbeing Support | ${SITE_NAME}`,
+    description: `Explore emotional wellbeing support for stress, low mood, self-esteem, and life transitions, with links to focused care and verified practitioners at ${SITE_NAME}.`,
+  },
+  "/concerns/postpartum-support": {
+    title: `Postpartum Counselling and Support | ${SITE_NAME}`,
+    description: `Find supportive postpartum counselling information for emotional changes, adjustment, relationships, and wellbeing after pregnancy through ${SITE_NAME}.`,
+  },
+  "/concerns/depression": {
+    title: `Depression and Low Mood Support | ${SITE_NAME}`,
+    description: `Explore counselling support for depression, low mood, loss of interest, and emotional strain, and review verified practitioner profiles with ${SITE_NAME}.`,
+  },
+  "/concerns/teenage-wellbeing": {
+    title: `Teenage and Student Counselling | ${SITE_NAME}`,
+    description: `Review counselling information for teenage and student concerns, including academic pressure, relationships, emotional wellbeing, and family support with ${SITE_NAME}.`,
+  },
+  "/concerns/trauma-ptsd": {
+    title: `Trauma and PTSD Support | ${SITE_NAME}`,
+    description: `Explore trauma-informed counselling information for difficult past experiences, trauma symptoms, recovery, and finding an appropriately verified practitioner at ${SITE_NAME}.`,
+  },
   "/concerns/all-concerns": {
     title: `Counselling and Wellness Concerns | ${SITE_NAME}`,
     description: `Explore general counselling and wellness topics and review verified practitioner profiles on ${SITE_NAME}.`,

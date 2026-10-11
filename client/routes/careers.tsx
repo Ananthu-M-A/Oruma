@@ -10,7 +10,11 @@ import {
 
 export default function CareersPage() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I am a practitioner and would like information about Oruma's verification process.",
+    [
+      "Hello, I am a counselling or wellness practitioner interested in joining Oruma.",
+      "Please share the eligibility and verification requirements, professional documents needed, how area of practice and scope are reviewed, expected timeline, and whether the role is independent or employed.",
+      "My professional role and qualification are [add a short summary].",
+    ].join("\n"),
   );
   const emailLink = businessLinks.supportEmail;
 

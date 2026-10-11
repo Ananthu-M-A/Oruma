@@ -2,7 +2,11 @@ import { createWhatsAppUrl } from "../src/config/business";
 
 export default function TherapyIntro() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help booking an Oruma counselling or wellness session.",
+    [
+      "Hello, I am exploring Oruma's counselling and wellness concerns.",
+      "Please help me identify the relevant service and practitioner profiles, their role and scope, session fees, next available times, and booking steps.",
+      "The concern I would like to ask about is [add a short area].",
+    ].join("\n"),
   );
 
   return (

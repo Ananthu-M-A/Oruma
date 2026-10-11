@@ -2,7 +2,10 @@ import { createWhatsAppUrl } from "../src/config/business";
 
 export default function DepressionHero() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help choosing a counselling or wellness service.",
+    [
+      "Hello, I am looking for counselling support for depression or persistent low mood.",
+      "Please share suitable practitioner profiles, their professional role and scope, session fees, next available times, and the steps to book.",
+    ].join("\n"),
   );
 
   return (

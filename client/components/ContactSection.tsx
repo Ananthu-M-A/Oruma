@@ -1,15 +1,18 @@
 import React from "react";
+import { useLocation } from "react-router-dom";
 import { LucideIcon } from "@site-builder/icons";
 import BusinessIdentityDisclosure from "./BusinessIdentityDisclosure";
 import {
   businessConfig,
   businessLinks,
-  createWhatsAppUrl,
+  createPageWhatsAppUrl,
 } from "../src/config/business";
 
 export default function ContactSection() {
-  const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help with Oruma services or a booking.",
+  const { pathname } = useLocation();
+  const whatsappLink = createPageWhatsAppUrl(
+    pathname,
+    "directing my question to the right care team and sharing the steps, fees, and information needed to resolve it",
   );
 
   return (

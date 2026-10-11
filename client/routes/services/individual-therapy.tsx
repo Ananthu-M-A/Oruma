@@ -26,7 +26,24 @@ export default function IndividualTherapyPage() {
           <h2 className="text-4xl font-heading font-black text-[#064F4B] mb-10 uppercase tracking-tighter">
             Available Therapists
           </h2>
-          <TherapistGrid />
+          <TherapistGrid
+            specialtyAreas={[
+              "Anxiety",
+              "Stress & Burnout",
+              "Depression",
+              "Emotional Wellbeing",
+              "Trauma & PTSD",
+              "Breakup Recovery",
+              "Grief & Loss",
+              "Postpartum Support",
+              "Sexual Wellness",
+              "Self-esteem",
+              "Workplace Stress",
+              "LGBTQIA+ Affirmative Support",
+            ]}
+            emptyTitle="No individual counselling practitioners match these areas right now."
+            emptyDescription="No current profiles list these areas of practice. Check back for updated availability or ask Oruma for help finding a match."
+          />
         </div>
       </section>
 
@@ -72,7 +89,11 @@ export default function IndividualTherapyPage() {
           <div className="mt-20">
             <a
               href={createWhatsAppUrl(
-                "Hello, I need information about an individual counselling session.",
+                [
+                  "Hello, I am considering an individual counselling session.",
+                  "Please share practitioners whose profiles list my concern, their professional role and scope, session fee, next available times, and the steps to book.",
+                  "My support area is [add a short concern, or say not sure yet]. Preferred language: [add if relevant].",
+                ].join("\n"),
               )}
               className="bg-[#064F4B] text-white px-16 py-6 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-[#064F4B]/20 hover:scale-105 transition-all"
             >

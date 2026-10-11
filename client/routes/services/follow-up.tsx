@@ -33,7 +33,11 @@ export default function FollowUpPage() {
               </h2>
               <a
                 href={createWhatsAppUrl(
-                  "Hello, I need help choosing an Oruma service or practitioner.",
+                  [
+                    "Hello, I have a question about booking a follow-up counselling session.",
+                    "Please explain how to select the practitioner from my earlier appointment, check the follow-up fee, and view their next available times.",
+                    "My booking reference is [add reference if available].",
+                  ].join("\n"),
                 )}
                 className="bg-[#1A1A1A] text-white px-8 py-3.5 rounded-full font-bold text-sm hover:bg-black transition-all inline-flex items-center gap-2"
               >

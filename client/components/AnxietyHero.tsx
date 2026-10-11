@@ -2,7 +2,11 @@ import { createWhatsAppUrl } from "../src/config/business";
 
 export default function AnxietyHero() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help choosing an anxiety counselling or wellness service.",
+    [
+      "Hello, I am looking for support with anxiety, overthinking, or stress.",
+      "Please share practitioners whose profiles list these concerns, their professional role and scope, session fee, next available times, and how to book.",
+      "My preferred language is [add language if relevant].",
+    ].join("\n"),
   );
 
   return (

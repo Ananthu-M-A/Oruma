@@ -67,7 +67,11 @@ function MechanismSection() {
 
 export default function NRIConsultationPage() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I need information about a remote Oruma consultation.",
+    [
+      "Hello, I am outside India and would like information about an online Oruma consultation.",
+      "Please confirm whether service is available in my country, how time zones and appointment times work, which practitioners can see international clients, session fees and currency, payment options, and the steps to book.",
+      "Country: [add country]. Time zone: [add time zone].",
+    ].join("\n"),
   );
 
   return (

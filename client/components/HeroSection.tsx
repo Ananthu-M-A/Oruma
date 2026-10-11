@@ -10,7 +10,11 @@ const trustPoints = [
 
 export default function HeroSection() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I would like help choosing and booking an Oruma psychologist.",
+    [
+      "Hello, I am exploring online counselling through Oruma.",
+      "Please help me compare the service and practitioner options, professional roles and scope, session fees, available times, and the steps needed to book.",
+      "My main support need is [add a short area, or say not sure yet].",
+    ].join("\n"),
   );
 
   return (

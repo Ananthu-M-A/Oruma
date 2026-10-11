@@ -76,7 +76,10 @@ export default function ProgramsPage() {
         <div className="mx-auto max-w-7xl space-y-7">
           {programTypes.map((program, index) => {
             const whatsappLink = createWhatsAppUrl(
-              `Hello, I would like information about ${program.title}.`,
+              [
+                `Hello, I am interested in ${program.title} from Oruma.`,
+                "Please share the next date, format and duration, price, who the program is suitable for, what is included, and how to register.",
+              ].join("\n"),
             );
             return (
               <article

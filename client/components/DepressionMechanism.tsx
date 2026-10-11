@@ -3,7 +3,10 @@ import { LucideIcon } from "@site-builder/icons";
 
 export default function DepressionMechanism() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help choosing a counselling or wellness service.",
+    [
+      "Hello, I have reviewed Oruma's depression and mood support information.",
+      "Please recommend practitioners whose profiles list depression or emotional wellbeing and share their role, fees, next available times, and booking steps.",
+    ].join("\n"),
   );
   const steps = [
     { icon: "message-square", title: "Safe to Vent" },

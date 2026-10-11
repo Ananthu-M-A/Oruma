@@ -3,7 +3,10 @@ import { LucideIcon } from "@site-builder/icons";
 
 export default function RelationshipMechanism() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help choosing a relationship counselling service.",
+    [
+      "Hello, I am looking for relationship counselling for communication or trust concerns.",
+      "Please send suitable practitioner profiles with role and scope, fees, next available times, and any information couples should review before booking.",
+    ].join("\n"),
   );
   const steps = [
     {

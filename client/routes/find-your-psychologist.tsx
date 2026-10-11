@@ -4,26 +4,71 @@ import Footer from "../components/Footer";
 import FloatingActions from "../components/FloatingActions";
 import { LucideIcon } from "@site-builder/icons";
 import { createWhatsAppUrl } from "../src/config/business";
+import { therapistDirectoryHref } from "../src/lib/concerns";
+
+const supportAreaFilters: Record<string, string[]> = {
+  "Relationship or marriage": ["Relationship Issues", "Couple Therapy"],
+  "Parenting or family": ["Parenting Challenges", "Family Counselling"],
+  "Child or teen wellbeing": [
+    "Child Behaviour",
+    "Teenage Concerns",
+    "Academic Stress",
+  ],
+  "Anxiety or stress": ["Anxiety", "Stress & Burnout"],
+  "Trauma or difficult experiences": ["Trauma & PTSD"],
+  "Emotional wellbeing": [
+    "Depression",
+    "Emotional Wellbeing",
+    "Self-esteem",
+  ],
+  "Postpartum support": ["Postpartum Support"],
+  "Sexual wellness": ["Sexual Wellness"],
+  "Not sure yet": [],
+};
 
 export default function FindYourPsychologistPage() {
   const [supportArea, setSupportArea] = useState("");
   const [sessionFor, setSessionFor] = useState("");
   const [language, setLanguage] = useState("");
   const [note, setNote] = useState("");
+  const [showOptions, setShowOptions] = useState(false);
+
+  const selectedAreas = new Set(supportAreaFilters[supportArea] ?? []);
+  if (sessionFor === "Me and my partner") {
+    selectedAreas.add("Relationship Issues");
+    selectedAreas.add("Couple Therapy");
+  }
+  if (sessionFor === "My child or teenager") {
+    selectedAreas.add("Child Behaviour");
+    selectedAreas.add("Teenage Concerns");
+    selectedAreas.add("Academic Stress");
+  }
+  if (sessionFor === "My family") selectedAreas.add("Family Counselling");
+
+  const matchingPractitionersHref = therapistDirectoryHref(
+    [...selectedAreas],
+    language,
+    sessionFor,
+  );
+  const whatsappLink = createWhatsAppUrl(
+    [
+      "Hello, I would like help finding a suitable Oruma practitioner.",
+      `Support area: ${supportArea || "not sure yet"}`,
+      `Session is for: ${sessionFor || "not selected"}`,
+      `Preferred language: ${language || "not selected"}`,
+      note.trim() ? `A little context: ${note.trim()}` : "",
+      "Please share matching profile links, each practitioner's role and scope, session fee, next available times, and the steps to book.",
+      sessionFor === "My child or teenager"
+        ? "Please also explain consent, privacy, and how a parent or guardian is involved."
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  );
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const message = [
-      "Hello, I would like help finding the right Oruma psychologist.",
-      `Support area: ${supportArea}`,
-      `Session for: ${sessionFor}`,
-      `Preferred language: ${language}`,
-      note.trim() ? `A little more context: ${note.trim()}` : "",
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    window.open(createWhatsAppUrl(message), "_blank", "noopener,noreferrer");
+    setShowOptions(true);
   };
 
   return (
@@ -44,7 +89,7 @@ export default function FindYourPsychologistPage() {
                 Let’s find the right support together.
               </h1>
               <p className="mt-5 text-base font-medium leading-7 text-white/70">
-                Share only what you are comfortable sharing. Your answers will create a WhatsApp message for Oruma’s support team.
+                Share only what you are comfortable sharing. Your answers can narrow the practitioner list or prepare a detailed question for Oruma.
               </p>
               <div className="mt-10 space-y-5 border-t border-white/15 pt-8">
                 {[
@@ -146,12 +191,42 @@ export default function FindYourPsychologistPage() {
                 type="submit"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#064F4B] px-8 py-4 text-sm font-black text-white shadow-lg shadow-[#064F4B]/15 transition hover:bg-[#0A7F7A]"
               >
-                Continue on WhatsApp <LucideIcon name="arrow-right" size={17} />
+                Find matching support <LucideIcon name="arrow-right" size={17} />
               </button>
               <p className="text-center text-xs font-medium leading-5 text-[#6C827E]">
-                By continuing, WhatsApp will open with your answers. Review the message before sending. See Oruma’s <a href="/privacy-policy" className="font-bold text-[#0A7F7A] underline">privacy policy</a>.
+                You can review practitioner profiles first, or review a prefilled WhatsApp message before sending it. See Oruma’s <a href="/privacy-policy" className="font-bold text-[#0A7F7A] underline">privacy policy</a>.
               </p>
             </form>
+
+            {showOptions ? (
+              <div className="mt-7 rounded-2xl border border-[#0A7F7A]/15 bg-[#F2F8F5] p-5">
+                <h3 className="font-heading text-xl font-bold text-[#064F4B]">
+                  Your next step
+                </h3>
+                <p className="mt-2 text-sm font-medium leading-6 text-[#5F7773]">
+                  The practitioner list will use your selected concern and
+                  language to show profiles that match their stated areas of
+                  practice.
+                </p>
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <a
+                    href={matchingPractitionersHref}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#064F4B] px-6 py-3 text-sm font-black text-white transition hover:bg-[#0A7F7A]"
+                  >
+                    See matching practitioners
+                    <LucideIcon name="arrow-right" size={16} />
+                  </a>
+                  <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[#064F4B]/20 bg-white px-6 py-3 text-sm font-black text-[#064F4B] transition hover:border-[#0A7F7A]"
+                  >
+                    Ask Oruma with these details
+                  </a>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>

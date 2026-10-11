@@ -81,6 +81,18 @@ type RazorpayPaymentResponse = {
   currency?: string;
   status?: string;
   captured?: boolean;
+  method?: string;
+  error_code?: string | null;
+  error_description?: string | null;
+  error_reason?: string | null;
+  error_source?: string | null;
+  error_step?: string | null;
+  created_at?: number;
+  error?: { description?: string };
+};
+
+type RazorpayPaymentCollectionResponse = {
+  items?: RazorpayPaymentResponse[];
   error?: { description?: string };
 };
 
@@ -129,6 +141,7 @@ type RazorpayWebhookPayload = {
 @Injectable()
 export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
+  private readonly razorpayOrderReconciliationAt = new Map<string, number>();
 
   constructor(
     @InjectRepository(Payment)
@@ -165,7 +178,7 @@ export class PaymentService {
   }
 
   async getRazorpayOrderStatus(orderId: string, user: JwtPayload) {
-    const payment = await this.paymentRepo.findOne({
+    let payment = await this.paymentRepo.findOne({
       where: {
         providerOrderId: orderId,
         patient: { id: user.userId },
@@ -173,6 +186,51 @@ export class PaymentService {
     });
 
     if (!payment) throw new NotFoundException('Payment not found');
+
+    if (
+      [PaymentStatus.PENDING, PaymentStatus.FAILED].includes(payment.status) &&
+      this.shouldReconcileRazorpayOrder(orderId)
+    ) {
+      try {
+        const providerPayment =
+          await this.fetchLatestPaymentForRazorpayOrder(orderId);
+        const providerEvent =
+          providerPayment?.status === 'captured'
+            ? 'payment.captured'
+            : providerPayment?.status === 'failed'
+              ? 'payment.failed'
+              : null;
+        if (providerPayment && providerEvent) {
+          await this.applyRazorpayWebhook({
+            event: providerEvent,
+            payload: { payment: { entity: providerPayment } },
+          });
+          payment =
+            (await this.paymentRepo.findOne({
+              where: {
+                providerOrderId: orderId,
+                patient: { id: user.userId },
+              },
+            })) ?? payment;
+          if (
+            [PaymentStatus.PAID, PaymentStatus.REFUNDED].includes(
+              payment.status,
+            )
+          ) {
+            this.razorpayOrderReconciliationAt.delete(orderId);
+          }
+        }
+      } catch (error) {
+        this.logger.warn(
+          JSON.stringify({
+            event: 'razorpay_order_reconciliation_failed',
+            orderId,
+            message:
+              error instanceof Error ? error.message : 'Unknown provider error',
+          }),
+        );
+      }
+    }
 
     return {
       orderId: payment.providerOrderId,
@@ -726,7 +784,7 @@ export class PaymentService {
         payment.status = PaymentStatus.PAID;
         payment.reference = entity.id ?? payment.reference;
         payment.providerPaymentId = entity.id ?? payment.providerPaymentId;
-        payment.notes = [payment.notes, 'Razorpay webhook captured payment']
+        payment.notes = [payment.notes, 'Razorpay confirmed captured payment']
           .filter(Boolean)
           .join('\n');
         if (payment.appointment) {
@@ -1809,5 +1867,64 @@ export class PaymentService {
     }
 
     return data;
+  }
+
+  private shouldReconcileRazorpayOrder(orderId: string) {
+    const now = Date.now();
+    const lastAttempt = this.razorpayOrderReconciliationAt.get(orderId) ?? 0;
+    if (now - lastAttempt < 5_000) return false;
+
+    this.razorpayOrderReconciliationAt.set(orderId, now);
+    if (this.razorpayOrderReconciliationAt.size > 1_000) {
+      for (const [key, attemptedAt] of this.razorpayOrderReconciliationAt) {
+        if (now - attemptedAt > 15 * 60_000) {
+          this.razorpayOrderReconciliationAt.delete(key);
+        }
+      }
+    }
+    return true;
+  }
+
+  private async fetchLatestPaymentForRazorpayOrder(orderId: string) {
+    const keyId = this.configService.get<string>('RAZORPAY_KEY_ID');
+    const keySecret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
+    if (!keyId || !keySecret) {
+      throw new ServiceUnavailableException('Razorpay is not configured');
+    }
+
+    const response = await fetch(
+      `https://api.razorpay.com/v1/orders/${encodeURIComponent(orderId)}/payments`,
+      {
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString(
+            'base64',
+          )}`,
+        },
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+    const data = (await response
+      .json()
+      .catch(() => ({}))) as RazorpayPaymentCollectionResponse;
+
+    if (!response.ok) {
+      throw new ServiceUnavailableException(
+        data.error?.description ?? 'Unable to reconcile payment with Razorpay',
+      );
+    }
+
+    const orderPayments = (data.items ?? []).filter(
+      (item) => item.order_id === orderId,
+    );
+    const captured = orderPayments.find(
+      (item) => item.status === 'captured' && item.captured !== false,
+    );
+    if (captured) return captured;
+
+    return (
+      orderPayments
+        .filter((item) => item.status === 'failed')
+        .sort((a, b) => (b.created_at ?? 0) - (a.created_at ?? 0))[0] ?? null
+    );
   }
 }

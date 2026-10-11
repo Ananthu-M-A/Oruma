@@ -8,6 +8,7 @@ import {
 } from "../src/lib/auth";
 import DashboardNavbar from "./DashboardNavbar";
 import { businessConfig } from "../src/config/business";
+import { concernPaths } from "../src/lib/concerns";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,14 +59,15 @@ export default function Navbar() {
   const concerns = [
     {
       name: "Relationship Issues",
-      href: "/concerns#relationship",
+      href: concernPaths.relationship,
     },
-    { name: "Breakup Recovery", href: "/concerns#breakup" },
-    { name: "Anxiety & Stress", href: "/concerns#anxiety" },
-    { name: "Postpartum Support", href: "/concerns#postpartum" },
-    { name: "Depression", href: "/concerns#depression" },
-    { name: "Teenage Wellness", href: "/concerns#student" },
-    { name: "Trauma & PTSD", href: "/concerns#trauma" },
+    { name: "Breakup Recovery", href: concernPaths.breakup },
+    { name: "Anxiety & Stress", href: concernPaths.anxiety },
+    { name: "Emotional Wellbeing", href: concernPaths.emotionalWellbeing },
+    { name: "Postpartum Support", href: concernPaths.postpartum },
+    { name: "Depression", href: concernPaths.depression },
+    { name: "Teenage Wellness", href: concernPaths.student },
+    { name: "Trauma & PTSD", href: concernPaths.trauma },
   ];
 
   const programs = [

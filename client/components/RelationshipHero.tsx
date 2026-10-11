@@ -2,7 +2,11 @@ import { createWhatsAppUrl } from "../src/config/business";
 
 export default function RelationshipHero() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help choosing a relationship counselling service.",
+    [
+      "Hello, my partner and I are considering relationship counselling.",
+      "Please share practitioners who list relationship or couple work, their professional role and scope, session fee, next available times, and steps to book an initial conversation.",
+      "We would also like to know whether both partners attend the first session.",
+    ].join("\n"),
   );
 
   return (

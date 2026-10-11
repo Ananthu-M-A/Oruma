@@ -1,6 +1,22 @@
 import { createWhatsAppUrl } from "../src/config/business";
 
-export default function AssessmentBanner() {
+export default function AssessmentBanner({
+  service,
+}: {
+  service: "couple" | "sexual-wellness";
+}) {
+  const message =
+    service === "couple"
+      ? [
+          "Hello, my partner and I are considering couple counselling.",
+          "Please share practitioner profiles for communication or relationship concerns, each professional role and scope, session fee, next available times, and who should attend the first session.",
+        ].join("\n")
+      : [
+          "Hello, I am considering confidential sexual wellness counselling.",
+          "Please share suitably qualified practitioner profiles, their scope, session fee, next available times, and how privacy is handled before booking.",
+          "My question is about [add a short concern, if comfortable].",
+        ].join("\n");
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       <div className="bg-[#B7C8A3]/20 border border-[#B7C8A3]/30 rounded-[2.5rem] p-8 lg:p-12 flex flex-col md:flex-row items-center justify-between gap-8">
@@ -18,9 +34,7 @@ export default function AssessmentBanner() {
           </div>
         </div>
         <a
-          href={createWhatsAppUrl(
-            "Hello, I need help choosing an Oruma service or practitioner.",
-          )}
+          href={createWhatsAppUrl(message)}
           className="whitespace-nowrap bg-[#1A1A1A] text-white px-8 py-3.5 rounded-full font-bold hover:bg-black transition-all shadow-lg"
         >
           Start assessment ›

@@ -1,12 +1,13 @@
 import { createWhatsAppUrl } from "../src/config/business";
 import { LucideIcon } from "@site-builder/icons";
+import { concernPaths } from "../src/lib/concerns";
 
 export default function ConcernsGrid() {
   const concerns = [
     {
       title: "Performance anxiety issues",
       icon: "zap",
-      href: "/concerns#anxiety",
+      href: concernPaths.anxiety,
     },
     {
       title: "Low desire or mismatched libido",
@@ -16,17 +17,17 @@ export default function ConcernsGrid() {
     {
       title: "Relationship intimacy concerns",
       icon: "heart",
-      href: "/concerns#relationship",
+      href: concernPaths.relationship,
     },
     {
       title: "Healing trauma & past experiences",
       icon: "sparkles",
-      href: "/concerns#trauma",
+      href: concernPaths.trauma,
     },
     {
       title: "Body image & self-esteem blocks",
       icon: "user",
-      href: "/concerns#depression",
+      href: concernPaths.depression,
     },
     {
       title: "Gender dysphoria concerns",
@@ -36,7 +37,7 @@ export default function ConcernsGrid() {
     {
       title: "Postpartum intimacy concerns",
       icon: "baby",
-      href: "/concerns#postpartum",
+      href: concernPaths.postpartum,
     },
     {
       title: "Queer affirmative counseling",
@@ -46,7 +47,11 @@ export default function ConcernsGrid() {
   ];
 
   const bookingLink = createWhatsAppUrl(
-    "Hello, I need help choosing a counselling or wellness practitioner.",
+    [
+      "Hello, I am looking for confidential sexual wellness or intimacy counselling.",
+      "Please share practitioner profiles that list this area, their professional role and scope, session fees, next available times, and booking steps.",
+      "My question relates to [add a short concern, if comfortable].",
+    ].join("\n"),
   );
 
   return (

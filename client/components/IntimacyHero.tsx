@@ -17,7 +17,11 @@ export default function IntimacyHero() {
           </p>
           <a
             href={createWhatsAppUrl(
-              "Hello, I need information about a confidential sexual wellness consultation.",
+              [
+                "Hello, I am looking for confidential sexual wellness counselling.",
+                "Please share suitable practitioner profiles, their professional role and scope, session fees, next available times, and how privacy is handled before booking.",
+                "My question is about [add a short concern, if comfortable].",
+              ].join("\n"),
             )}
             className="bg-[#1A1A1A] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-black transition-all shadow-xl shadow-black/10 inline-block"
           >

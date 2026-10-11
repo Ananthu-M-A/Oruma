@@ -3,7 +3,10 @@ import { LucideIcon } from "@site-builder/icons";
 
 export default function TraumaMechanism() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help choosing a counselling or wellness service.",
+    [
+      "Hello, I have reviewed Oruma's trauma and PTSD support information.",
+      "Please send profiles for practitioners listing trauma-informed care, with role and scope, fees, next available times, and booking steps.",
+    ].join("\n"),
   );
   const steps = [
     { icon: "shield-check", title: "Safe Boundaries" },

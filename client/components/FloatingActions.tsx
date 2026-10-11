@@ -1,9 +1,12 @@
 import { LucideIcon } from "@site-builder/icons";
-import { businessLinks, createWhatsAppUrl } from "../src/config/business";
+import { useLocation } from "react-router-dom";
+import { businessLinks, createPageWhatsAppUrl } from "../src/config/business";
 
 export default function FloatingActions() {
-  const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help with an Oruma booking.",
+  const { pathname } = useLocation();
+  const whatsappLink = createPageWhatsAppUrl(
+    pathname,
+    "choosing an appropriate practitioner and checking the session fee, next available time, and booking steps",
   );
   return (
     <div className="fixed bottom-12 right-6 z-[100] flex flex-col gap-4 items-end">

@@ -3,7 +3,11 @@ import { LucideIcon } from "@site-builder/icons";
 
 export default function AnxietyMechanism() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help choosing an anxiety counselling or wellness service.",
+    [
+      "Hello, I have reviewed Oruma's anxiety and stress support information.",
+      "Please recommend practitioners whose profiles list anxiety, stress, or overthinking and share their role, fees, next available times, and booking steps.",
+      "Preferred language: [add language if relevant].",
+    ].join("\n"),
   );
   const steps = [
     { icon: "shield", title: "Safe Space" },

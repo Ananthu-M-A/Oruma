@@ -2,7 +2,11 @@ import { createWhatsAppUrl } from "../src/config/business";
 
 export default function StudentHero() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I need information about student or teenager counselling support.",
+    [
+      "Hello, I am a parent or guardian looking for counselling for a child or teenager.",
+      "Please share practitioners who work with academic stress, behaviour, emotions, or peer concerns, along with their role, experience, fee, and next available times.",
+      "Please also explain consent, privacy, and how a parent or guardian is involved.",
+    ].join("\n"),
   );
 
   return (

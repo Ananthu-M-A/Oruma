@@ -1,12 +1,13 @@
 import { LucideIcon } from "@site-builder/icons";
 import { createWhatsAppUrl } from "../src/config/business";
+import { concernPaths } from "../src/lib/concerns";
 
 const supportPathways = [
   {
     title: "Relationship & Marriage",
     description: "Connection, communication, trust and emotional distance",
     icon: "heart-handshake",
-    href: "/concerns#relationship",
+    href: concernPaths.relationship,
     color: "bg-[#F4F0E7]",
   },
   {
@@ -27,7 +28,7 @@ const supportPathways = [
     title: "Emotional Wellbeing",
     description: "Anxiety, stress, self-esteem and life transitions",
     icon: "brain",
-    href: "/concerns#anxiety",
+    href: concernPaths.emotionalWellbeing,
     color: "bg-[#EAF3F7]",
   },
 ];
@@ -37,47 +38,63 @@ const services = [
     title: "Individual Therapy",
     icon: "user",
     href: "/services/individual-therapy",
+    color: "from-[#EAF3F7] to-[#F5FAFC]",
+    iconColor: "text-[#287A92]",
   },
   {
     title: "Couple Therapy",
     icon: "heart-handshake",
     href: "/services/couple-therapy",
+    color: "from-[#F7E7E6] to-[#FFF6F2]",
+    iconColor: "text-[#B85E61]",
   },
   {
     title: "Parenting Support",
     icon: "users",
     href: "/services/parenting-support",
+    color: "from-[#FBEDE3] to-[#FFF8F1]",
+    iconColor: "text-[#B46F40]",
   },
   {
     title: "Child & Teen Counselling",
     icon: "user-round-check",
     href: "/services/child-teen-counselling",
+    color: "from-[#F1ECF7] to-[#FAF7FD]",
+    iconColor: "text-[#755A9C]",
   },
   {
     title: "Family Counselling",
     icon: "heart",
     href: "/services/family-counselling",
+    color: "from-[#E8F1E8] to-[#F6FAF4]",
+    iconColor: "text-[#58805B]",
   },
   {
     title: "Postpartum Support",
     icon: "baby",
     href: "/services/postpartum-support",
+    color: "from-[#FCF1D8] to-[#FFFAEF]",
+    iconColor: "text-[#AA8125]",
   },
   {
     title: "Sexual Wellness",
     icon: "sparkles",
     href: "/services/sexual-wellness",
+    color: "from-[#F7EAF1] to-[#FFF6FA]",
+    iconColor: "text-[#A7527B]",
   },
 ];
 
 const concerns = [
-  { title: "Relationship Issues", href: "/concerns#relationship" },
-  { title: "Breakup Recovery", href: "/concerns#breakup" },
-  { title: "Anxiety & Stress", href: "/concerns#anxiety" },
+  { title: "Relationship Issues", href: concernPaths.relationship },
+  { title: "Breakup Recovery", href: concernPaths.breakup },
+  { title: "Anxiety & Stress", href: concernPaths.anxiety },
   { title: "Parenting Challenges", href: "/services/parenting-support" },
-  { title: "Teenage Concerns", href: "/concerns#student" },
-  { title: "Trauma & PTSD", href: "/concerns#trauma" },
-  { title: "Emotional Wellbeing", href: "/concerns#depression" },
+  { title: "Teenage Concerns", href: concernPaths.student },
+  { title: "Trauma & PTSD", href: concernPaths.trauma },
+  { title: "Postpartum Support", href: concernPaths.postpartum },
+  { title: "Depression & Low Mood", href: concernPaths.depression },
+  { title: "Emotional Wellbeing", href: concernPaths.emotionalWellbeing },
 ];
 
 const programs = [
@@ -279,15 +296,15 @@ export function CounsellingServices() {
             <a
               key={service.title}
               href={service.href}
-              className="group flex min-h-[175px] flex-col items-center justify-center rounded-[1.5rem] border border-[#DDE6E2] bg-white px-3 py-6 text-center transition hover:-translate-y-1 hover:border-[#0A7F7A]/30 hover:bg-[#F7FAF8] hover:shadow-lg"
+              className={`group flex min-h-[190px] flex-col items-center justify-center rounded-[1.5rem] border border-white/80 bg-gradient-to-br ${service.color} px-3 py-6 text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#064F4B]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A7F7A]`}
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF4EF] text-[#0A7F7A] transition group-hover:bg-[#064F4B] group-hover:text-white">
+              <span className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80 ${service.iconColor} shadow-sm transition group-hover:scale-105`}>
                 <LucideIcon name={service.icon} size={24} />
               </span>
-              <h3 className="mt-4 text-sm font-black leading-5 text-[#123E3A]">
+              <h3 className="mt-4 text-sm font-black leading-5 text-[#123E3A] sm:text-base">
                 {service.title}
               </h3>
-              <LucideIcon name="arrow-right" size={15} className="mt-3 text-[#7F9B43] transition-transform group-hover:translate-x-1" />
+              <LucideIcon name="arrow-right" size={16} className={`mt-3 ${service.iconColor} transition-transform group-hover:translate-x-1`} />
             </a>
           ))}
         </div>
@@ -416,7 +433,12 @@ export function TestimonialsSection() {
 
 export function FinalBookingSection() {
   const whatsappLink = createWhatsAppUrl(
-    "Hello, I would like to begin my healing journey with Oruma.",
+    [
+      "Hello, I am looking for online counselling through Oruma.",
+      "Please help me identify the right service and practitioners, with their professional roles, session fees, upcoming availability, and booking steps.",
+      "My support area is [add a short concern, or say not sure yet].",
+      "Preferred language: [add language if relevant].",
+    ].join("\n"),
   );
 
   return (
