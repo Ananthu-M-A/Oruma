@@ -1,5 +1,3 @@
-import { therapistDirectoryHref } from "../src/lib/concerns";
-
 export default function PostpartumHero() {
   return (
     <section className="relative w-full overflow-hidden bg-white border-t border-gray-100">
@@ -17,12 +15,6 @@ export default function PostpartumHero() {
             specialized counselling to support your emotional health during the
             postpartum period.
           </p>
-          <a
-            href={therapistDirectoryHref(["Postpartum Support"])}
-            className="bg-[#B7C8A3] text-[#064F4B] px-10 py-5 rounded-full font-black text-lg hover:scale-105 transition-all shadow-2xl shadow-black/20 active:scale-95"
-          >
-            Get Specialized Support
-          </a>
         </div>
 
         {/* Right Side - Image with Quote */}

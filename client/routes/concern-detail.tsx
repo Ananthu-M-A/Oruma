@@ -89,12 +89,6 @@ function BreakupContent() {
               </li>
             ))}
           </ul>
-          <a
-            href={therapistDirectoryHref(["Breakup Recovery", "Grief & Loss"])}
-            className="mt-10 inline-block rounded-full bg-[#064F4B] px-10 py-5 text-sm font-black uppercase tracking-widest text-white shadow-xl shadow-[#064F4B]/20 transition hover:bg-[#0A7F7A] active:scale-95"
-          >
-            Start Your Recovery
-          </a>
         </div>
 
         <div className="relative aspect-[4/5] overflow-hidden rounded-[2.5rem] border-8 border-[#F5F8F7] shadow-2xl lg:rounded-[4rem]">

@@ -5,7 +5,6 @@ import ServiceScopeNotice from "../../components/ServiceScopeNotice";
 import TherapistGrid from "../../components/TherapistGrid";
 import { LucideIcon } from "@site-builder/icons";
 import { createSupportEmailUrl } from "../../src/config/business";
-import { therapistDirectoryHref } from "../../src/lib/concerns";
 
 type SupportingServiceKey =
   | "parenting-support"
@@ -229,12 +228,6 @@ export default function SupportingServicePage({
               {service.introduction}
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <a
-                href={therapistDirectoryHref(service.specialtyAreas)}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#064F4B] px-8 py-4 text-sm font-black text-white transition hover:bg-[#0A7F7A]"
-              >
-                See matching practitioners <LucideIcon name="arrow-right" size={17} />
-              </a>
               <a
                 href={emailLink}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-[#064F4B]/25 bg-white px-8 py-4 text-sm font-black text-[#064F4B] transition hover:border-[#0A7F7A]"

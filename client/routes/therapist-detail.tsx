@@ -148,7 +148,7 @@ export default function TherapistDetailPage() {
 
           {isLoading && (
             <div className="grid lg:grid-cols-[420px_1fr] gap-12 items-stretch">
-              <div className="h-[520px] rounded-[2rem] bg-[#B7C8A3]/50 animate-pulse" />
+              <div className="h-[520px] rounded-[2rem] bg-[#F1E8D7]/70 animate-pulse" />
               <div className="space-y-6">
                 <div className="h-14 max-w-lg rounded-full bg-[#B7C8A3]/40 animate-pulse" />
                 <div className="h-8 max-w-sm rounded-full bg-[#B7C8A3]/30 animate-pulse" />
@@ -172,8 +172,8 @@ export default function TherapistDetailPage() {
           {!isLoading && therapist && profile && (
             <div className="grid lg:grid-cols-[420px_1fr] gap-12 items-start">
               <div className="lg:sticky lg:top-28">
-                <div className="bg-[#B7C8A3] rounded-[2rem] p-5 shadow-xl shadow-[#064F4B]/10">
-                  <div className="aspect-[4/5] rounded-[1.5rem] overflow-hidden bg-white/30">
+                <div className="bg-[#F1E8D7] rounded-[2rem] p-5 shadow-xl shadow-[#064F4B]/10">
+                  <div className="aspect-[4/5] rounded-[1.5rem] overflow-hidden bg-white/60">
                     {profile.image ? (
                       <img
                         src={profile.image}
@@ -192,7 +192,7 @@ export default function TherapistDetailPage() {
                   </div>
 
                   <div className="mt-5">
-                    <div className="bg-white/40 rounded-[1.25rem] p-4">
+                    <div className="bg-white/60 rounded-[1.25rem] p-4">
                       <p className="text-[9px] font-black uppercase tracking-widest text-[#064F4B]/60">
                         Experience
                       </p>

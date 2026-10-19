@@ -178,7 +178,7 @@ export default function TherapistGrid({
         {[1, 2, 3].map((item) => (
           <div
             key={item}
-            className="h-[360px] rounded-[3rem] bg-[#B7C8A3]/40 animate-pulse"
+            className="h-[360px] rounded-[3rem] bg-[#F1E8D7]/70 animate-pulse"
           />
         ))}
       </div>
@@ -232,9 +232,9 @@ export default function TherapistGrid({
           return (
             <div
               key={therapist.id}
-              className="bg-white rounded-[2rem] border border-[#E2E8E6] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden"
+              className="bg-[#F8F5EF] rounded-[2rem] border border-[#E9E1D4] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden"
             >
-              <div className="relative min-h-44 bg-[#F2E5AE] px-7 py-7">
+              <div className="relative min-h-44 bg-[#F1E8D7] px-7 py-7">
                 <div className="relative z-10 pr-28">
                   <h3 className="text-3xl font-heading font-black text-[#1A2E2C] leading-tight">
                     {therapist.name}

@@ -1,5 +1,3 @@
-import { therapistDirectoryHref } from "../src/lib/concerns";
-
 export default function DepressionHero() {
   return (
     <section className="relative w-full overflow-hidden bg-white border-t border-gray-100">
@@ -20,12 +18,6 @@ export default function DepressionHero() {
             Depression can feel like an invisible weight. Our therapists provide
             a safe, non-judgmental space to rediscover hope.
           </p>
-          <a
-            href={therapistDirectoryHref(["Depression", "Emotional Wellbeing"])}
-            className="bg-white text-[#0A7F7A] px-12 py-5 rounded-full font-black text-sm uppercase tracking-widest hover:bg-[#B7C8A3] hover:text-[#064F4B] transition-all shadow-2xl shadow-black/20 active:scale-95"
-          >
-            Start Healing
-          </a>
         </div>
 
         {/* Right Side - Image with Quote */}

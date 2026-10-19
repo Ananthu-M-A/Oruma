@@ -1,5 +1,3 @@
-import { therapistDirectoryHref } from "../src/lib/concerns";
-
 export default function AnxietyHero() {
   return (
     <section className="relative w-full overflow-hidden bg-white border-t border-gray-100">
@@ -20,12 +18,6 @@ export default function AnxietyHero() {
             Persistent worry and chronic stress can feel overwhelming. We help
             you calm your nervous system and rediscover your inner peace.
           </p>
-          <a
-            href={therapistDirectoryHref(["Anxiety", "Stress & Burnout"])}
-            className="bg-white text-[#064F4B] px-12 py-5 rounded-full font-black text-sm uppercase tracking-widest hover:bg-[#B7C8A3] transition-all shadow-2xl shadow-black/20 active:scale-95"
-          >
-            Start Healing
-          </a>
         </div>
 
         {/* Left Side - Image with Quote */}

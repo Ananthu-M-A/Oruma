@@ -39,7 +39,6 @@ export default function CoupleTherapyPage() {
         subtitle="Online relationship counselling can provide a structured setting to discuss communication and shared concerns. Review the selected practitioner's verified profile before booking."
         img="/assets/relationship-healing-connection-v2.webp"
         imageAlt="A couple offering each other comfort and support"
-        specialtyAreas={coupleTherapyAreas}
       />
 
       <AssessmentBanner service="couple" />

@@ -1,5 +1,3 @@
-import { therapistDirectoryHref } from "../src/lib/concerns";
-
 export default function StudentHero() {
   return (
     <section className="relative w-full overflow-hidden bg-white border-t border-gray-100">
@@ -20,16 +18,6 @@ export default function StudentHero() {
             Safe space for young minds to express, heal, and grow. Specialized
             support for academic stress and digital wellness.
           </p>
-          <a
-            href={therapistDirectoryHref([
-              "Child Behaviour",
-              "Teenage Concerns",
-              "Academic Stress",
-            ])}
-            className="bg-[#064F4B] text-white px-12 py-5 rounded-full font-black text-sm uppercase tracking-widest hover:bg-white hover:text-[#064F4B] transition-all shadow-2xl active:scale-95"
-          >
-            Start Counselling
-          </a>
         </div>
 
         {/* Right Side - Image with Quote */}

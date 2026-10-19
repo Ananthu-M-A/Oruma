@@ -6,7 +6,6 @@ import FAQSection from "../../components/FAQSection";
 import Footer from "../../components/Footer";
 import FloatingActions from "../../components/FloatingActions";
 import ServiceScopeNotice from "../../components/ServiceScopeNotice";
-import { therapistDirectoryHref } from "../../src/lib/concerns";
 
 const individualTherapyAreas = [
   "Anxiety",
@@ -35,7 +34,6 @@ export default function IndividualTherapyPage() {
         subtitle="Individual therapy provides a safe, confidential space where you can explore your thoughts and feelings with a professional who truly listens."
         img="/assets/home-lady-striped-shirt-v2.webp"
         imageAlt="A woman smiling outdoors during a moment of personal wellbeing"
-        specialtyAreas={individualTherapyAreas}
       />
 
       <section className="py-20 bg-[#F5F8F7]">
@@ -90,14 +88,6 @@ export default function IndividualTherapyPage() {
             ))}
           </div>
 
-          <div className="mt-20">
-            <a
-              href={therapistDirectoryHref(individualTherapyAreas)}
-              className="bg-[#064F4B] text-white px-16 py-6 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-[#064F4B]/20 hover:scale-105 transition-all"
-            >
-              Start Your Journey
-            </a>
-          </div>
         </div>
       </section>
 

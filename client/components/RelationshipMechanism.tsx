@@ -1,5 +1,4 @@
 import { LucideIcon } from "@site-builder/icons";
-import { therapistDirectoryHref } from "../src/lib/concerns";
 
 export default function RelationshipMechanism() {
   const steps = [
@@ -51,14 +50,6 @@ export default function RelationshipMechanism() {
           ))}
         </div>
 
-        <div className="mt-12">
-          <a
-            href={therapistDirectoryHref(["Relationship Issues", "Couple Therapy"])}
-            className="inline-block bg-[#1A1A1A] text-white px-10 py-3.5 rounded-full font-bold text-sm hover:bg-black shadow-xl shadow-black/10 transition-transform hover:scale-105 active:scale-95"
-          >
-            Get Therapy
-          </a>
-        </div>
       </div>
     </section>
   );

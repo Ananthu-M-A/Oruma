@@ -1,5 +1,3 @@
-import { therapistDirectoryHref } from "../src/lib/concerns";
-
 export default function RelationshipHero() {
   return (
     <section className="relative w-full overflow-hidden bg-white border-t border-gray-100">
@@ -22,12 +20,6 @@ export default function RelationshipHero() {
             exhausting. We provide a specialized, gentle space to rebuild your
             bond.
           </p>
-          <a
-            href={therapistDirectoryHref(["Relationship Issues", "Couple Therapy"])}
-            className="bg-white text-[#0A7F7A] px-12 py-5 rounded-full font-black text-sm uppercase tracking-widest hover:bg-[#B7C8A3] hover:text-[#064F4B] transition-all shadow-2xl shadow-black/20 active:scale-95"
-          >
-            Start Your Journey
-          </a>
         </div>
 
         {/* Right Side - Image with Quote */}
