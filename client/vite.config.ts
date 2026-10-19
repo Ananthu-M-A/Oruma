@@ -66,7 +66,7 @@ export default defineConfig(({ mode }) => {
             legalName: businessConfig.operatorLegalName,
             description: businessConfig.serviceDescription,
             url: `${website}/`,
-            logo: `${website}/assets/oruma-main-logo.webp`,
+            logo: `${website}/assets/Oruma_Primary_Logo.png`,
             image: `${website}/assets/home-lady-striped-shirt-v2.webp`,
             telephone: businessConfig.supportPhone.e164,
             email: businessConfig.emails.support,

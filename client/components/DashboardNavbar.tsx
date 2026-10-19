@@ -109,19 +109,16 @@ export default function DashboardNavbar() {
           aria-label="Oruma dashboard home"
         >
           <img
-            src="/assets/oruma-main-logo.webp"
+            src="/assets/Oruma_Primary_Logo.png"
             alt=""
-            width="1000"
-            height="600"
+            width="444"
+            height="148"
             loading="eager"
             decoding="async"
-            className="h-9 w-auto object-contain sm:h-10"
+            className="h-9 w-auto rounded-md bg-[#0A7F7A] p-1 object-contain sm:h-10"
           />
           <div className="hidden sm:block">
-            <p className="text-lg font-heading font-black uppercase leading-none text-[#01413D]">
-              oruma
-            </p>
-            <p className="mt-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#0A7F7A]">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0A7F7A]">
               Dashboard
             </p>
           </div>

@@ -253,7 +253,7 @@ export function OrumaIntroductionVideo() {
             A Little About Oruma
           </h2>
           <p className="mt-5 max-w-lg text-base font-medium leading-7 text-[#5F7773]">
-            Watch this short introduction to understand how Oruma can support you on your healing journey.
+            Watch our videos to learn more about Oruma and the support we offer.
           </p>
           <ul className="mt-7 space-y-3">
             {points.map((point) => (
@@ -267,15 +267,27 @@ export function OrumaIntroductionVideo() {
           </ul>
         </div>
 
-        <div className="relative aspect-video overflow-hidden rounded-[1.75rem] border-8 border-white bg-[#064F4B] shadow-2xl shadow-[#064F4B]/15 sm:rounded-[2.25rem]">
-          <iframe
-            className="absolute inset-0 h-full w-full"
-            src="https://www.youtube.com/embed/R9m-SGecnVc?rel=0&modestbranding=1"
-            title="A little about Oruma"
-            loading="lazy"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="relative aspect-video overflow-hidden rounded-[1.75rem] border-8 border-white bg-[#064F4B] shadow-2xl shadow-[#064F4B]/15 sm:rounded-[2.25rem]">
+            <iframe
+              className="absolute inset-0 h-full w-full"
+              src="https://www.youtube-nocookie.com/embed/R9m-SGecnVc?rel=0&modestbranding=1"
+              title="A little about Oruma"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+          <div className="relative aspect-video overflow-hidden rounded-[1.75rem] border-8 border-white bg-[#064F4B] shadow-2xl shadow-[#064F4B]/15 sm:rounded-[2.25rem]">
+            <iframe
+              className="absolute inset-0 h-full w-full"
+              src="https://www.youtube-nocookie.com/embed/7jd_snHx3CM?rel=0&modestbranding=1"
+              title="Oruma video"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
         </div>
       </div>
     </section>

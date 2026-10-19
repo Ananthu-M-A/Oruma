@@ -7,7 +7,6 @@ import {
   getRedirectPathForRole,
 } from "../src/lib/auth";
 import DashboardNavbar from "./DashboardNavbar";
-import { businessConfig } from "../src/config/business";
 import { concernPaths } from "../src/lib/concerns";
 
 export default function Navbar() {
@@ -121,37 +120,35 @@ export default function Navbar() {
       />
 
       <nav className="fixed top-0 left-0 right-0 bg-white z-[1000] border-b border-gray-100 shadow-sm transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-18 flex items-center justify-between relative">
-          <a href="/" className="flex items-center gap-2 group h-full py-1.5">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6 xl:h-20">
+          <a
+            href="/"
+            aria-label="Oruma home"
+            className="group flex shrink-0 items-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0A7F7A]"
+          >
             <img
-              src="/assets/oruma-main-logo.webp"
-              alt={`${businessConfig.brandName} logo`}
-              width="1000"
-              height="600"
+              src="/assets/Oruma_Primary_Logo.png"
+              alt="Oruma logo"
+              width="444"
+              height="148"
               loading="eager"
               decoding="async"
-              className="h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105"
+              className="h-9 w-auto rounded-md bg-[#0A7F7A] p-1 object-contain transition-transform group-hover:scale-[1.03] sm:h-10 xl:h-11"
             />
-            <div className="flex flex-col justify-center">
-              <span className="text-lg md:text-xl font-heading font-black text-[#01413D] tracking-tighter uppercase leading-none">
-                oruma
-              </span>
-              <span className="text-[7px] font-black text-[#0A7F7A] uppercase tracking-[0.2em] mt-0.5">
-                Together gently
-              </span>
-            </div>
           </a>
 
           <button
-            className="lg:hidden p-2 text-[#0A7F7A] relative z-[1001]"
+            className="relative z-[1001] rounded-full p-2 text-[#0A7F7A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A7F7A] xl:hidden"
             onClick={() => setIsOpen(!isOpen)}
-            aria-label="Toggle Menu"
+            aria-label={isOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isOpen}
+            aria-controls="mobile-navigation"
           >
             <LucideIcon name={isOpen ? "x" : "menu"} size={24} />
           </button>
 
           {/* Desktop Links */}
-          <div className="hidden lg:flex items-center gap-4 xl:gap-5">
+          <div className="hidden items-center gap-3 xl:flex 2xl:gap-5">
             <a
               href="/"
               className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors"
@@ -289,7 +286,8 @@ export default function Navbar() {
 
         {/* Mobile Menu Overlay */}
         <div
-          className={`fixed inset-0 top-0 bg-white z-[999] lg:hidden transition-all duration-300 ${
+          id="mobile-navigation"
+          className={`fixed inset-x-0 bottom-0 top-14 z-[999] bg-white transition-all duration-300 sm:top-16 xl:hidden ${
             isOpen
               ? "opacity-100 translate-y-0"
               : "opacity-0 -translate-y-4 pointer-events-none"

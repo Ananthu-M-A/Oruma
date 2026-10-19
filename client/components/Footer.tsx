@@ -70,17 +70,17 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <a
               href="/"
-              className="mb-7 inline-flex"
+              className="mb-7 inline-flex rounded-md bg-[#0A7F7A] p-1.5"
               aria-label={`${businessConfig.brandName} home`}
             >
               <img
-                src="/assets/oruma-main-logo.webp"
+                src="/assets/Oruma_Primary_Logo.png"
                 alt={`${businessConfig.brandName} logo`}
-                width="1000"
-                height="600"
+                width="444"
+                height="148"
                 loading="lazy"
                 decoding="async"
-                className="h-14 w-auto object-contain"
+                className="h-12 w-auto object-contain"
               />
             </a>
             <p className="mb-8 max-w-md text-lg font-medium leading-relaxed text-[#064F4B]/75">
