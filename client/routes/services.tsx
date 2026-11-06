@@ -3,6 +3,7 @@ import Footer from "../components/Footer";
 import CoupleTherapySection from "../components/CoupleTherapySection";
 import { LucideIcon } from "@site-builder/icons";
 import ServiceScopeNotice from "../components/ServiceScopeNotice";
+import { publishedSeoServices } from "../src/content/seoServices";
 
 const programs = [
   {
@@ -20,7 +21,7 @@ const programs = [
       "INR Checkout Information",
       "Published Privacy Practices",
     ],
-    link: "/consultation",
+    link: "/services/nri-online-counselling",
   },
   {
     id: "individual",
@@ -236,6 +237,45 @@ export default function ServicesPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Relationship, marriage and specialist services */}
+      <section className="border-b border-gray-50 py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-12">
+          <div className="mb-12 flex items-center gap-4">
+            <h2 className="font-heading text-3xl font-black text-[#064F4B]">
+              Relationship &amp; Specialist Counselling
+            </h2>
+            <div className="h-px flex-grow bg-gray-100" />
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {publishedSeoServices.map((service) => (
+              <a
+                key={service.slug}
+                href={service.path}
+                className="group flex flex-col rounded-[2rem] border border-gray-100 bg-white p-7 transition-all hover:border-[#0A7F7A]/30 hover:shadow-2xl"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E5ECCE] text-[#607D2E]">
+                  <LucideIcon name={service.icon} size={24} />
+                </span>
+                <h3 className="mt-5 text-xl font-black uppercase tracking-tighter text-[#1A2E2C]">
+                  {service.navLabel}
+                </h3>
+                <p className="mt-3 flex-grow text-sm font-medium leading-relaxed text-[#5F7F7A]">
+                  {service.seoDescription}
+                </p>
+                <span className="mt-6 inline-flex items-center gap-2 text-sm font-black text-[#0A7F7A]">
+                  Learn more
+                  <LucideIcon
+                    name="arrow-right"
+                    size={16}
+                    className="transition-transform group-hover:translate-x-1"
+                  />
+                </span>
+              </a>
+            ))}
           </div>
         </div>
       </section>

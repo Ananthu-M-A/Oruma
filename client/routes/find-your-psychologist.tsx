@@ -5,9 +5,17 @@ import FloatingActions from "../components/FloatingActions";
 import { LucideIcon } from "@site-builder/icons";
 import { createSupportEmailUrl } from "../src/config/business";
 import { therapistDirectoryHref } from "../src/lib/concerns";
+import ContactForm from "../components/ContactForm";
 
 const supportAreaFilters: Record<string, string[]> = {
-  "Relationship or marriage": ["Relationship Issues", "Couple Therapy"],
+  "Relationship or marriage": [
+    "Relationship Issues",
+    "Couple Therapy",
+    "Marriage Counselling",
+    "Premarital Counselling",
+    "Trust & Infidelity Recovery",
+  ],
+  "Breakup recovery": ["Breakup Recovery"],
   "Parenting or family": ["Parenting Challenges", "Family Counselling"],
   "Child or teen wellbeing": [
     "Child Behaviour",
@@ -222,6 +230,18 @@ export default function FindYourPsychologistPage() {
                   >
                     Ask Oruma with these details
                   </a>
+                </div>
+                <div className="mt-8 border-t border-[#0A7F7A]/15 pt-7">
+                  <ContactForm
+                    heading="Or send these details to the care team"
+                    defaultSubject="Choosing a practitioner"
+                    defaultMessage={[
+                      `Support area: ${supportArea || "not sure yet"}`,
+                      `Session is for: ${sessionFor || "not selected"}`,
+                      `Preferred language: ${language || "not selected"}`,
+                      "Please suggest suitable practitioners, their fees and next available times.",
+                    ].join("\n")}
+                  />
                 </div>
               </div>
             ) : null}

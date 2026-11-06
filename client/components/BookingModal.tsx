@@ -26,6 +26,7 @@ import {
   getRazorpayOrderStatus,
   verifyRazorpayPayment,
 } from "../src/lib/operations";
+import { trackEvent } from "../src/lib/analytics";
 import {
   calculateSessionPackagePricing,
   formatINR,
@@ -434,6 +435,13 @@ export default function BookingModal({
       const showPaymentConfirmed = () => {
         if (paymentCompleted) return;
         paymentCompleted = true;
+        // Booking reference and amount only: never patient or clinical details.
+        trackEvent("purchase", {
+          transaction_id: appointmentId,
+          value: order.amount,
+          currency: order.currency,
+          items: [{ item_name: formData.service }],
+        });
         stopPaymentStatusPolling();
         setPaymentStatus("Paid");
         setSubmitSuccess(true);
@@ -572,6 +580,11 @@ export default function BookingModal({
         setIsSubmitting(false);
       });
 
+      trackEvent("begin_checkout", {
+        value: order.amount,
+        currency: order.currency,
+        items: [{ item_name: formData.service }],
+      });
       checkout.open();
     } catch (error) {
       setSubmitError(

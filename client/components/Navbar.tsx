@@ -8,6 +8,7 @@ import {
 } from "../src/lib/auth";
 import DashboardNavbar from "./DashboardNavbar";
 import { concernPaths } from "../src/lib/concerns";
+import { publishedSeoServices } from "../src/content/seoServices";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,6 +47,10 @@ export default function Navbar() {
     { name: "All Services", href: "/services" },
     { name: "Individual Therapy", href: "/services/individual-therapy" },
     { name: "Couple Therapy", href: "/services/couple-therapy" },
+    ...publishedSeoServices.map((service) => ({
+      name: service.navLabel,
+      href: service.path,
+    })),
     { name: "Parenting Support", href: "/services/parenting-support" },
     {
       name: "Child & Teen Counselling",
@@ -167,7 +172,7 @@ export default function Navbar() {
                 Services <LucideIcon name="chevron-down" size={12} />
               </a>
               <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover/services:opacity-100 group-hover/services:visible transition-all duration-300">
-                <div className="bg-white border border-gray-100 shadow-2xl rounded-b-2xl p-4 min-w-[220px]">
+                <div className="grid min-w-[460px] grid-cols-2 gap-x-6 rounded-b-2xl border border-gray-100 bg-white p-4 shadow-2xl">
                   {services.map((s) => (
                     <a
                       key={s.name}

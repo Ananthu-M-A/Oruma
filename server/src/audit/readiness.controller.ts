@@ -36,15 +36,17 @@ export class ReadinessController {
     };
     try {
       await this.dataSource.query('SELECT 1');
-      const [schema] = (await this.dataSource.query(`SELECT
+      const [schema] = await this.dataSource.query<
+        Array<{
+          migrations: boolean;
+          providerJob: boolean;
+          paymentWebhookEvent: boolean;
+        }>
+      >(`SELECT
         to_regclass('public.migrations') IS NOT NULL AS "migrations",
         to_regclass('public.provider_job') IS NOT NULL AS "providerJob",
         to_regclass('public.payment_webhook_event') IS NOT NULL AS "paymentWebhookEvent"
-      `)) as Array<{
-        migrations: boolean;
-        providerJob: boolean;
-        paymentWebhookEvent: boolean;
-      }>;
+      `);
       const schemaReady = Boolean(
         schema?.migrations && schema.providerJob && schema.paymentWebhookEvent,
       );

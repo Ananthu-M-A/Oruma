@@ -5,6 +5,7 @@ import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 import PasswordChangeForm from "../components/PasswordChangeForm";
 import ProfileTabs from "../components/ProfileTabs";
+import AdminEnquiries from "../components/AdminEnquiries";
 import { LucideIcon } from "@site-builder/icons";
 import { getAccessToken, getCurrentUser } from "../src/lib/auth";
 import {
@@ -425,6 +426,7 @@ export default function AdminProfilePage() {
               { id: "payments", label: "Payments" },
               { id: "cases", label: "Case sheets" },
               { id: "tickets", label: "Tickets" },
+              { id: "enquiries", label: "Enquiries" },
               { id: "reliability", label: "Reliability & privacy" },
               { id: "account", label: "Account" },
             ]}
@@ -522,7 +524,7 @@ export default function AdminProfilePage() {
                 </h2>
                 <p className="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-[#5F7F7A]">
                   ORUMA is the booking record. After payment, confirm the
-                  appointment, create one unique Zoom meeting, add its link,
+                  appointment, create one unique Google Meet or Zoom meeting, add its link,
                   and use the prepared WhatsApp messages to contact the patient.
                 </p>
                 <div className="mt-6 grid gap-5">
@@ -858,6 +860,8 @@ export default function AdminProfilePage() {
               </section>
             )}
 
+            {activeTab === "enquiries" && <AdminEnquiries />}
+
             {activeTab === "account" && <PasswordChangeForm />}
             {activeTab === "reliability" && <section className="grid gap-6 lg:grid-cols-2">
               <div className="rounded-lg border border-[#E2E8E6] bg-white p-6">
@@ -958,7 +962,7 @@ function createManualWhatsAppMessage(
       "",
       "Your secure ORUMA consultation link is ready.",
       ...sharedDetails,
-      `Join Zoom: ${appointment.meetingLink ?? "Link pending"}`,
+      `Join session: ${appointment.meetingLink ?? "Link pending"}`,
       "",
       "Please join a few minutes early. Use your ORUMA dashboard for the official appointment status.",
     ].join("\n");
@@ -970,7 +974,7 @@ function createManualWhatsAppMessage(
       "",
       "This is a reminder for your upcoming ORUMA consultation.",
       ...sharedDetails,
-      `Join Zoom: ${appointment.meetingLink ?? "Link pending"}`,
+      `Join session: ${appointment.meetingLink ?? "Link pending"}`,
       "",
       "If you need help, reply to this official ORUMA WhatsApp chat.",
     ].join("\n");
@@ -981,7 +985,7 @@ function createManualWhatsAppMessage(
     "",
     "Your ORUMA appointment is confirmed.",
     ...sharedDetails,
-    "Our care team will share a unique Zoom link before the session.",
+    "Our care team will share a unique session link before the session.",
     "For cancellations or support, please use your ORUMA dashboard.",
   ].join("\n");
 }
@@ -1112,13 +1116,13 @@ function AppointmentOperationsCard({
 
           <section className="rounded-lg border border-[#E2E8E6] bg-white p-4">
             <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
-              2. Unique Zoom link
+              2. Unique session link (Google Meet or Zoom)
             </p>
             <input
               type="url"
               value={draft.meetingLink}
               disabled={!isConfirmed || isSaving}
-              placeholder="https://us06web.zoom.us/j/..."
+              placeholder="https://meet.google.com/abc-defg-hij"
               onChange={(event) =>
                 onDraftChange({ ...draft, meetingLink: event.target.value })
               }
@@ -1131,12 +1135,12 @@ function AppointmentOperationsCard({
                 onClick={() =>
                   onSave(
                     { meetingLink: draft.meetingLink.trim() },
-                    "Secure Zoom link saved to the appointment.",
+                    "Session link saved to the appointment.",
                   )
                 }
                 className={`${statusButtonClass} bg-[#064F4B] text-white`}
               >
-                Save Zoom link
+                Save session link
               </button>
               {appointment.meetingLink && (
                 <a
@@ -1175,7 +1179,7 @@ function AppointmentOperationsCard({
                 onClick={() =>
                   onSave(
                     { markMeetingLinkSent: true },
-                    "Manual Zoom link delivery recorded.",
+                    "Manual session link delivery recorded.",
                   )
                 }
                 className={`${statusButtonClass} border border-[#DDE8E5] bg-white text-[#064F4B]`}

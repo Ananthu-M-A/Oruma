@@ -17,6 +17,7 @@ import { PaymentWebhookEvent } from './payment/entities/payment-webhook-event.en
 import { PrivacyRequest } from './privacy/entities/privacy-request.entity';
 import { ProviderJob } from './reliability/entities/provider-job.entity';
 import { PaymentRefund } from './payment/entities/payment-refund.entity';
+import { Enquiry } from './enquiry/entities/enquiry.entity';
 
 function loadEnvFile() {
   const envPath = resolve(process.cwd(), '.env');
@@ -67,6 +68,7 @@ export default new DataSource({
     PrivacyRequest,
     ProviderJob,
     PaymentRefund,
+    Enquiry,
   ],
   migrations: [resolve(__dirname, 'migrations/*{.ts,.js}')],
   synchronize: false,

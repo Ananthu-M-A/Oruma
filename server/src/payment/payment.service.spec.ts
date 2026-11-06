@@ -181,6 +181,93 @@ describe('PaymentService', () => {
     expect(appointmentService.notifyBookingAfterPayment).not.toHaveBeenCalled();
   });
 
+  const failedAttempt = () => ({
+    id: 'payment-1',
+    amount: 1200,
+    status: PaymentStatus.FAILED,
+    providerPaymentId: 'pay_failed_1',
+    reference: 'pay_failed_1',
+    appointment: {
+      id: 'appointment-1',
+      contactEmail: 'patient@example.com',
+    },
+    patient: {
+      id: 'patient-1',
+      email: 'patient@example.com',
+    },
+    notes: 'Razorpay webhook marked payment failed',
+  });
+
+  it('confirms a verified retry on the same order after a failed attempt', async () => {
+    const payment = failedAttempt();
+    const { service, paymentRepo, appointmentService } = createService(payment);
+
+    const result = await service.verifyRazorpayPayment(
+      {
+        razorpayOrderId: 'order_123',
+        razorpayPaymentId: 'pay_123',
+        razorpaySignature: signatureFor('order_123', 'pay_123'),
+      },
+      patient,
+    );
+
+    expect(result.status).toBe(PaymentStatus.PAID);
+    expect(paymentRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ providerPaymentId: 'pay_123' }),
+    );
+    expect(appointmentService.notifyBookingAfterPayment).toHaveBeenCalled();
+  });
+
+  it('confirms a webhook capture on the same order after a failed attempt', async () => {
+    const payment = failedAttempt();
+    const { service, paymentRepo, appointmentService } = createService(payment);
+    const webhookHandler = service as unknown as {
+      applyRazorpayWebhook(payload: unknown): Promise<void>;
+    };
+
+    await webhookHandler.applyRazorpayWebhook({
+      event: 'payment.captured',
+      payload: {
+        payment: {
+          entity: {
+            id: 'pay_123',
+            order_id: 'order_123',
+            amount: 120000,
+            currency: 'INR',
+            status: 'captured',
+            captured: true,
+          },
+        },
+      },
+    });
+
+    expect(payment.status).toBe(PaymentStatus.PAID);
+    expect(paymentRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ providerPaymentId: 'pay_123' }),
+    );
+    expect(appointmentService.notifyBookingAfterPayment).toHaveBeenCalled();
+  });
+
+  it('still rejects a capture when the order is already paid by a different payment', async () => {
+    const payment = {
+      ...failedAttempt(),
+      status: PaymentStatus.PAID,
+      providerPaymentId: 'pay_other',
+    };
+    const { service } = createService(payment);
+
+    await expect(
+      service.verifyRazorpayPayment(
+        {
+          razorpayOrderId: 'order_123',
+          razorpayPaymentId: 'pay_123',
+          razorpaySignature: signatureFor('order_123', 'pay_123'),
+        },
+        patient,
+      ),
+    ).rejects.toThrow('This order is already linked to a different payment');
+  });
+
   it('rejects invalid Razorpay signatures', async () => {
     const payment = {
       id: 'payment-1',

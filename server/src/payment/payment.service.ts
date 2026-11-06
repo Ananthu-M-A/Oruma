@@ -497,7 +497,10 @@ export class PaymentService {
           'Captured payment amount or currency does not match the booking',
         );
       }
+      // A failed attempt leaves its payment ID on the order. Razorpay allows a
+      // retry on the same order, so only a non-failed link is a real conflict.
       if (
+        payment.status !== PaymentStatus.FAILED &&
         payment.providerPaymentId &&
         payment.providerPaymentId !== dto.razorpayPaymentId
       ) {
@@ -753,6 +756,7 @@ export class PaymentService {
           );
         }
         if (
+          payment.status !== PaymentStatus.FAILED &&
           payment.providerPaymentId &&
           entity.id &&
           payment.providerPaymentId !== entity.id

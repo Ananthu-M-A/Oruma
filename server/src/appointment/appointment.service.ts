@@ -39,9 +39,17 @@ import { ProviderJobService } from '../reliability/provider-job.service';
 import { businessConfig } from '../config/business.config';
 import { Payment } from '../payment/entities/payment.entity';
 import { PaymentStatus } from '../payment/entities/payment-status.enum';
-import { normalizeManualZoomLink } from './appointment-operations';
+import { normalizeManualMeetingLink } from './appointment-operations';
 import { TherapistVerificationStatus } from '../therapist/entities/therapist-verification-status.enum';
 import { getSupportedBookingModes } from '../therapist/therapist-profile.constants';
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
 
 @Injectable()
 export class AppointmentService {
@@ -416,6 +424,8 @@ export class AppointmentService {
           ? (appointment.therapist.couplePrice ?? appointment.therapist.price)
           : appointment.therapist.price;
     const policyUrl = `${businessConfig.website}/service-delivery-policy`;
+    const invoiceUrl = `${businessConfig.website}/profile/patient`;
+    const adminUrl = `${businessConfig.website}/profile/admin`;
 
     if (email) {
       await this.providerJobService.enqueueEmail(
@@ -431,6 +441,7 @@ export class AppointmentService {
             `Amount paid: INR ${payableAmount}`,
             'Payment status: Paid',
             'Staff will confirm the appointment and send joining instructions.',
+            `Your invoice is available in your account: ${invoiceUrl}`,
             `Service delivery, cancellation, and refund information: ${policyUrl}`,
             `Support: ${businessConfig.emails.support}`,
           ].join('\n'),
@@ -443,6 +454,7 @@ export class AppointmentService {
           <p><strong>Amount paid:</strong> INR ${payableAmount}</p>
           <p><strong>Payment status:</strong> Paid</p>
           <p>Staff will confirm the appointment and send joining instructions.</p>
+          <p><a href="${invoiceUrl}">View your invoice in your Oruma account</a></p>
           <p><a href="${policyUrl}">Service delivery, cancellation, and refund information</a></p>
           <p>Support: ${businessConfig.emails.support}</p>
         `,
@@ -450,6 +462,44 @@ export class AppointmentService {
         { deduplicationKey: `appointment:${appointment.id}:request:email` },
       );
     }
+
+    // Alert the care team. Booking facts only: no patient concern, notes or
+    // contact details, because email is not a secure channel for them.
+    const opsEmail = this.getOpsNotificationEmail();
+    if (opsEmail) {
+      await this.providerJobService.enqueueEmail(
+        {
+          to: opsEmail,
+          subject: `New paid booking: ${service}, ${slotRange}`,
+          text: [
+            `A new paid booking has been received on ${businessConfig.brandName}.`,
+            `Booking reference: ${appointment.id}`,
+            `Service: ${service}`,
+            `Practitioner: ${appointment.therapist.name}`,
+            `Slot: ${slotRange}`,
+            `Amount paid: INR ${payableAmount}`,
+            `Next step: confirm the appointment and add the session link at ${adminUrl}`,
+          ].join('\n'),
+          html: `
+          <p>A new paid booking has been received on ${businessConfig.brandName}.</p>
+          <p><strong>Booking reference:</strong> ${escapeHtml(appointment.id)}</p>
+          <p><strong>Service:</strong> ${escapeHtml(service)}</p>
+          <p><strong>Practitioner:</strong> ${escapeHtml(appointment.therapist.name)}</p>
+          <p><strong>Slot:</strong> ${escapeHtml(slotRange)}</p>
+          <p><strong>Amount paid:</strong> INR ${payableAmount}</p>
+          <p><a href="${adminUrl}">Confirm the appointment and add the session link</a></p>
+        `,
+        },
+        { deduplicationKey: `appointment:${appointment.id}:ops:email` },
+      );
+    }
+  }
+
+  private getOpsNotificationEmail() {
+    return (
+      this.configService.get<string>('OPS_NOTIFICATION_EMAIL')?.trim() ||
+      businessConfig.emails.support
+    );
   }
 
   private async sendBookingInAppNotifications(appointment: Appointment) {
@@ -668,7 +718,7 @@ export class AppointmentService {
           'Confirm the paid appointment before adding a meeting link',
         );
       }
-      const meetingLink = this.validateManualZoomLink(dto.meetingLink);
+      const meetingLink = this.validateManualMeetingLink(dto.meetingLink);
       meetingLinkChanged = meetingLink !== appointment.meetingLink;
       if (meetingLinkChanged) {
         appointment.meetingLink = meetingLink;
@@ -856,11 +906,11 @@ export class AppointmentService {
     });
   }
 
-  private validateManualZoomLink(value: string) {
-    const link = normalizeManualZoomLink(value);
+  private validateManualMeetingLink(value: string) {
+    const link = normalizeManualMeetingLink(value);
     if (!link) {
       throw new BadRequestException(
-        'Meeting links must use an official zoom.us address',
+        'Meeting links must be an official https://meet.google.com or zoom.us link',
       );
     }
     return link;
@@ -878,7 +928,7 @@ export class AppointmentService {
             recipientId: appointment.patient.id,
             type: NotificationType.APPOINTMENT,
             title: 'Your session link is ready',
-            body: `${service} for ${slotRange} now has a secure Zoom link in your appointment dashboard.`,
+            body: `${service} for ${slotRange} now has a secure session link in your appointment dashboard.`,
             actionUrl: '/profile/patient',
             metadata: { appointmentId: appointment.id },
           }
@@ -898,6 +948,33 @@ export class AppointmentService {
     );
 
     await this.notificationService.createMany(notifications);
+
+    const patientEmail =
+      appointment.contactEmail ?? appointment.patient?.email ?? null;
+    if (patientEmail && appointment.meetingLinkAddedAt) {
+      const dashboardUrl = `${businessConfig.website}/profile/patient`;
+      await this.providerJobService.enqueueEmail(
+        {
+          to: patientEmail,
+          subject: `Your ${businessConfig.brandName} session link is ready`,
+          text: [
+            `The session link for your ${service} on ${slotRange} is ready.`,
+            `Open your appointment dashboard to join: ${dashboardUrl}`,
+            'Please join from a quiet, private space a few minutes before the start time.',
+            `Support: ${businessConfig.emails.support}`,
+          ].join('\n'),
+          html: `
+          <p>The session link for your ${escapeHtml(service)} on ${escapeHtml(slotRange)} is ready.</p>
+          <p><a href="${dashboardUrl}">Open your appointment dashboard to join</a></p>
+          <p>Please join from a quiet, private space a few minutes before the start time.</p>
+          <p>Support: ${businessConfig.emails.support}</p>
+        `,
+        },
+        {
+          deduplicationKey: `appointment:${appointment.id}:meeting-link:${appointment.meetingLinkAddedAt.getTime()}:email`,
+        },
+      );
+    }
   }
 
   private formatSlotRange(appointment: Appointment) {

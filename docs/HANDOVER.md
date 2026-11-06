@@ -23,9 +23,9 @@ This document explains what you are receiving, how to run the website each day, 
 
 ### What staff do by hand
 
-**Zoom meetings and WhatsApp messages are handled manually by staff in this version. There is no automated Zoom or WhatsApp integration in the application. Automating them later is new development work.**
+**Video meetings (Google Meet or Zoom) and WhatsApp messages are handled manually by staff in this version. There is no automated Google Meet, Zoom or WhatsApp integration in the application. Automating them later is new development work.**
 
-Staff create each Zoom meeting, paste its link into ORUMA, and send messages from the official WhatsApp Business account.
+Staff create each Google Meet or Zoom meeting, paste its link into ORUMA, and send messages from the official WhatsApp Business account. The website's WhatsApp buttons only open a chat with +91-8157039987; someone must answer it. Website contact-form messages arrive by email and in the admin **Enquiries** tab.
 
 ---
 
@@ -81,8 +81,8 @@ Full procedure: [Manual appointment operations](MANUAL_APPOINTMENT_OPERATIONS.md
 1. Open **Appointments** and start with the newest paid appointment.
 2. Confirm it only after ORUMA shows **Paid**.
 3. Send the prepared confirmation from WhatsApp Business, then select **Mark confirmation sent**.
-4. Create a new Zoom meeting with a waiting room and passcode. Never reuse a meeting link.
-5. Paste the `zoom.us` link into ORUMA and save it.
+4. Create a new Google Meet meeting (from Google Calendar) or Zoom meeting with a waiting room and passcode. Never reuse a meeting link.
+5. Paste the `meet.google.com` or `zoom.us` link into ORUMA and save it. The patient is emailed that the link is ready.
 6. Send the link to the patient, then select **Mark link sent**.
 7. Send the reminder before the session, then select **Mark reminder sent**.
 
@@ -285,12 +285,13 @@ Optional settings and their defaults are listed in `server/.env.example` and `cl
 
 ## 11. Known limitations at handover
 
-- Zoom and WhatsApp are manual (section 1).
+- Google Meet, Zoom and WhatsApp are manual (section 1).
 - Admins and practitioners have no self-service password reset (section 4).
 - Cancelling a booking doesn't refund it automatically (section 4).
 - Automatic data retention and erasure are off until retention periods are approved.
-- Google Analytics is off until you decide whether a consent banner is needed.
-- [FILL: remaining dependency audit findings, or "None"]
+- Google Analytics and Tag Manager are off until their IDs are set in Vercel. A cookie consent banner is built in and on by default.
+- Dependency audit (6 Nov 2026): client production dependencies have no findings. The server has 3 moderate findings in `glob` and `minimatch` inside `typeorm`. They need a breaking `typeorm` upgrade, so they were left. They affect file-pattern matching at startup, not user input.
+- Each new marketing tag added in Tag Manager (for example Meta Pixel or Google Ads) needs its domains added to the Content-Security-Policy in `client/vercel.json`, or the browser will block it.
 - [FILL: anything else still open at handover, or "None"]
 
 ---

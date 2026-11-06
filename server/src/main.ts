@@ -72,6 +72,15 @@ async function bootstrap() {
       skip: (req) => !req.path.startsWith('/auth'),
     }),
   );
+  app.use(
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: Number(process.env.ENQUIRY_RATE_LIMIT_PER_15_MINUTES ?? 5),
+      keyPrefix: 'enquiry',
+      message: 'Too many messages sent. Please try again later or email us.',
+      skip: (req) => req.method !== 'POST' || req.path !== '/enquiries',
+    }),
+  );
 
   app.enableCors({
     origin: clientOrigins,

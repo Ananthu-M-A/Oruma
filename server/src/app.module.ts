@@ -11,6 +11,7 @@ import { AvailabilityModule } from './availability/availability.module';
 import { AdminModule } from './admin/admin.module';
 import { PaymentModule } from './payment/payment.module';
 import { TicketModule } from './ticket/ticket.module';
+import { EnquiryModule } from './enquiry/enquiry.module';
 import { CaseSheetModule } from './case-sheet/case-sheet.module';
 import { MediaModule } from './media/media.module';
 import { NotificationModule } from './notification/notification.module';
@@ -33,6 +34,7 @@ import { PrivacyModule } from './privacy/privacy.module';
     AvailabilityModule,
     PaymentModule,
     TicketModule,
+    EnquiryModule,
     CaseSheetModule,
     MediaModule,
     NotificationModule,

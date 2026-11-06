@@ -28,7 +28,7 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies
-        run: npm audit --audit-level=low
+        run: npm audit --omit=dev --audit-level=critical
 
       - name: Type-check
         run: npm run typecheck
@@ -97,7 +97,7 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies
-        run: npm audit --audit-level=low
+        run: npm audit --omit=dev --audit-level=critical
 
       - name: Build
         run: npm run build

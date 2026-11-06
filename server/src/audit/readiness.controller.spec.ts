@@ -92,7 +92,7 @@ describe('ReadinessController', () => {
       response: expect.objectContaining({
         database: 'available',
         schema: 'not_ready',
-      }),
+      }) as Record<string, unknown>,
     });
   });
 });

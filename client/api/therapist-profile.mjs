@@ -22,7 +22,17 @@ function replaceMeta(html, attribute, key, content) {
   );
 }
 
-function renderHead(html, profile) {
+// dist/index.html is prerendered for the home page, so it already carries the
+// home page's JSON-LD. Remove it before adding the profile's own schema.
+function removePageSchema(html) {
+  return html.replace(
+    /<script[^>]*id="oruma-page-schema"[^>]*>[\s\S]*?<\/script>/i,
+    "",
+  );
+}
+
+function renderHead(sourceHtml, profile) {
+  const html = removePageSchema(sourceHtml);
   const siteUrl = process.env.ORUMA_SITE_URL || DEFAULT_SITE_URL;
   const canonicalUrl = `${siteUrl}/therapists/${encodeURIComponent(profile.id)}`;
   const areas = profile.areasOfPractice || profile.tags || [];
@@ -92,7 +102,8 @@ function renderHead(html, profile) {
   );
 }
 
-function renderUnavailableHead(html) {
+function renderUnavailableHead(sourceHtml) {
+  const html = removePageSchema(sourceHtml);
   const title = "Practitioner Profile Unavailable | Oruma";
   let rendered = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
   rendered = replaceMeta(

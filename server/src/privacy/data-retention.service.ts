@@ -5,6 +5,7 @@ import { DataSource, In, LessThan } from 'typeorm';
 import { AuditEvent } from '../audit/entities/audit-event.entity';
 import { LoginOtp } from '../auth/entities/login-otp.entity';
 import { Notification } from '../notification/entities/notification.entity';
+import { Enquiry, EnquiryStatus } from '../enquiry/entities/enquiry.entity';
 import {
   PaymentWebhookEvent,
   PaymentWebhookStatus,
@@ -68,6 +69,10 @@ export class DataRetentionService {
             PrivacyRequestStatus.REJECTED,
           ]),
           updatedAt: LessThan(cutoff('PRIVACY_REQUEST_RETENTION_DAYS', 2555)),
+        }),
+        this.dataSource.getRepository(Enquiry).delete({
+          status: In([EnquiryStatus.REPLIED, EnquiryStatus.CLOSED]),
+          updatedAt: LessThan(cutoff('ENQUIRY_RETENTION_DAYS', 365)),
         }),
       ]);
       const removed = results.reduce(

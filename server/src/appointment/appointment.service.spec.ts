@@ -219,6 +219,7 @@ describe('AppointmentService manual operations', () => {
       save: jest.fn((value: unknown) => Promise.resolve(value)),
     };
     const notificationService = { createMany: jest.fn() };
+    const providerJobService = { enqueueEmail: jest.fn() };
     const service = new AppointmentService(
       appointmentRepository as never,
       {} as never,
@@ -226,7 +227,7 @@ describe('AppointmentService manual operations', () => {
       notificationService as never,
       {} as never,
       {} as never,
-      {} as never,
+      providerJobService as never,
     );
 
     const result = await service.updateOperations(
@@ -248,6 +249,84 @@ describe('AppointmentService manual operations', () => {
       'Patient contacted from the official number.',
     );
     expect(notificationService.createMany).toHaveBeenCalledTimes(1);
+    expect(providerJobService.enqueueEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'patient@example.com',
+        subject: expect.stringContaining('session link is ready') as string,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('emails the patient and alerts the care team after a paid booking', async () => {
+    const providerJobService = { enqueueEmail: jest.fn() };
+    const service = new AppointmentService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { get: jest.fn(() => 'care-team@example.com') } as never,
+      providerJobService as never,
+    );
+    const bookingNotifier = service as unknown as {
+      sendBookingNotifications(
+        appointment: unknown,
+        email: string | null,
+      ): Promise<void>;
+    };
+
+    await bookingNotifier.sendBookingNotifications(
+      {
+        ...appointment(),
+        packageOfferAmount: 0,
+        contactName: 'Private Patient',
+        therapist: { id: 'therapist-1', name: 'Therapist', price: 1200 },
+      },
+      'patient@example.com',
+    );
+
+    expect(providerJobService.enqueueEmail).toHaveBeenCalledTimes(2);
+    const [, [opsEmail, opsOptions]] = providerJobService.enqueueEmail.mock
+      .calls as Array<
+      [{ to: string; text: string }, { deduplicationKey: string }]
+    >;
+    expect(opsEmail.to).toBe('care-team@example.com');
+    expect(opsEmail.text).toContain('INR 1200');
+    expect(opsEmail.text).not.toContain('Private Patient');
+    expect(opsOptions.deduplicationKey).toBe(
+      'appointment:appointment-1:ops:email',
+    );
+  });
+
+  it('stores a Google Meet link added by staff', async () => {
+    const currentAppointment = appointment();
+    const queryBuilder = {
+      addSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(currentAppointment),
+    };
+    const service = new AppointmentService(
+      {
+        createQueryBuilder: jest.fn(() => queryBuilder),
+        save: jest.fn((value: unknown) => Promise.resolve(value)),
+      } as never,
+      {} as never,
+      {} as never,
+      { createMany: jest.fn() } as never,
+      {} as never,
+      {} as never,
+      { enqueueEmail: jest.fn() } as never,
+    );
+
+    const result = await service.updateOperations(
+      currentAppointment.id,
+      { meetingLink: 'https://meet.google.com/abc-defg-hij' },
+      { userId: 'admin-1', email: 'admin@example.com', role: Role.ADMIN },
+    );
+
+    expect(result.meetingLink).toBe('https://meet.google.com/abc-defg-hij');
   });
 
   it('prevents confirmation until payment is recorded', async () => {

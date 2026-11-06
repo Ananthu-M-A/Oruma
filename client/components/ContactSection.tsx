@@ -6,14 +6,18 @@ import {
   businessConfig,
   businessLinks,
   createPageSupportEmailUrl,
+  createPageWhatsAppUrl,
+  googleBusinessProfile as googleProfile,
+  publicContact,
 } from "../src/config/business";
+import { trackEvent } from "../src/lib/analytics";
 
 export default function ContactSection() {
   const { pathname } = useLocation();
-  const emailLink = createPageSupportEmailUrl(
-    pathname,
-    "directing my question to the right care team and sharing the steps, fees, and information needed to resolve it",
-  );
+  const request =
+    "directing my question to the right care team and sharing the steps, fees, and information needed to resolve it";
+  const emailLink = createPageSupportEmailUrl(pathname, request);
+  const whatsappLink = createPageWhatsAppUrl(pathname, request);
 
   return (
     <section id="contact" className="scroll-mt-24 bg-[#F5F8F7] py-24">
@@ -35,6 +39,27 @@ export default function ContactSection() {
                     {businessConfig.emails.support}
                   </a>
                 </ContactItem>
+                {publicContact.phone ? (
+                  <ContactItem icon="phone" label="Phone">
+                    <a href={businessLinks.supportPhone}>
+                      {businessConfig.supportPhone.display}
+                    </a>
+                  </ContactItem>
+                ) : null}
+                {publicContact.whatsapp ? (
+                  <ContactItem icon="message-circle" label="WhatsApp">
+                    <a
+                      href={whatsappLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() =>
+                        trackEvent("whatsapp_click", { page_path: pathname })
+                      }
+                    >
+                      {businessConfig.whatsappPhone.display}
+                    </a>
+                  </ContactItem>
+                ) : null}
                 <ContactItem icon="map-pin" label="Operating address">
                   <address className="not-italic">
                     {businessConfig.address.lines.map((line) => (
@@ -45,6 +70,30 @@ export default function ContactSection() {
                   </address>
                 </ContactItem>
               </dl>
+              {googleProfile.mapsUrl || googleProfile.reviewUrl ? (
+                <div className="mt-8 flex flex-wrap gap-3">
+                  {googleProfile.mapsUrl ? (
+                    <a
+                      href={googleProfile.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-black text-white hover:bg-white/20"
+                    >
+                      <LucideIcon name="map-pin" size={16} /> Find us on Google
+                    </a>
+                  ) : null}
+                  {googleProfile.reviewUrl ? (
+                    <a
+                      href={googleProfile.reviewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-black text-white hover:bg-white/20"
+                    >
+                      Leave a Google review
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </div>
 

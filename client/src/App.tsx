@@ -8,6 +8,8 @@ import {
 } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { applyDocumentSeo, trackPageView } from "./lib/seo";
+import { seoServices } from "./content/seoServices";
+import ConsentBanner from "../components/ConsentBanner";
 
 const Index = lazy(() => import("../routes/index"));
 const About = lazy(() => import("../routes/about"));
@@ -49,6 +51,8 @@ const PatientProfile = lazy(() => import("../routes/profile-patient"));
 const TherapistProfile = lazy(() => import("../routes/profile-therapist"));
 const AdminProfile = lazy(() => import("../routes/profile-admin"));
 const AdminTherapists = lazy(() => import("../routes/admin-therapists"));
+const SeoService = lazy(() => import("../routes/services/seo-service"));
+const NotFound = lazy(() => import("../routes/not-found"));
 
 function RouteEffects() {
   const { pathname } = useLocation();
@@ -78,7 +82,10 @@ export default function App() {
           <Route path="/articles" element={<Articles />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/concerns" element={<Concerns />} />
-          <Route path="/concerns/all-concerns" element={<Concerns />} />
+          <Route
+            path="/concerns/all-concerns"
+            element={<Navigate to="/concerns" replace />}
+          />
           <Route
             path="/concerns/:concernSlug"
             element={<ConcernDetail />}
@@ -164,11 +171,22 @@ export default function App() {
           <Route path="/therapists" element={<Therapists />} />
           <Route path="/therapists/:id" element={<TherapistDetail />} />
           <Route path="/team" element={<Navigate to="/therapists" replace />} />
+          {seoServices.map((service) => (
+            <Route
+              key={service.slug}
+              path={service.path}
+              element={<SeoService slug={service.slug} />}
+            />
+          ))}
           <Route path="/terms" element={<Terms />} />
-          <Route path="/terms-and-conditions" element={<Terms />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="/terms-and-conditions"
+            element={<Navigate to="/terms" replace />}
+          />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      <ConsentBanner />
     </BrowserRouter>
   );
 }

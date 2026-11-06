@@ -1,4 +1,5 @@
 import rawBusinessConfig from "../../../config/business.json";
+import { seoServices } from "../content/seoServices";
 
 type BusinessConfig = typeof rawBusinessConfig;
 
@@ -51,6 +52,21 @@ export function validateBusinessConfig(config: BusinessConfig) {
 export const businessConfig = Object.freeze(rawBusinessConfig);
 export const businessConfigWarnings = validateBusinessConfig(businessConfig);
 export const businessAddress = businessConfig.address.lines.join(", ");
+
+/**
+ * Which contact channels the public site shows, besides email. WhatsApp was
+ * removed on 11 Oct 2026 (commit 56f55f7) and restored at the owners' request;
+ * set either to false in config/business.json to hide it everywhere.
+ */
+export const publicContact: { whatsapp: boolean; phone: boolean } =
+  businessConfig.publicContact;
+
+/** Google Business Profile links. Null until the owners' profile is verified. */
+export const googleBusinessProfile: {
+  mapsUrl: string | null;
+  reviewUrl: string | null;
+  mapEmbedUrl: string | null;
+} = businessConfig.googleBusinessProfile;
 export const ownershipDisclosure = `${businessConfig.brandName} is a brand operated by ${businessConfig.operatorLegalName}, an individual business providing online counselling and wellness services.`;
 
 export const businessLinks = Object.freeze({
@@ -117,12 +133,28 @@ const supportEmailPageTopics: Record<string, string> = {
   "/contact": "a service, booking, payment, cancellation, or refund question",
 };
 
-export function createPageSupportEmailUrl(pathname: string, request: string) {
-  const pageTopic =
+for (const service of seoServices) {
+  supportEmailPageTopics[service.path] = service.enquiryTopic;
+}
+
+function pageTopicFor(pathname: string) {
+  return (
     supportEmailPageTopics[pathname] ??
     (pathname.startsWith("/therapists/")
       ? "reviewing a specific practitioner profile"
-      : "an Oruma counselling or wellness service");
+      : "an Oruma counselling or wellness service")
+  );
+}
+
+/** WhatsApp click-to-chat link with a message naming the current page. */
+export function createPageWhatsAppUrl(pathname: string, request: string) {
+  return createWhatsAppUrl(
+    `Hello Oruma, I am viewing the page about ${pageTopicFor(pathname)}. I would like help with ${request}.`,
+  );
+}
+
+export function createPageSupportEmailUrl(pathname: string, request: string) {
+  const pageTopic = pageTopicFor(pathname);
   return createSupportEmailUrl(
     [
       `Hello Oruma, I am viewing the page about ${pageTopic}.`,

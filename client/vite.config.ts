@@ -3,12 +3,93 @@ import react from "@vitejs/plugin-react";
 import fs from "fs";
 import path from "path";
 
+import {
+  SITE_URL,
+  absoluteImageUrl,
+  buildPageSchema,
+  canonicalUrlFor,
+  gatedSeoRoutes,
+  indexablePublicPaths,
+  notFoundSeo,
+  privateSeoRoutes,
+  publicSeoRoutes,
+  type PageSeo,
+} from "./src/lib/seo-routes";
+
 function escapeHtmlAttribute(value: string) {
   return value
     .replaceAll("&", "&amp;")
     .replaceAll('"', "&quot;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
+}
+
+function replaceMeta(
+  html: string,
+  attribute: "name" | "property",
+  key: string,
+  content: string,
+) {
+  const tag = `<meta ${attribute}="${key}" content="${escapeHtmlAttribute(content)}" />`;
+  const expression = new RegExp(
+    `<meta\\s+${attribute}="${key.replace(/[.:]/g, "\\$&")}"[\\s\\S]*?\\/?>`,
+    "i",
+  );
+  return expression.test(html)
+    ? html.replace(expression, tag)
+    : html.replace("</head>", `${tag}</head>`);
+}
+
+function renderSitemap() {
+  const lastmod = new Date().toISOString().slice(0, 10);
+  const urls = indexablePublicPaths()
+    .map(
+      (route) =>
+        `  <url><loc>${SITE_URL}${route === "/" ? "/" : route}</loc><lastmod>${lastmod}</lastmod></url>`,
+    )
+    .join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+}
+
+function renderSeoHtml(template: string, route: string, seo: PageSeo) {
+  const canonicalUrl = canonicalUrlFor(route, seo);
+  const image = absoluteImageUrl(seo.image);
+  const robots = seo.noIndex
+    ? "noindex, nofollow"
+    : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
+  let html = template.replace(
+    /<title>[\s\S]*?<\/title>/i,
+    `<title>${escapeHtmlAttribute(seo.title)}</title>`,
+  );
+  html = html.replace(
+    /<link\s+rel="canonical"[\s\S]*?\/>/i,
+    `<link rel="canonical" href="${escapeHtmlAttribute(canonicalUrl)}" />`,
+  );
+  html = replaceMeta(html, "name", "description", seo.description);
+  html = replaceMeta(html, "name", "robots", robots);
+  html = replaceMeta(html, "name", "googlebot", robots);
+  html = replaceMeta(html, "property", "og:title", seo.title);
+  html = replaceMeta(html, "property", "og:description", seo.description);
+  html = replaceMeta(html, "property", "og:type", seo.type ?? "website");
+  html = replaceMeta(html, "property", "og:url", canonicalUrl);
+  html = replaceMeta(html, "property", "og:image", image);
+  html = replaceMeta(html, "name", "twitter:title", seo.title);
+  html = replaceMeta(html, "name", "twitter:description", seo.description);
+  html = replaceMeta(html, "name", "twitter:image", image);
+  if (seo.image) {
+    // Hero images have their own dimensions; drop the default image's.
+    html = html
+      .replace(/<meta\s+property="og:image:width"[\s\S]*?\/>\s*/i, "")
+      .replace(/<meta\s+property="og:image:height"[\s\S]*?\/>\s*/i, "");
+  }
+  const schema = JSON.stringify(buildPageSchema(route, seo)).replaceAll(
+    "<",
+    "\\u003c",
+  );
+  return html.replace(
+    "</head>",
+    `<script type="application/ld+json" id="oruma-page-schema">${schema}</script></head>`,
+  );
 }
 
 export default defineConfig(({ mode }) => {
@@ -41,7 +122,14 @@ export default defineConfig(({ mode }) => {
     };
     supportPhone: { e164: string };
     emails: { support: string };
+    socialProfiles?: string[];
+    googleBusinessProfile?: { mapsUrl: string | null };
   };
+  const mapsUrl = businessConfig.googleBusinessProfile?.mapsUrl || null;
+  const sameAs = [
+    ...(businessConfig.socialProfiles ?? []),
+    ...(mapsUrl ? [mapsUrl] : []),
+  ];
   const searchConsoleVerification = env.VITE_GOOGLE_SITE_VERIFICATION?.trim();
   const searchConsolePlugin: Plugin = {
     name: "oruma-search-console-verification",
@@ -95,6 +183,8 @@ export default defineConfig(({ mode }) => {
               },
             ],
             areaServed: "India",
+            ...(sameAs.length ? { sameAs } : {}),
+            ...(mapsUrl ? { hasMap: mapsUrl } : {}),
             contactPoint: {
               "@type": "ContactPoint",
               telephone: businessConfig.supportPhone.e164,
@@ -131,6 +221,54 @@ export default defineConfig(({ mode }) => {
     },
   };
 
+  // Writes one HTML file per public route with that route's title, meta tags,
+  // canonical URL and JSON-LD already in place, so crawlers and link previews
+  // (WhatsApp, Facebook, LinkedIn) see the right page without running
+  // JavaScript. Vercel serves /about from about.html (cleanUrls) before any
+  // rewrite applies. Also generates sitemap.xml and 404.html from the same
+  // route list, so they can't drift apart.
+  const prerenderSeoPlugin: Plugin = {
+    name: "oruma-prerender-seo",
+    apply: "build",
+    closeBundle() {
+      const outDir = path.resolve(__dirname, "dist");
+      const templatePath = path.join(outDir, "index.html");
+      if (!fs.existsSync(templatePath)) return;
+      const template = fs.readFileSync(templatePath, "utf8");
+
+      const writePage = (route: string, seo: PageSeo, fileName: string) => {
+        const html = renderSeoHtml(template, route, seo);
+        const target = path.join(outDir, fileName);
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.writeFileSync(target, html);
+      };
+
+      const routes = {
+        ...publicSeoRoutes,
+        ...gatedSeoRoutes,
+        ...privateSeoRoutes,
+      };
+      for (const [route, seo] of Object.entries(routes)) {
+        if (seo.canonicalPath && seo.canonicalPath !== route) continue;
+        writePage(route, seo, route === "/" ? "index.html" : `${route.slice(1)}.html`);
+      }
+      writePage("/404", notFoundSeo, "404.html");
+      fs.writeFileSync(path.join(outDir, "sitemap.xml"), renderSitemap());
+    },
+  };
+
+  // The dev server (also used by the browser tests) serves the same sitemap.
+  const devSitemapPlugin: Plugin = {
+    name: "oruma-dev-sitemap",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use("/sitemap.xml", (_req, res) => {
+        res.setHeader("Content-Type", "application/xml; charset=utf-8");
+        res.end(renderSitemap());
+      });
+    },
+  };
+
   return {
     plugins: [
       react({
@@ -138,6 +276,8 @@ export default defineConfig(({ mode }) => {
       }),
       searchConsolePlugin,
       businessStructuredDataPlugin,
+      prerenderSeoPlugin,
+      devSitemapPlugin,
     ],
     server: {
       fs: {

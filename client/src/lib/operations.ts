@@ -303,3 +303,80 @@ export async function upsertCaseSheet(
   });
   return readResponse<CaseSheet>(response, "Unable to save case sheet.");
 }
+
+export const enquirySubjects = [
+  "Choosing a practitioner",
+  "Booking or rescheduling",
+  "Payment or refund",
+  "Services and fees",
+  "Programs and workshops",
+  "Practitioner application",
+  "Something else",
+] as const;
+
+export type EnquirySubject = (typeof enquirySubjects)[number];
+export type EnquiryContactMethod = "email" | "phone" | "whatsapp";
+
+export type Enquiry = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  preferredContact: EnquiryContactMethod;
+  subject: EnquirySubject;
+  message: string;
+  pagePath: string | null;
+  status: "NEW" | "REPLIED" | "CLOSED";
+  adminNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EnquiryInput = {
+  name: string;
+  email: string;
+  phone?: string;
+  preferredContact: EnquiryContactMethod;
+  subject: EnquirySubject;
+  message: string;
+  pagePath?: string;
+  consent: boolean;
+  /** Hidden honeypot field; people leave it empty. */
+  website?: string;
+};
+
+/** Public contact form submission. No account needed. */
+export async function submitEnquiry(payload: EnquiryInput) {
+  const response = await fetch(`${API_BASE_URL}/enquiries`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return readResponse<{ received: boolean }>(
+    response,
+    "Unable to send your message. Please email us instead.",
+  );
+}
+
+export async function getEnquiries(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/enquiries`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  return readResponse<Enquiry[]>(response, "Unable to load enquiries.");
+}
+
+export async function updateEnquiry(
+  accessToken: string,
+  id: string,
+  payload: { status?: Enquiry["status"]; adminNote?: string },
+) {
+  const response = await fetch(`${API_BASE_URL}/enquiries/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  return readResponse<Enquiry>(response, "Unable to update enquiry.");
+}

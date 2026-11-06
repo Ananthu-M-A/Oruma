@@ -78,12 +78,12 @@ function AppointmentCard({
     }
     if (appointment.status !== "CONFIRMED") return null;
     if (!appointment.meetingLink) {
-      return "Your appointment is confirmed. Our care team is creating a unique Zoom link and will share it before the session.";
+      return "Your appointment is confirmed. Our care team is creating a unique session link and will share it before the session.";
     }
     if (appointment.meetingLinkSentAt) {
-      return `Your secure Zoom link is ready below and was shared by the care team on ${formatDate(appointment.meetingLinkSentAt)}.`;
+      return `Your secure session link is ready below and was shared by the care team on ${formatDate(appointment.meetingLinkSentAt)}.`;
     }
-    return "Your secure Zoom link is ready below. The care team will share booking updates by email; use the booking-specific WhatsApp option below if you need help.";
+    return "Your secure session link is ready below. The care team will share booking updates by email; use the booking-specific WhatsApp option below if you need help.";
   })();
 
   return (

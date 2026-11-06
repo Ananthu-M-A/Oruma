@@ -12,7 +12,9 @@ describe("therapist API helpers", () => {
       new Response(JSON.stringify(therapists), { status: 200 }),
     );
 
-    await expect(getTherapists()).resolves.toEqual(therapists);
+    await expect(getTherapists()).resolves.toEqual([
+      { id: "therapist-1", tags: [], areasOfPractice: [], languages: [] },
+    ]);
   });
 
   it("rejects object responses instead of letting the grid call filter on them", async () => {
