@@ -69,6 +69,8 @@ jobs:
           --health-retries 5
     env:
       NODE_ENV: test
+      # Same time zone the API sets for itself in main.ts.
+      TZ: Asia/Kolkata
       DATABASE_URL: postgres://oruma:oruma_test@localhost:5432/oruma_test
       DATABASE_SSL: "false"
       DATABASE_SYNC: "false"

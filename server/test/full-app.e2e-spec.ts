@@ -14,7 +14,12 @@ import { PaymentWebhookEvent } from '../src/payment/entities/payment-webhook-eve
 import { Therapist } from '../src/therapist/entities/therapist.entity';
 import { TherapistVerificationStatus } from '../src/therapist/entities/therapist-verification-status.enum';
 import { Role, User } from '../src/user/entities/user.entity';
+import { IST_TIME_ZONE } from '../src/common/ist-date-time';
 
+// Match main.ts. The database session runs in IST and some columns are
+// "timestamp without time zone", so Node must read them in IST too. Without
+// this, a UTC CI runner sees a booking made "now" as 5.5 hours in the future.
+process.env.TZ = IST_TIME_ZONE;
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'database-e2e-secret';
 process.env.PROVIDER_WORKER_ENABLED = 'false';
