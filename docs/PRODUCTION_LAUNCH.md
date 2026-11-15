@@ -71,7 +71,7 @@ Repeat against production only after staging validation and a backup. Seed the i
 
 ## 4. Provider dashboards
 
-- Razorpay: complete individual-business KYC without changing the owner identity or business structure. In Live Mode → Account & Settings → Payment Methods, confirm UPI is `Activated` and verify UPI Intent plus Dynamic QR are available. Oruma uses Standard Checkout and also hides the deprecated UPI Collect flow; mobile checkout should use Intent and desktop checkout should display Razorpay's dynamic QR. A `Rejected` request is an account/category/product decision: preserve its exact Dashboard message and reason code because application code cannot activate it. See `razorpay-activation-checklist.md` and `razorpay-qr-use-case.md`.
+- Razorpay: complete individual-business KYC without changing the owner identity or business structure. In Live Mode → Account & Settings → Payment Methods, confirm UPI is `Activated` and verify UPI Intent plus Dynamic QR are available. Oruma uses Standard Checkout and also hides the deprecated UPI Collect flow; mobile checkout should use Intent and desktop checkout should display Razorpay's dynamic QR. A `Rejected` request is an account/category/product decision: preserve its exact Dashboard message and reason code because application code cannot activate it.
 - Configure `https://api.oruma.me/payments/razorpay/webhook`; enable `payment.captured`, `payment.failed`, `order.paid`, `refund.created`, `refund.processed`, and `refund.failed`; then test signature verification and refunds. Use matching Live Mode keys for a controlled Intent/QR acceptance payment; Razorpay Test Mode simulates UPI and does not prove that live Intent/QR activation is complete.
 - Every admin refund request must include a stable `Idempotency-Key`. Review durable attempts at `GET /payments/admin/refunds`; never create a new refund while an operation is `REQUESTED` or `UNKNOWN`. Reuse its key so the API can reconcile the stable receipt without submitting a second gateway refund.
 - Resend: verify the sending domain and DKIM/SPF records, then test OTP and therapist credential delivery.
@@ -100,7 +100,7 @@ npm.cmd run test:e2e
 
 The six full-module database scenarios run when `RUN_DATABASE_E2E=true` and must point only to a disposable PostgreSQL database. The repository CI provisions that database, runs every migration from empty state, and then runs the suite automatically.
 
-Then execute the controlled production flow listed in `PROJECT_AUDIT.md`, confirm dashboards and role isolation, and record evidence for every external integration.
+Then run the live booking, payment and refund test in `HANDOVER_PLAN.md` Phase 3, confirm dashboards and role isolation, and record evidence for every external integration.
 
 For the frontend release, also verify `/robots.txt`, `/sitemap.xml`, route-specific canonical/meta tags, the ProfessionalService/Brand/Person-operator schema, GA4 Realtime events, Search Console URL Inspection, apex/www redirects, TLS, and mobile/desktop PageSpeed results.
 

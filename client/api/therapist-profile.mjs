@@ -18,7 +18,8 @@ function replaceMeta(html, attribute, key, content) {
   );
   return html.replace(
     expression,
-    `<meta ${attribute}="${key}" content="${escapeHtml(content)}" />`,
+    // A function replacer keeps "$&", "$'" etc. in profile text literal.
+    () => `<meta ${attribute}="${key}" content="${escapeHtml(content)}" />`,
   );
 }
 
@@ -70,10 +71,10 @@ function renderHead(sourceHtml, profile) {
     inLanguage: "en-IN",
   }).replaceAll("<", "\\u003c");
 
-  let rendered = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+  let rendered = html.replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${escapeHtml(title)}</title>`);
   rendered = rendered.replace(
     /<link\s+rel="canonical"[\s\S]*?\/>/i,
-    `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`,
+    () => `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`,
   );
   rendered = replaceMeta(rendered, "name", "description", description);
   rendered = replaceMeta(
@@ -98,14 +99,14 @@ function renderHead(sourceHtml, profile) {
   rendered = replaceMeta(rendered, "name", "twitter:image", image);
   return rendered.replace(
     "</head>",
-    `<script type="application/ld+json" id="oruma-page-schema">${schema}</script></head>`,
+    () => `<script type="application/ld+json" id="oruma-page-schema">${schema}</script></head>`,
   );
 }
 
 function renderUnavailableHead(sourceHtml) {
   const html = removePageSchema(sourceHtml);
   const title = "Practitioner Profile Unavailable | Oruma";
-  let rendered = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
+  let rendered = html.replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${title}</title>`);
   rendered = replaceMeta(
     rendered,
     "name",

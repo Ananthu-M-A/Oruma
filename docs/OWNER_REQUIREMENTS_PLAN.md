@@ -39,7 +39,7 @@ Checks run on 6 November 2026:
 | Owner requirement | Status | Where |
 |---|---|---|
 | Payment retry bug (HP 1.5) | ✅ Fixed and tested | `server/src/payment/payment.service.ts` |
-| Other HP Phase 1 fixes (1.2–1.4, 1.6–1.9) | ✅ Done | Lint, tests, `npm audit fix`, `ParseUUIDPipe`, seed script removed, `.env.example`, CI audit command, README and audit doc |
+| Other HP Phase 1 fixes (1.2–1.4, 1.6–1.9) | ✅ Done | Lint, tests, `npm audit fix`, `ParseUUIDPipe`, seed script removed, `.env.example`, CI audit command, README |
 | Search Console verification | ✅ Ready (unchanged) | Needs B2 |
 | Google Analytics 4 | ✅ Ready, with events | `client/src/lib/analytics.ts`. Needs B3. |
 | Google Tag Manager | ✅ Built | Loads when `VITE_GTM_ID` is set. Needs B4. |

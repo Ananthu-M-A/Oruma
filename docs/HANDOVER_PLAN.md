@@ -144,7 +144,6 @@ npm.cmd audit --omit=dev
 
 **1.9 [Dev] Correct the documentation:**
 
-- `docs/PROJECT_AUDIT.md`: it still says `api.oruma.me` doesn't resolve.
 - `README.md`: update the current status.
 - Check that `service-delivery-policy`, `terms` and `privacy-policy` describe the WhatsApp contact the way the owners actually intend to use it.
 
@@ -575,8 +574,8 @@ The owners should read this section and confirm they accept these limits. Plan l
 - [Production launch checklist](PRODUCTION_LAUNCH.md)
 - [Manual appointment operations](MANUAL_APPOINTMENT_OPERATIONS.md)
 - [Practitioner verification checklist](practitioner-verification-checklist.md)
-- [Razorpay activation checklist](razorpay-activation-checklist.md)
 - [SEO setup](SEO_SETUP.md)
+- [Owner requirements plan](OWNER_REQUIREMENTS_PLAN.md)
 - [Vercel fair use guidelines](https://vercel.com/docs/limits/fair-use-guidelines)
 - [Render free tier](https://render.com/docs/free)
 - [Neon plans](https://neon.com/docs/introduction/plans)

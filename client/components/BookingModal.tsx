@@ -660,15 +660,24 @@ export default function BookingModal({
             <div className="space-y-6">
               {therapist && (
                 <div className="flex items-center gap-4 p-4 bg-[#B7C8A3]/10 rounded-2xl mb-4">
-                  <img
-                    src={therapist.image || therapist.img}
-                    className="w-12 h-12 rounded-full object-cover"
-                    alt={therapist.name}
-                    width="48"
-                    height="48"
-                    loading="lazy"
-                    decoding="async"
-                  />
+                  {therapist.image || therapist.img ? (
+                    <img
+                      src={therapist.image || therapist.img}
+                      className="w-12 h-12 rounded-full object-cover"
+                      alt={therapist.name}
+                      width="48"
+                      height="48"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#E5ECCE] text-[#607D2E]"
+                    >
+                      <LucideIcon name="user" size={22} />
+                    </span>
+                  )}
                   <div>
                     <p className="font-bold text-[#064F4B]">{therapist.name}</p>
                     <p className="text-xs text-[#064F4B]/60">

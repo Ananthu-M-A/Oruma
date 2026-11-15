@@ -1,4 +1,5 @@
-import { requireProductionSecrets } from './security.middleware';
+import type { Request } from 'express';
+import { getClientIp, requireProductionSecrets } from './security.middleware';
 
 describe('requireProductionSecrets', () => {
   const keys = [
@@ -83,5 +84,16 @@ describe('requireProductionSecrets', () => {
     expect(() => requireProductionSecrets()).toThrow(
       'RESERVATION_CLEANUP_ENABLED=true',
     );
+  });
+});
+
+describe('getClientIp', () => {
+  it('uses the proxy-resolved req.ip, not a forged X-Forwarded-For', () => {
+    const req = {
+      ip: '203.0.113.7',
+      headers: { 'x-forwarded-for': '1.2.3.4, 203.0.113.7' },
+      socket: { remoteAddress: '10.0.0.1' },
+    } as unknown as Request;
+    expect(getClientIp(req)).toBe('203.0.113.7');
   });
 });

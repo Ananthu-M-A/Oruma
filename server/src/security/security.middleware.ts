@@ -230,11 +230,15 @@ function getRequestId(req: Request) {
     : randomUUID();
 }
 
-function getClientIp(req: Request) {
-  const forwardedFor = req.headers['x-forwarded-for'];
-  if (process.env.TRUST_PROXY === 'true' && typeof forwardedFor === 'string') {
-    return forwardedFor.split(',')[0].trim();
-  }
+// Express resolves req.ip from X-Forwarded-For using the "trust proxy" hop
+// count set in main.ts, so it only trusts entries added by our own proxies.
+// Reading the header's first entry directly would let a client pick its own
+// rate-limit key by sending a forged X-Forwarded-For.
+export function getClientIp(req: Request) {
+  return req.ip || req.socket?.remoteAddress || 'unknown';
+}
 
-  return req.ip || req.socket.remoteAddress || 'unknown';
+export function getTrustProxyHops() {
+  const hops = Number(process.env.TRUST_PROXY_HOPS ?? 1);
+  return Number.isInteger(hops) && hops > 0 ? hops : 1;
 }

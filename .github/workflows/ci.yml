@@ -79,6 +79,7 @@ jobs:
       DATA_RETENTION_WORKER_ENABLED: "false"
       PAYMENT_BYPASS_ENABLED: "true"
       BOOKING_LEAD_TIME_BYPASS_ENABLED: "true"
+      OTP_DEV_CODE_ENABLED: "true"
     defaults:
       run:
         working-directory: server

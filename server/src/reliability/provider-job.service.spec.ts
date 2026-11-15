@@ -11,7 +11,12 @@ describe('ProviderJobService', () => {
       id: 'job-1',
       kind: ProviderJobKind.EMAIL,
       status: ProviderJobStatus.PENDING,
-      payload: { to: 'patient@example.com', subject: 'Hello', text: 'Body' },
+      payload: {
+        to: 'patient@example.com',
+        subject: 'Hello',
+        text: 'Body',
+        html: '<p>Body</p>',
+      },
       deduplicationKey: 'email:test',
       attempts: 0,
       maxAttempts: 3,
@@ -40,7 +45,12 @@ describe('ProviderJobService', () => {
 
     await expect(
       service.enqueueEmail(
-        { to: 'patient@example.com', subject: 'Hello', text: 'Body' },
+        {
+          to: 'patient@example.com',
+          subject: 'Hello',
+          text: 'Body',
+          html: '<p>Body</p>',
+        },
         { deduplicationKey: 'email:test' },
       ),
     ).resolves.toBe(existing);

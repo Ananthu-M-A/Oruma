@@ -265,7 +265,9 @@ npm.cmd run migration:run:prod
 
 Optional settings and their defaults are listed in `server/.env.example` and `client/.env.example`.
 
-**Must stay off in production:** `DATABASE_SYNC`, `PAYMENT_BYPASS_ENABLED`, `BOOKING_LEAD_TIME_BYPASS_ENABLED`, `ALLOW_PRODUCTION_DATABASE_CLEAR`, `VITE_PAYMENT_BYPASS_ENABLED`, `VITE_BOOKING_LEAD_TIME_BYPASS_ENABLED`.
+**Must stay off in production:** `DATABASE_SYNC`, `PAYMENT_BYPASS_ENABLED`, `BOOKING_LEAD_TIME_BYPASS_ENABLED`, `ALLOW_PRODUCTION_DATABASE_CLEAR`, `OTP_DEV_CODE_ENABLED`, `VITE_PAYMENT_BYPASS_ENABLED`, `VITE_BOOKING_LEAD_TIME_BYPASS_ENABLED`.
+
+**Set on Render:** `TRUST_PROXY=true` and `TRUST_PROXY_HOPS` (1 for Render alone, 2 if Cloudflare proxies `api.oruma.me`), so rate limits key on the real visitor IP.
 
 **Off until the owners approve retention periods:** `DATA_RETENTION_WORKER_ENABLED`, `PRIVACY_AUTO_ERASURE_ENABLED`.
 

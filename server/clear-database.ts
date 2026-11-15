@@ -28,7 +28,8 @@ Safety:
   - Dry-run mode lists the tables without deleting data.
   - ADMIN users are preserved.
   - Real deletion requires --confirm=${CONFIRMATION_PHRASE}.
-  - Production is blocked unless ALLOW_PRODUCTION_DATABASE_CLEAR=true is set.
+  - Production, and any database that is not on this machine (for example
+    Neon), is blocked unless ALLOW_PRODUCTION_DATABASE_CLEAR=true is set.
 `);
 }
 
@@ -37,6 +38,26 @@ function quoteTablePath(tablePath: string) {
     .split('.')
     .map((part) => `"${part.replace(/"/g, '""')}"`)
     .join('.');
+}
+
+const LOCAL_DATABASE_HOSTS = new Set([
+  'localhost',
+  '127.0.0.1',
+  '::1',
+  '[::1]',
+  'postgres',
+]);
+
+function getDatabaseHost() {
+  const databaseUrl = process.env.DATABASE_URL?.trim();
+  if (databaseUrl) {
+    try {
+      return new URL(databaseUrl).hostname.toLowerCase();
+    } catch {
+      return 'unparseable DATABASE_URL';
+    }
+  }
+  return process.env.DATABASE_HOST?.trim().toLowerCase() || 'unknown';
 }
 
 async function clearDatabase() {
@@ -58,9 +79,19 @@ async function clearDatabase() {
     );
   }
 
-  if (!isDryRun && isProduction && !allowProductionClear) {
+  // NODE_ENV alone is not enough: a local .env with NODE_ENV=development can
+  // still point DATABASE_URL at the live Neon database. (AppModule's
+  // ConfigModule has already loaded .env by the time this runs.)
+  const databaseHost = getDatabaseHost();
+  const isRemoteDatabase = !LOCAL_DATABASE_HOSTS.has(databaseHost);
+
+  if (
+    !isDryRun &&
+    (isProduction || isRemoteDatabase) &&
+    !allowProductionClear
+  ) {
     throw new Error(
-      'Refusing to clear a production database. Set ALLOW_PRODUCTION_DATABASE_CLEAR=true only if you are absolutely sure.',
+      `Refusing to clear ${isProduction ? 'a production' : 'a remote'} database (host: ${databaseHost}). Set ALLOW_PRODUCTION_DATABASE_CLEAR=true only if you are absolutely sure.`,
     );
   }
 
@@ -74,14 +105,18 @@ async function clearDatabase() {
       .map((metadata) => metadata.tablePath)
       .filter((tablePath, index, all) => all.indexOf(tablePath) === index)
       .sort();
-    const tablesToTruncate = allTables.filter((tablePath) => tablePath !== 'user');
+    const tablesToTruncate = allTables.filter(
+      (tablePath) => tablePath !== 'user',
+    );
 
     if (allTables.length === 0) {
       console.log('No TypeORM entity tables were found.');
       return;
     }
 
-    console.log(`Database: ${dataSource.options.database ?? 'configured DB'}`);
+    console.log(
+      `Database: ${String(dataSource.options.database ?? 'configured DB')} on ${databaseHost}`,
+    );
     console.log(
       `Tables to clear completely: ${tablesToTruncate.join(', ') || 'none'}`,
     );

@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded, Request, type Application } from 'express';
 import { AppModule } from './app.module';
 import {
+  getTrustProxyHops,
   originGuard,
   rateLimit,
   requireProductionSecrets,
@@ -31,7 +32,9 @@ async function bootstrap() {
   expressApp.disable('x-powered-by');
 
   if (process.env.TRUST_PROXY === 'true') {
-    expressApp.set('trust proxy', 1);
+    // Number of proxies in front of the API (Render = 1; add 1 for Cloudflare
+    // proxying). Express then ignores X-Forwarded-For entries a client forged.
+    expressApp.set('trust proxy', getTrustProxyHops());
   }
 
   app.use(
