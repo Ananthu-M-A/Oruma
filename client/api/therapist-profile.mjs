@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const DEFAULT_SITE_URL = "https://oruma.me";
 
@@ -118,67 +119,56 @@ function renderUnavailableHead(sourceHtml) {
   return rendered;
 }
 
+const HTML_HEADERS = { "Content-Type": "text/html; charset=utf-8" };
+
+/**
+ * Loads the built page shell to fill in. The file's location inside the
+ * deployed function depends on Vercel's project root, so try the paths it can
+ * have, then fall back to fetching the deployed home page (also the app shell).
+ */
+async function loadTemplate(request) {
+  const candidates = [
+    fileURLToPath(new URL("../dist/index.html", import.meta.url)),
+    join(process.cwd(), "dist", "index.html"),
+    join(process.cwd(), "client", "dist", "index.html"),
+  ];
+  for (const path of candidates) {
+    try {
+      return await readFile(path, "utf8");
+    } catch {
+      // Try the next location.
+    }
+  }
+  const response = await fetch(new URL("/", request.url), {
+    headers: { Accept: "text/html" },
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!response.ok) {
+    throw new Error(`App shell unavailable (${response.status})`);
+  }
+  return response.text();
+}
+
 export default {
   async fetch(request) {
-    const html = await readFile(join(process.cwd(), "dist", "index.html"), "utf8");
-    const requestUrl = new URL(request.url);
-    const id = requestUrl.searchParams.get("id") || "";
-    const apiBase = (
-      process.env.ORUMA_API_URL ||
-      process.env.VITE_API_URL ||
-      "https://api.oruma.me"
-    ).replace(/\/$/, "");
-    if (!/^[0-9a-f-]{36}$/i.test(id)) {
-      return new Response(renderUnavailableHead(html), {
-        status: 404,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "X-Robots-Tag": "noindex, nofollow",
-        },
-      });
-    }
-    if (!/^https?:\/\//i.test(apiBase)) {
-      return new Response(renderUnavailableHead(html), {
-        status: 503,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "X-Robots-Tag": "noindex, nofollow",
-          "Cache-Control": "no-store",
-          "Retry-After": "60",
-        },
-      });
-    }
-
+    let html;
     try {
-      const response = await fetch(`${apiBase}/therapists/${encodeURIComponent(id)}`, {
-        headers: { Accept: "application/json" },
-        signal: AbortSignal.timeout(5000),
-      });
-      if (response.status === 404) {
-        return new Response(renderUnavailableHead(html), {
-          status: 404,
-          headers: {
-            "Content-Type": "text/html; charset=utf-8",
-            "X-Robots-Tag": "noindex, nofollow",
-            "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-          },
+      html = await loadTemplate(request);
+      return await renderProfilePage(request, html);
+    } catch (error) {
+      // Never answer a profile link with a bare 500. Serve the app shell so the
+      // browser still renders the profile, just without profile-specific tags.
+      console.error("therapist-profile failed", error);
+      if (html) {
+        return new Response(html, {
+          status: 200,
+          headers: { ...HTML_HEADERS, "Cache-Control": "no-store" },
         });
       }
-      if (!response.ok) throw new Error(`Profile API returned ${response.status}`);
-      const profile = await response.json();
-      return new Response(renderHead(html, profile), {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
-        },
-      });
-    } catch {
-      return new Response(renderUnavailableHead(html), {
+      return new Response("Profile temporarily unavailable. Please try again.", {
         status: 503,
         headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "X-Robots-Tag": "noindex, nofollow",
+          "Content-Type": "text/plain; charset=utf-8",
           "Cache-Control": "no-store",
           "Retry-After": "60",
         },
@@ -186,3 +176,69 @@ export default {
     }
   },
 };
+
+async function renderProfilePage(request, html) {
+  const requestUrl = new URL(request.url);
+  const id = requestUrl.searchParams.get("id") || "";
+  const apiBase = (
+    process.env.ORUMA_API_URL ||
+    process.env.VITE_API_URL ||
+    "https://api.oruma.me"
+  ).replace(/\/$/, "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) {
+    return new Response(renderUnavailableHead(html), {
+      status: 404,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "X-Robots-Tag": "noindex, nofollow",
+      },
+    });
+  }
+  if (!/^https?:\/\//i.test(apiBase)) {
+    return new Response(renderUnavailableHead(html), {
+      status: 503,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "X-Robots-Tag": "noindex, nofollow",
+        "Cache-Control": "no-store",
+        "Retry-After": "60",
+      },
+    });
+  }
+
+  try {
+    const response = await fetch(`${apiBase}/therapists/${encodeURIComponent(id)}`, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (response.status === 404) {
+      return new Response(renderUnavailableHead(html), {
+        status: 404,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "X-Robots-Tag": "noindex, nofollow",
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      });
+    }
+    if (!response.ok) throw new Error(`Profile API returned ${response.status}`);
+    const profile = await response.json();
+    return new Response(renderHead(html, profile), {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
+      },
+    });
+  } catch {
+    return new Response(renderUnavailableHead(html), {
+      status: 503,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "X-Robots-Tag": "noindex, nofollow",
+        "Cache-Control": "no-store",
+        "Retry-After": "60",
+      },
+    });
+  }
+}
