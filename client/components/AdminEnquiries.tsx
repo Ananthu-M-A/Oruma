@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getAccessToken } from "../src/lib/auth";
+import { isSignedIn } from "../src/lib/auth";
 import {
   getEnquiries,
   updateEnquiry,
@@ -28,10 +28,10 @@ export default function AdminEnquiries() {
   const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
     try {
-      const data = await getEnquiries(token);
+      const data = await getEnquiries();
       setEnquiries(data);
       setNotes(
         Object.fromEntries(data.map((item) => [item.id, item.adminNote ?? ""])),
@@ -52,10 +52,10 @@ export default function AdminEnquiries() {
     enquiry: Enquiry,
     payload: { status?: Enquiry["status"]; adminNote?: string },
   ) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
     try {
-      await updateEnquiry(token, enquiry.id, payload);
+      await updateEnquiry(enquiry.id, payload);
       setNotice("Enquiry updated.");
       await load();
     } catch (err) {

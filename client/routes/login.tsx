@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PasswordInput from "../components/PasswordInput";
 import { LucideIcon } from "@site-builder/icons";
-import { getCurrentUser, getRedirectPathForRole, login, requestLoginOtp, saveAccessToken, verifyLoginOtp } from "../src/lib/auth";
+import { getCurrentUser, getRedirectPathForRole, login, requestLoginOtp, saveSession, verifyLoginOtp } from "../src/lib/auth";
 
 type LocationState = {
   message?: string;
@@ -31,9 +31,7 @@ export default function LoginPage() {
 
     try {
       const result = await login({ email, password });
-      if (result.accessToken) {
-        saveAccessToken(result.accessToken);
-      }
+      saveSession(result);
       const user = getCurrentUser();
       setSuccess("You are logged in. Redirecting...");
       setTimeout(() => navigate(getRedirectPathForRole(user?.role)), 700);
@@ -68,9 +66,7 @@ export default function LoginPage() {
 
     try {
       const result = await verifyLoginOtp({ identifier: otpIdentifier, code: otpCode });
-      if (result.accessToken) {
-        saveAccessToken(result.accessToken);
-      }
+      saveSession(result);
       const user = getCurrentUser();
       setSuccess("You are logged in. Redirecting...");
       setTimeout(() => navigate(getRedirectPathForRole(user?.role)), 700);

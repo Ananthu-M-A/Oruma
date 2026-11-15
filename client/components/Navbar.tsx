@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { LucideIcon } from "@site-builder/icons";
 import {
   AUTH_CHANGED_EVENT,
-  clearAccessToken,
+  logout,
   getCurrentUser,
   getRedirectPathForRole,
 } from "../src/lib/auth";
@@ -95,7 +95,7 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    clearAccessToken();
+    void logout();
     handleLinkClick();
   };
 

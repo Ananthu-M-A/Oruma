@@ -517,7 +517,7 @@ export class PaymentService {
           .getRepository(Appointment)
           .findOne({
             where: { id: payment.appointment.id },
-            relations: ['patient', 'therapist', 'slot'],
+            relations: { patient: true, therapist: true, slot: true },
             lock: { mode: 'pessimistic_write' },
           });
         if (lockedAppointment) payment.appointment = lockedAppointment;
@@ -770,7 +770,7 @@ export class PaymentService {
             .getRepository(Appointment)
             .findOne({
               where: { id: payment.appointment.id },
-              relations: ['patient', 'therapist', 'slot'],
+              relations: { patient: true, therapist: true, slot: true },
               lock: { mode: 'pessimistic_write' },
             });
           if (lockedAppointment) payment.appointment = lockedAppointment;
@@ -1515,7 +1515,7 @@ export class PaymentService {
         { providerRefundId: refund.id },
         ...(refund.receipt ? [{ receipt: refund.receipt }] : []),
       ],
-      relations: ['payment'],
+      relations: { payment: true },
     });
 
     if (operation) {

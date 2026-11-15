@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
+import { MemoryRateLimitStore, RateLimitStore } from './rate-limit-store';
+import { readSessionCookie } from '../auth/session-cookie';
 
 type RateLimitOptions = {
   windowMs: number;
@@ -7,21 +9,9 @@ type RateLimitOptions = {
   keyPrefix: string;
   message: string;
   skip?: (req: Request) => boolean;
+  /** Where counts are kept. Defaults to a per-process in-memory store. */
+  store?: RateLimitStore;
 };
-
-type RateLimitEntry = {
-  count: number;
-  resetAt: number;
-};
-
-const rateLimitBuckets = new Map<string, RateLimitEntry>();
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitBuckets.entries()) {
-    if (entry.resetAt <= now) rateLimitBuckets.delete(key);
-  }
-}).unref();
 
 export function securityHeaders() {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -68,7 +58,15 @@ export function originGuard(allowedOrigins: Set<string>) {
     if (isWebhookRequest(req)) return next();
 
     const origin = req.headers.origin;
-    if (!origin) return next();
+    if (!origin) {
+      // Browsers always send Origin on cross-origin writes. A write that
+      // relies on the session cookie but has no Origin is not from our site,
+      // so refuse it (CSRF). Bearer-token API clients are unaffected.
+      if (readSessionCookie(req)) {
+        return res.status(403).json({ message: 'Origin is required' });
+      }
+      return next();
+    }
 
     if (!allowedOrigins.has(origin)) {
       return res.status(403).json({ message: 'Origin is not allowed' });
@@ -79,39 +77,44 @@ export function originGuard(allowedOrigins: Set<string>) {
 }
 
 export function rateLimit(options: RateLimitOptions) {
+  const store = options.store ?? new MemoryRateLimitStore();
+  const max =
+    Number.isFinite(options.max) && options.max > 0 ? options.max : 60;
+
   return (req: Request, res: Response, next: NextFunction) => {
     if (options.skip?.(req)) return next();
 
-    const max =
-      Number.isFinite(options.max) && options.max > 0 ? options.max : 60;
-    const now = Date.now();
     const key = `${options.keyPrefix}:${getClientIp(req)}`;
-    const entry = rateLimitBuckets.get(key);
-
-    if (!entry || entry.resetAt <= now) {
-      rateLimitBuckets.set(key, {
-        count: 1,
-        resetAt: now + options.windowMs,
-      });
-      return next();
-    }
-
-    entry.count += 1;
-    const retryAfterSeconds = Math.ceil((entry.resetAt - now) / 1000);
-    res.setHeader('Retry-After', String(retryAfterSeconds));
-    res.setHeader('X-RateLimit-Limit', String(max));
-    res.setHeader(
-      'X-RateLimit-Remaining',
-      String(Math.max(0, max - entry.count)),
-    );
-    res.setHeader('X-RateLimit-Reset', String(Math.ceil(entry.resetAt / 1000)));
-
-    if (entry.count > max) {
-      return res.status(429).json({ message: options.message });
-    }
-
-    next();
+    store
+      .hit(key, options.windowMs)
+      .then((entry) => {
+        if (entry.count > max) {
+          setRateLimitHeaders(res, max, entry);
+          return res.status(429).json({ message: options.message });
+        }
+        if (entry.count > 1) setRateLimitHeaders(res, max, entry);
+        next();
+      })
+      .catch(next);
   };
+}
+
+function setRateLimitHeaders(
+  res: Response,
+  max: number,
+  entry: { count: number; resetAt: number },
+) {
+  const retryAfterSeconds = Math.max(
+    0,
+    Math.ceil((entry.resetAt - Date.now()) / 1000),
+  );
+  res.setHeader('Retry-After', String(retryAfterSeconds));
+  res.setHeader('X-RateLimit-Limit', String(max));
+  res.setHeader(
+    'X-RateLimit-Remaining',
+    String(Math.max(0, max - entry.count)),
+  );
+  res.setHeader('X-RateLimit-Reset', String(Math.ceil(entry.resetAt / 1000)));
 }
 
 export function requireProductionSecrets() {

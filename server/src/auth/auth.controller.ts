@@ -1,5 +1,17 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { Response } from 'express';
+import { AuthService, AuthenticatedUser } from './auth.service';
+import { clearSessionCookie, setSessionCookie } from './session-cookie';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RequestLoginOtpDto } from './dto/request-login-otp.dto';
@@ -16,7 +28,10 @@ type AuthenticatedRequest = {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
@@ -32,8 +47,18 @@ export class AuthController {
   }
 
   @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.startSession(res, await this.authService.login(dto));
+  }
+
+  /** Ends the browser session by clearing the httpOnly cookie. */
+  @Post('logout')
+  @HttpCode(204)
+  logout(@Res({ passthrough: true }) res: Response) {
+    clearSessionCookie(res, this.configService);
   }
 
   @Post('login/otp/request')
@@ -42,8 +67,11 @@ export class AuthController {
   }
 
   @Post('login/otp/verify')
-  verifyLoginOtp(@Body() dto: VerifyLoginOtpDto) {
-    return this.authService.verifyLoginOtp(dto);
+  async verifyLoginOtp(
+    @Body() dto: VerifyLoginOtpDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.startSession(res, await this.authService.verifyLoginOtp(dto));
   }
 
   @Post('booking/otp/request')
@@ -59,5 +87,19 @@ export class AuthController {
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
+  }
+
+  /**
+   * Puts the token in the httpOnly cookie and leaves it out of the response
+   * body, so browser scripts never see it.
+   */
+  private startSession(res: Response, session: AuthenticatedUser) {
+    setSessionCookie(
+      res,
+      session.accessToken,
+      session.expiresAt,
+      this.configService,
+    );
+    return { user: session.user, expiresAt: session.expiresAt.toISOString() };
   }
 }

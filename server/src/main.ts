@@ -1,7 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded, Request, type Application } from 'express';
+import { DataSource } from 'typeorm';
 import { AppModule } from './app.module';
+import { PostgresRateLimitStore } from './security/rate-limit-store';
 import {
   getTrustProxyHops,
   originGuard,
@@ -55,6 +57,11 @@ async function bootstrap() {
     }),
   );
 
+  // Sign-in and contact-form limits are kept in PostgreSQL so they survive
+  // restarts and are shared across instances. The high-volume global limit
+  // stays in memory to avoid a database write on every request.
+  const sharedRateLimitStore = new PostgresRateLimitStore(app.get(DataSource));
+
   app.use(securityHeaders());
   app.use(originGuard(allowedOrigins));
   app.use(
@@ -72,7 +79,9 @@ async function bootstrap() {
       max: Number(process.env.AUTH_RATE_LIMIT_PER_15_MINUTES ?? 30),
       keyPrefix: 'auth',
       message: 'Too many authentication attempts. Please try again later.',
-      skip: (req) => !req.path.startsWith('/auth'),
+      // Only sign-in style requests count; reading the profile does not.
+      skip: (req) => req.method !== 'POST' || !req.path.startsWith('/auth'),
+      store: sharedRateLimitStore,
     }),
   );
   app.use(
@@ -82,6 +91,7 @@ async function bootstrap() {
       keyPrefix: 'enquiry',
       message: 'Too many messages sent. Please try again later or email us.',
       skip: (req) => req.method !== 'POST' || req.path !== '/enquiries',
+      store: sharedRateLimitStore,
     }),
   );
 

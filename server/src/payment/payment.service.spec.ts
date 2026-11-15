@@ -16,6 +16,7 @@ describe('PaymentService', () => {
     userId: 'patient-1',
     email: 'patient@example.com',
     role: Role.PATIENT,
+    mustChangePassword: false,
   };
 
   beforeEach(() => {
@@ -435,7 +436,7 @@ describe('PaymentService', () => {
         .fn()
         .mockImplementation((value: unknown) => Promise.resolve(value)),
     };
-    const appointmentRepo = {
+    const appointmentRepo: Record<string, jest.Mock> = {
       findOne: jest.fn().mockResolvedValue(appointment),
       save: jest.fn().mockImplementation((value: unknown) => value),
     };

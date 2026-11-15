@@ -3,7 +3,7 @@ import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 import MultiSelectDropdown from "../components/MultiSelectDropdown";
 import { LucideIcon } from "@site-builder/icons";
-import { getAccessToken } from "../src/lib/auth";
+import { isSignedIn } from "../src/lib/auth";
 import {
   approveTherapistProfileChanges,
   deleteTherapist,
@@ -60,12 +60,12 @@ export default function AdminTherapistsPage() {
   });
 
   const loadData = async () => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     const [therapistData, performanceData] = await Promise.all([
-      getAdminTherapists(token),
-      getTherapistPerformance(token),
+      getAdminTherapists(),
+      getTherapistPerformance(),
     ]);
     setTherapists(therapistData);
     setPerformance(performanceData);
@@ -125,15 +125,14 @@ export default function AdminTherapistsPage() {
   }, [performanceByTherapist, query, sortBy, therapists]);
 
   const togglePublication = async (therapist: Therapist) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setError("");
     setNotice("");
     try {
       const isPublishing = !therapist.isActive;
       await updateTherapist(
-        token,
         therapist.id,
         { isActive: isPublishing },
       );
@@ -149,9 +148,9 @@ export default function AdminTherapistsPage() {
   };
 
   const removeTherapist = async (therapist: Therapist) => {
-    const token = getAccessToken();
+    const signedIn = isSignedIn();
     if (
-      !token ||
+      !signedIn ||
       !window.confirm(
         `Archive ${therapist.name}? Historical records will be retained.`,
       )
@@ -161,7 +160,7 @@ export default function AdminTherapistsPage() {
     setError("");
     setNotice("");
     try {
-      await deleteTherapist(token, therapist.id);
+      await deleteTherapist(therapist.id);
       setNotice("Therapist archived.");
       await loadData();
     } catch (err) {
@@ -172,10 +171,10 @@ export default function AdminTherapistsPage() {
   };
 
   const restoreArchivedTherapist = async (therapist: Therapist) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
     try {
-      await restoreTherapist(token, therapist.id);
+      await restoreTherapist(therapist.id);
       setNotice(
         "Therapist restored. Publish the profile when it is ready to return publicly.",
       );
@@ -191,17 +190,17 @@ export default function AdminTherapistsPage() {
     therapist: Therapist,
     action: "approve" | "reject",
   ) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setError("");
     setNotice("");
     try {
       if (action === "approve") {
-        await approveTherapistProfileChanges(token, therapist.id);
+        await approveTherapistProfileChanges(therapist.id);
         setNotice(`${therapist.name}'s profile changes were approved.`);
       } else {
-        await rejectTherapistProfileChanges(token, therapist.id);
+        await rejectTherapistProfileChanges(therapist.id);
         setNotice(`${therapist.name}'s profile changes were rejected.`);
       }
       await loadData();
@@ -248,13 +247,13 @@ export default function AdminTherapistsPage() {
 
   const saveEditor = async (event: FormEvent) => {
     event.preventDefault();
-    const token = getAccessToken();
-    if (!token || !editing) return;
+    const signedIn = isSignedIn();
+    if (!signedIn || !editing) return;
 
     setError("");
     setNotice("");
     try {
-      await updateTherapist(token, editing.id, {
+      await updateTherapist(editing.id, {
         name: editForm.name.trim(),
         title: editForm.title.trim(),
         tags: editForm.areasOfPractice,

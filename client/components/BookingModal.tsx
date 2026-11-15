@@ -13,10 +13,10 @@ import {
   POST_PAYMENT_NOTICE_KEY,
 } from "../src/lib/booking";
 import {
-  getAccessToken,
+  isSignedIn,
   getCurrentUser,
   getMyAccount,
-  saveAccessToken,
+  saveSession,
   requestBookingOtp,
   verifyBookingOtp,
 } from "../src/lib/auth";
@@ -322,9 +322,9 @@ export default function BookingModal({
 
   async function handleBooking() {
     let appointmentId: string | null = null;
-    let accessToken = getAccessToken();
+    const signedIn = isSignedIn();
     const currentUser = getCurrentUser();
-    const isQuickBooking = !currentUser || !accessToken;
+    const isQuickBooking = !currentUser || !signedIn;
     let paymentCompleted = false;
     let paymentVerificationStarted = false;
     let paymentFailed = false;
@@ -380,13 +380,11 @@ export default function BookingModal({
       if (!isQuickBooking) {
         const appointment = await createAppointment(
           bookingPayload,
-          accessToken!,
         );
         appointmentId = appointment.id;
       } else {
         const result = await createQuickAppointment(bookingPayload);
-        saveAccessToken(result.accessToken);
-        accessToken = result.accessToken;
+        saveSession(result);
         appointmentId = result.appointment.id;
       }
 
@@ -398,7 +396,7 @@ export default function BookingModal({
       setPaymentStatus("Payment pending");
 
       if (isPaymentBypassEnabled) {
-        await completeDevelopmentPayment(accessToken!, appointmentId);
+        await completeDevelopmentPayment(appointmentId);
         paymentCompleted = true;
         setSubmitSuccess(true);
         setSubmitError("");
@@ -417,7 +415,7 @@ export default function BookingModal({
         throw new Error("Razorpay checkout is unavailable.");
       }
 
-      const order = await createRazorpayOrder(accessToken!, appointmentId);
+      const order = await createRazorpayOrder(appointmentId);
       const pollController = new AbortController();
       const pollStartedAt = Date.now();
       paymentPollAbortRef.current = pollController;
@@ -469,7 +467,6 @@ export default function BookingModal({
 
         try {
           const result = await getRazorpayOrderStatus(
-            accessToken!,
             order.orderId,
             pollController.signal,
           );
@@ -536,7 +533,7 @@ export default function BookingModal({
         handler: async (response) => {
           paymentVerificationStarted = true;
           try {
-            const verifiedPayment = await verifyRazorpayPayment(accessToken!, {
+            const verifiedPayment = await verifyRazorpayPayment({
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,

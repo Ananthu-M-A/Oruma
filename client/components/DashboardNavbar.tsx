@@ -5,8 +5,8 @@ import {
   AUTH_CHANGED_EVENT,
   AuthAccount,
   AuthRole,
-  clearAccessToken,
-  getAccessToken,
+  logout,
+  isSignedIn,
   getCurrentUser,
   getMyAccount,
 } from "../src/lib/auth";
@@ -48,11 +48,11 @@ export default function DashboardNavbar() {
   }, [user?.userId]);
 
   const loadNotifications = () => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setIsNotificationsLoading(true);
-    getNotifications(token)
+    getNotifications()
       .then(setNotifications)
       .catch(() => setNotifications([]))
       .finally(() => setIsNotificationsLoading(false));
@@ -68,7 +68,7 @@ export default function DashboardNavbar() {
   }, [user?.userId]);
 
   const handleLogout = () => {
-    clearAccessToken();
+    void logout();
     navigate("/login", { replace: true });
   };
 
@@ -78,8 +78,8 @@ export default function DashboardNavbar() {
 
   const handleMarkRead = async (notification: AppNotification) => {
     if (notification.readAt) return;
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setNotifications((current) =>
       current.map((item) =>
@@ -88,16 +88,16 @@ export default function DashboardNavbar() {
           : item,
       ),
     );
-    await markNotificationRead(token, notification.id).catch(loadNotifications);
+    await markNotificationRead(notification.id).catch(loadNotifications);
   };
 
   const handleMarkAllRead = async () => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     const readAt = new Date().toISOString();
     setNotifications((current) => current.map((item) => ({ ...item, readAt })));
-    await markAllNotificationsRead(token).catch(loadNotifications);
+    await markAllNotificationsRead().catch(loadNotifications);
   };
 
   return (

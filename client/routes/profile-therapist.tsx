@@ -5,7 +5,7 @@ import PasswordChangeForm from "../components/PasswordChangeForm";
 import ProfileTabs from "../components/ProfileTabs";
 import MultiSelectDropdown from "../components/MultiSelectDropdown";
 import { LucideIcon } from "@site-builder/icons";
-import { getAccessToken, getCurrentUser } from "../src/lib/auth";
+import { isSignedIn, getCurrentUser } from "../src/lib/auth";
 import {
   BookingResponse,
   getEarliestBookableSlotTime,
@@ -300,8 +300,8 @@ export default function TherapistProfilePage() {
   );
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) {
+    const signedIn = isSignedIn();
+    if (!signedIn) {
       setIsLoading(false);
       return;
     }
@@ -312,10 +312,10 @@ export default function TherapistProfilePage() {
     }
 
     Promise.all([
-      getAppointments(token),
-      getMyTherapistProfile(token),
-      getMyAvailabilitySlots(token),
-      getCaseSheets(token),
+      getAppointments(),
+      getMyTherapistProfile(),
+      getMyAvailabilitySlots(),
+      getCaseSheets(),
     ])
       .then(([appointmentData, profileData, slotData, caseSheetData]) => {
         setAppointments(appointmentData);
@@ -392,8 +392,8 @@ export default function TherapistProfilePage() {
 
   const saveProfile = async (event: React.FormEvent) => {
     event.preventDefault();
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setIsSaving(true);
     setError("");
@@ -406,19 +406,19 @@ export default function TherapistProfilePage() {
       let voiceIntroPublicId = mediaIdentifiers.voiceIntroPublicId;
 
       if (mediaDrafts.image) {
-        const uploaded = await uploadMedia(token, mediaDrafts.image.file);
+        const uploaded = await uploadMedia(mediaDrafts.image.file);
         uploadedMedia.push(uploaded);
         image = uploaded.url;
         imagePublicId = uploaded.publicId ?? null;
       }
       if (mediaDrafts.voiceIntro) {
-        const uploaded = await uploadMedia(token, mediaDrafts.voiceIntro.file);
+        const uploaded = await uploadMedia(mediaDrafts.voiceIntro.file);
         uploadedMedia.push(uploaded);
         voiceIntro = uploaded.url;
         voiceIntroPublicId = uploaded.publicId ?? null;
       }
 
-      const updatedProfile = await updateMyTherapistProfile(token, {
+      const updatedProfile = await updateMyTherapistProfile({
         name: form.name.trim(),
         title: form.title.trim(),
         experience: Number(form.experience),
@@ -454,7 +454,7 @@ export default function TherapistProfilePage() {
       setNotice("Profile updates submitted for admin review.");
     } catch (err) {
       await Promise.allSettled(
-        uploadedMedia.map((media) => deleteMedia(token, media)),
+        uploadedMedia.map((media) => deleteMedia(media)),
       );
       setError(err instanceof Error ? err.message : "Unable to save profile.");
     } finally {
@@ -492,13 +492,13 @@ export default function TherapistProfilePage() {
 
   const saveCaseSheet = async (event: React.FormEvent) => {
     event.preventDefault();
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setError("");
     setNotice("");
     try {
-      const saved = await upsertCaseSheet(token, caseForm);
+      const saved = await upsertCaseSheet(caseForm);
       setCaseSheets((current) => [
         saved,
         ...current.filter((sheet) => sheet.id !== saved.id),
@@ -519,19 +519,19 @@ export default function TherapistProfilePage() {
   };
 
   const refreshSlots = async () => {
-    const token = getAccessToken();
-    if (!token) return;
-    setSlots(await getMyAvailabilitySlots(token));
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
+    setSlots(await getMyAvailabilitySlots());
   };
 
   const refreshAppointments = async () => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setIsAppointmentsRefreshing(true);
     setError("");
     try {
-      setAppointments(await getAppointments(token));
+      setAppointments(await getAppointments());
       setNotice("Appointments and patient health information refreshed.");
     } catch (err) {
       setError(
@@ -544,8 +544,8 @@ export default function TherapistProfilePage() {
 
   const saveSlot = async (event: React.FormEvent) => {
     event.preventDefault();
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setError("");
     setNotice("");
@@ -556,10 +556,10 @@ export default function TherapistProfilePage() {
       };
 
       if (editingSlotId) {
-        await updateMyAvailabilitySlot(token, editingSlotId, payload);
+        await updateMyAvailabilitySlot(editingSlotId, payload);
         setNotice("Availability slot updated.");
       } else {
-        await createMyAvailabilitySlot(token, payload);
+        await createMyAvailabilitySlot(payload);
         setNotice("Availability slot added.");
       }
 
@@ -580,13 +580,13 @@ export default function TherapistProfilePage() {
   };
 
   const removeSlot = async (slot: AvailabilitySlot) => {
-    const token = getAccessToken();
-    if (!token || !window.confirm("Delete this availability slot?")) return;
+    const signedIn = isSignedIn();
+    if (!signedIn || !window.confirm("Delete this availability slot?")) return;
 
     setError("");
     setNotice("");
     try {
-      await deleteMyAvailabilitySlot(token, slot.id);
+      await deleteMyAvailabilitySlot(slot.id);
       setNotice("Availability slot removed.");
       await refreshSlots();
     } catch (err) {
@@ -598,8 +598,8 @@ export default function TherapistProfilePage() {
     appointment: BookingResponse,
     status: BookingResponse["status"],
   ) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setError("");
     setNotice("");
@@ -607,7 +607,6 @@ export default function TherapistProfilePage() {
       const updatedAppointment = await updateAppointmentStatus(
         appointment.id,
         status,
-        token,
       );
       setAppointments((current) =>
         current.map((item) =>

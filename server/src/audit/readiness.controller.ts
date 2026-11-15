@@ -41,14 +41,26 @@ export class ReadinessController {
           migrations: boolean;
           providerJob: boolean;
           paymentWebhookEvent: boolean;
+          rateLimitBucket: boolean;
+          userTokenVersion: boolean;
         }>
       >(`SELECT
         to_regclass('public.migrations') IS NOT NULL AS "migrations",
         to_regclass('public.provider_job') IS NOT NULL AS "providerJob",
-        to_regclass('public.payment_webhook_event') IS NOT NULL AS "paymentWebhookEvent"
+        to_regclass('public.payment_webhook_event') IS NOT NULL AS "paymentWebhookEvent",
+        to_regclass('public.rate_limit_bucket') IS NOT NULL AS "rateLimitBucket",
+        EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'user'
+            AND column_name = 'tokenVersion'
+        ) AS "userTokenVersion"
       `);
       const schemaReady = Boolean(
-        schema?.migrations && schema.providerJob && schema.paymentWebhookEvent,
+        schema?.migrations &&
+        schema.providerJob &&
+        schema.paymentWebhookEvent &&
+        schema.rateLimitBucket &&
+        schema.userTokenVersion,
       );
       if (!schemaReady) {
         throw new ServiceUnavailableException({

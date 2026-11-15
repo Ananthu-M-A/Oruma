@@ -165,7 +165,7 @@ describe('AvailabilityService', () => {
 
   it('returns no public availability for an ineligible therapist', async () => {
     const { service, therapistRepo, slotRepo } = createService();
-    therapistRepo.findOne.mockResolvedValueOnce(null);
+    therapistRepo.findOne.mockResolvedValueOnce(null as never);
 
     await expect(
       service.getAvailableSlots('therapist-a'),

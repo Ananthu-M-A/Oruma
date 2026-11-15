@@ -1,5 +1,10 @@
 import type { Request } from 'express';
-import { getClientIp, requireProductionSecrets } from './security.middleware';
+import {
+  getClientIp,
+  originGuard,
+  rateLimit,
+  requireProductionSecrets,
+} from './security.middleware';
 
 describe('requireProductionSecrets', () => {
   const keys = [
@@ -95,5 +100,75 @@ describe('getClientIp', () => {
       socket: { remoteAddress: '10.0.0.1' },
     } as unknown as Request;
     expect(getClientIp(req)).toBe('203.0.113.7');
+  });
+});
+
+describe('originGuard', () => {
+  const run = (headers: Record<string, string>, method = 'POST') => {
+    const req = { method, headers, path: '/tickets' } as unknown as Request;
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+    };
+    const next = jest.fn();
+    originGuard(new Set(['https://oruma.me']))(req, res as never, next);
+    return { res, next };
+  };
+
+  it('refuses a cookie-authenticated write without an Origin (CSRF)', () => {
+    const { res, next } = run({ cookie: 'oruma_session=abc' });
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('allows a cookie write from the site and refuses other origins', () => {
+    expect(
+      run({ cookie: 'oruma_session=abc', origin: 'https://oruma.me' }).next,
+    ).toHaveBeenCalled();
+    expect(
+      run({ cookie: 'oruma_session=abc', origin: 'https://evil.example' }).res
+        .status,
+    ).toHaveBeenCalledWith(403);
+  });
+
+  it('still allows Bearer API clients that send no Origin', () => {
+    expect(run({ authorization: 'Bearer token' }).next).toHaveBeenCalled();
+  });
+});
+
+describe('rateLimit', () => {
+  it('blocks once the store reports more hits than the limit', async () => {
+    const store = {
+      hit: jest
+        .fn()
+        .mockResolvedValueOnce({ count: 2, resetAt: Date.now() + 1000 })
+        .mockResolvedValueOnce({ count: 3, resetAt: Date.now() + 1000 }),
+    };
+    const middleware = rateLimit({
+      windowMs: 1000,
+      max: 2,
+      keyPrefix: 'auth',
+      message: 'Slow down',
+      store,
+    });
+    const makeRes = () => ({
+      setHeader: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+    });
+    const req = { ip: '203.0.113.7', headers: {} } as unknown as Request;
+
+    const allowed = jest.fn();
+    middleware(req, makeRes() as never, allowed);
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(allowed).toHaveBeenCalledWith();
+
+    const blockedRes = makeRes();
+    const blocked = jest.fn();
+    middleware(req, blockedRes as never, blocked);
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(blocked).not.toHaveBeenCalled();
+    expect(blockedRes.status).toHaveBeenCalledWith(429);
+    expect(store.hit).toHaveBeenCalledWith('auth:203.0.113.7', 1000);
   });
 });

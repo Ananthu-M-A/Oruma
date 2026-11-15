@@ -9,7 +9,7 @@ import {
   AuthAccount,
   createPrivacyRequest,
   exportMyData,
-  getAccessToken,
+  isSignedIn,
   getCurrentUser,
   getMyAccount,
   updateMyAccount,
@@ -265,17 +265,17 @@ export default function PatientProfilePage() {
   }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) {
+    const signedIn = isSignedIn();
+    if (!signedIn) {
       setIsLoading(false);
       return;
     }
 
     Promise.all([
-      getMyAppointments(token),
+      getMyAppointments(),
       getMyAccount(),
-      getTickets(token),
-      getMyPayments(token),
+      getTickets(),
+      getMyPayments(),
     ])
       .then(([appointmentData, accountData, ticketData, paymentData]) => {
         setAppointments(appointmentData);
@@ -399,14 +399,14 @@ export default function PatientProfilePage() {
 
   const submitTicket = async (event: React.FormEvent) => {
     event.preventDefault();
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setIsSaving(true);
     setError("");
     setNotice("");
     try {
-      const ticket = await createTicket(token, ticketForm);
+      const ticket = await createTicket(ticketForm);
       setTickets((current) => [ticket, ...current]);
       setTicketForm({ subject: "", category: "Booking", message: "" });
       setNotice("Support ticket created.");
@@ -418,22 +418,22 @@ export default function PatientProfilePage() {
   };
 
   const openInvoice = async (payment: Payment) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setError("");
     setNotice("");
 
     try {
-      await openPaymentInvoice(token, payment.id);
+      await openPaymentInvoice(payment.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to open invoice.");
     }
   };
 
   const cancelBooking = async (appointment: BookingResponse) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
     if (
       !window.confirm(
         "Cancel this appointment? The slot will be released. Any eligible refund is processed separately under the Refund Policy.",
@@ -449,7 +449,6 @@ export default function PatientProfilePage() {
     try {
       const cancelledAppointment = await cancelAppointment(
         appointment.id,
-        token,
       );
       setAppointments((current) =>
         current.map((item) =>

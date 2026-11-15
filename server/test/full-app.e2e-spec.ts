@@ -27,7 +27,6 @@ process.env.RAZORPAY_WEBHOOK_SECRET = 'database-e2e-webhook-secret';
 const databaseDescribe =
   process.env.RUN_DATABASE_E2E === 'true' ? describe : describe.skip;
 
-type AuthBody = { accessToken: string };
 type BookingBody = { id: string };
 type QuickOtpBody = { devCode: string };
 type QuickVerifyBody = { verificationToken: string };
@@ -51,7 +50,16 @@ databaseDescribe('Full application with PostgreSQL (e2e)', () => {
       .post('/auth/login')
       .send({ email, password: 'Password123!' })
       .expect(201);
-    return bodyAs<AuthBody>(response).accessToken;
+    // The token arrives only in the httpOnly session cookie, never the body.
+    expect(response.body).not.toHaveProperty('accessToken');
+    const cookies = ([] as string[]).concat(
+      response.headers['set-cookie'] ?? [],
+    );
+    const session = cookies.find((cookie) =>
+      cookie.startsWith('oruma_session='),
+    );
+    expect(session).toMatch(/HttpOnly/i);
+    return decodeURIComponent(session!.split(';')[0].split('=')[1]);
   };
 
   const seedApplication = async () => {
@@ -334,5 +342,29 @@ databaseDescribe('Full application with PostgreSQL (e2e)', () => {
         const body = bodyAs<{ account: { email: string } }>(response);
         expect(body.account.email).toBe('patient-one@oruma.test');
       });
+  });
+
+  it('ends existing sessions when the password changes', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ email: 'rotating@oruma.test', password: 'Password123!' })
+      .expect(201);
+    const oldToken = await login('rotating@oruma.test');
+    const cookie = { Cookie: `oruma_session=${oldToken}` };
+
+    // The session cookie alone authenticates browser requests.
+    await request(app.getHttpServer()).get('/user/me').set(cookie).expect(200);
+
+    await request(app.getHttpServer())
+      .patch('/user/me/password')
+      .set(bearer(oldToken))
+      .send({ currentPassword: 'Password123!', newPassword: 'Password456!' })
+      .expect(200);
+
+    await request(app.getHttpServer()).get('/user/me').set(cookie).expect(401);
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'rotating@oruma.test', password: 'Password456!' })
+      .expect(201);
   });
 });

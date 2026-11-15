@@ -210,6 +210,7 @@ Keep the preview URL in the list until step 6.3.
 NODE_ENV=production
 DATABASE_SYNC=false
 TRUST_PROXY=true
+TRUST_PROXY_HOPS=2
 ALLOW_PRODUCTION_DATABASE_CLEAR=false
 ```
 

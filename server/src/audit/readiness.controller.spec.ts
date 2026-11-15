@@ -23,6 +23,8 @@ describe('ReadinessController', () => {
             migrations: true,
             providerJob: true,
             paymentWebhookEvent: true,
+            rateLimitBucket: true,
+            userTokenVersion: true,
           },
         ]),
     };

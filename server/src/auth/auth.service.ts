@@ -25,8 +25,10 @@ type RegisteredUser = Pick<
   User,
   'id' | 'email' | 'role' | 'createdAt' | 'mustChangePassword'
 >;
-type AuthenticatedUser = {
+export type AuthenticatedUser = {
   accessToken: string;
+  /** When the access token (and so the session cookie) expires. */
+  expiresAt: Date;
   user: Pick<
     User,
     'id' | 'email' | 'role' | 'createdAt' | 'mustChangePassword'
@@ -88,7 +90,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.createAuthResponse(user);
+    return this.issueSession(user);
   }
 
   async requestLoginOtp(dto: RequestLoginOtpDto): Promise<{
@@ -108,7 +110,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired login code');
     }
 
-    return this.createAuthResponse(user);
+    return this.issueSession(user);
   }
 
   requestQuickBookingOtp(dto: RequestLoginOtpDto) {
@@ -274,16 +276,27 @@ export class AuthService {
     await this.loginOtpRepository.save(otp);
   }
 
-  private createAuthResponse(user: User): AuthenticatedUser {
+  /**
+   * Signs an access token that carries the account's current token version,
+   * so it stops working once the password changes.
+   */
+  async issueSession(user: User): Promise<AuthenticatedUser> {
+    const session = await this.userService.findForSession(user.id);
     const accessToken = this.jwtService.sign({
       userId: user.id,
       email: user.email,
       role: user.role,
       mustChangePassword: user.mustChangePassword,
+      tv: session?.tokenVersion ?? 0,
     });
+    const { exp } = this.jwtService.decode<{ exp?: number }>(accessToken) ?? {};
+    const expiresAt = new Date(
+      typeof exp === 'number' ? exp * 1000 : Date.now() + 60 * 60 * 1000,
+    );
 
     return {
       accessToken,
+      expiresAt,
       user: {
         id: user.id,
         email: user.email,

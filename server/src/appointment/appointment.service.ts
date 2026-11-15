@@ -88,6 +88,7 @@ export class AppointmentService {
   async createQuickBooking(dto: CreateAppointmentDto): Promise<{
     appointment: Appointment;
     accessToken: string;
+    expiresAt: Date;
     user: Pick<User, 'id' | 'email' | 'role' | 'createdAt'>;
     createdAccount: boolean;
   }> {
@@ -119,15 +120,12 @@ export class AppointmentService {
       };
     });
 
-    const accessToken = this.jwtService.sign({
-      userId: result.patient.id,
-      email: result.patient.email,
-      role: result.patient.role,
-    });
+    const session = await this.authService.issueSession(result.patient);
 
     return {
       appointment: result.appointment,
-      accessToken,
+      accessToken: session.accessToken,
+      expiresAt: session.expiresAt,
       user: {
         id: result.patient.id,
         email: result.patient.email,
@@ -605,7 +603,7 @@ export class AppointmentService {
   async findOne(id: string): Promise<Appointment> {
     const appointment = await this.appointmentRepo.findOne({
       where: { id },
-      relations: ['therapist.account'],
+      relations: { therapist: { account: true } },
     });
 
     if (!appointment) {
@@ -891,7 +889,7 @@ export class AppointmentService {
 
     const therapist = await this.dataSource.getRepository(Therapist).findOne({
       where: { id: appointment.therapist.id },
-      relations: ['account'],
+      relations: { account: true },
     });
 
     return therapist?.account?.id ?? null;

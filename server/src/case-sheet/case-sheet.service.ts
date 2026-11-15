@@ -71,7 +71,7 @@ export class CaseSheetService {
   async findOne(id: string, user: JwtPayload) {
     const caseSheet = await this.caseSheetRepo.findOne({
       where: { id },
-      relations: ['therapist.account'],
+      relations: { therapist: { account: true } },
     });
 
     if (!caseSheet) throw new NotFoundException('Case sheet not found');

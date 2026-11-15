@@ -8,3 +8,4 @@ test-results/
 playwright-report/
 client/walkthroughs/.work/
 client/walkthroughs/output/
+.tmp/

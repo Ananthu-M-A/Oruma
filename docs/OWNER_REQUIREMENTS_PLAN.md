@@ -31,7 +31,7 @@ Checks run on 6 November 2026:
 | Client unit tests | 29 of 29 pass (the 2 failures from HP 1.3 are fixed) |
 | Client build | Passes. Writes 50 prerendered pages, `404.html` and a 43-URL sitemap. |
 | Browser tests (Playwright) | 69 of 69 pass on desktop, phone (Pixel 7) and tablet (iPad) |
-| Production dependency audit | Client: 0 findings. Server: 3 moderate, inside `typeorm` (need a breaking upgrade; recorded in `HANDOVER.md`). Critical and high findings fixed. |
+| Production dependency audit | Client: 0 findings. Server: 0 findings after the TypeORM 1.1.3 upgrade (15 Nov 2026). |
 | Database end-to-end tests | **Not run.** They need a disposable PostgreSQL database (HP 1.10). |
 
 ### What the code now does
@@ -184,8 +184,9 @@ Create every Google account **in the owners' Google account**, not the developer
 **C2 [Dev] Deploy to the API and the preview,** following HP 2.1. Order matters:
 
 1. **Back up the database** (HP 2.8).
-2. **Run the new migration** `1791000000000-WebsiteEnquiries` (it only adds the `enquiry` table): `npm.cmd run migration:run:prod` with `DATABASE_MIGRATION_URL` pointing at the direct Neon connection. Confirm it in HP 0.7's query, which should now list **6** migrations.
-3. In Render, add `OPS_NOTIFICATION_EMAIL` (from A2) and optionally `ENQUIRY_RETENTION_DAYS` (default 365). Deploy the API.
+2. **Run the new migrations** `1791000000000-WebsiteEnquiries` (adds the `enquiry` table) and `1792000000000-SecurityHardening` (adds the `rate_limit_bucket` table and the `user.tokenVersion` column): `npm.cmd run migration:run:prod` with `DATABASE_MIGRATION_URL` pointing at the direct Neon connection. Confirm it in HP 0.7's query, which should now list **7** migrations. **Run them before deploying the API:** the new build signs nobody in until `tokenVersion` exists, and `/ready` reports `schema: not_ready` until both are there.
+3. In Render, add `OPS_NOTIFICATION_EMAIL` (from A2), `TRUST_PROXY_HOPS=2`, and optionally `ENQUIRY_RETENTION_DAYS` (default 365). While the owners test on `oruma-eight.vercel.app` against `api.oruma.me`, also set `SESSION_COOKIE_SAMESITE=none` (the preview is a different site, so the default `lax` cookie would not be sent). Set it back to `lax`, or remove it, after the switch to `oruma.me`. Deploy the API.
+   - Sign-in now uses an httpOnly cookie instead of a token in the browser, so **everyone has to sign in again once** after this deploy.
 4. Deploy the client to the preview.
 
 If the API is deployed before the migration, everything works except the contact form, which returns an error until the migration runs.

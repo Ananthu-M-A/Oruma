@@ -7,7 +7,7 @@ import PasswordChangeForm from "../components/PasswordChangeForm";
 import ProfileTabs from "../components/ProfileTabs";
 import AdminEnquiries from "../components/AdminEnquiries";
 import { LucideIcon } from "@site-builder/icons";
-import { getAccessToken, getCurrentUser } from "../src/lib/auth";
+import { isSignedIn, getCurrentUser } from "../src/lib/auth";
 import {
   AdminSummary, AuditEvent, executePrivacyRequest, getAdminSummary,
   getAuditEvents, getPaymentWebhookEvents, getPrivacyRequests,
@@ -74,8 +74,8 @@ export default function AdminProfilePage() {
   const [savingAppointmentId, setSavingAppointmentId] = useState("");
 
   const loadAdminData = async () => {
-    const token = getAccessToken();
-    if (!token) {
+    const signedIn = isSignedIn();
+    if (!signedIn) {
       setIsLoading(false);
       return;
     }
@@ -92,16 +92,16 @@ export default function AdminProfilePage() {
       privacyData,
       auditData,
     ] = await Promise.all([
-      getAppointments(token),
-      getAdminTherapists(token),
-      getAdminSummary(token),
-      getPayments(token),
-      getTickets(token),
-      getCaseSheets(token),
-      getProviderDeliveries(token),
-      getPaymentWebhookEvents(token),
-      getPrivacyRequests(token),
-      getAuditEvents(token),
+      getAppointments(),
+      getAdminTherapists(),
+      getAdminSummary(),
+      getPayments(),
+      getTickets(),
+      getCaseSheets(),
+      getProviderDeliveries(),
+      getPaymentWebhookEvents(),
+      getPrivacyRequests(),
+      getAuditEvents(),
     ]);
     setAppointments(appointmentData);
     setAppointmentDrafts(
@@ -132,34 +132,34 @@ export default function AdminProfilePage() {
   };
 
   const retryReliabilityItem = async (type: "delivery" | "webhook", id: string) => {
-    const token = getAccessToken(); if (!token) return;
-    try { if (type === "delivery") await retryProviderDelivery(token, id); else await retryPaymentWebhook(token, id); setNotice("Retry queued."); await loadAdminData(); }
+    const signedIn = isSignedIn(); if (!signedIn) return;
+    try { if (type === "delivery") await retryProviderDelivery(id); else await retryPaymentWebhook(id); setNotice("Retry queued."); await loadAdminData(); }
     catch (error) { setError(error instanceof Error ? error.message : "Unable to retry item."); }
   };
 
   const reviewPrivacy = async (id: string, status: "APPROVED" | "REJECTED") => {
-    const token = getAccessToken(); if (!token) return;
-    try { await reviewPrivacyRequest(token, id, status); setNotice(`Privacy request ${status.toLowerCase()}.`); await loadAdminData(); }
+    const signedIn = isSignedIn(); if (!signedIn) return;
+    try { await reviewPrivacyRequest(id, status); setNotice(`Privacy request ${status.toLowerCase()}.`); await loadAdminData(); }
     catch (error) { setError(error instanceof Error ? error.message : "Unable to review request."); }
   };
 
   const executePrivacy = async (id: string) => {
-    const token = getAccessToken(); if (!token || !window.confirm("Execute this approved erasure now?")) return;
-    try { await executePrivacyRequest(token, id); setNotice("Approved erasure completed."); await loadAdminData(); }
+    const signedIn = isSignedIn(); if (!signedIn || !window.confirm("Execute this approved erasure now?")) return;
+    try { await executePrivacyRequest(id); setNotice("Approved erasure completed."); await loadAdminData(); }
     catch (error) { setError(error instanceof Error ? error.message : "Unable to execute request."); }
   };
 
   const handleRecordPayment = async (event: FormEvent) => {
     event.preventDefault();
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setIsSaving(true);
     setError("");
     setNotice("");
 
     try {
-      await createPayment(token, {
+      await createPayment({
         appointmentId: paymentForm.appointmentId,
         amount: Number(paymentForm.amount),
         reference: paymentForm.reference,
@@ -177,9 +177,9 @@ export default function AdminProfilePage() {
   };
 
   const handleRefund = async (payment: Payment) => {
-    const token = getAccessToken();
+    const signedIn = isSignedIn();
     const amount = Number(refundForm[payment.id]);
-    if (!token || !amount) return;
+    if (!signedIn || !amount) return;
 
     setIsSaving(true);
     setError("");
@@ -190,7 +190,7 @@ export default function AdminProfilePage() {
       const idempotencyKey =
         refundRequestKeys.current[requestFingerprint] ?? crypto.randomUUID();
       refundRequestKeys.current[requestFingerprint] = idempotencyKey;
-      await refundPayment(token, payment.id, { amount }, idempotencyKey);
+      await refundPayment(payment.id, { amount }, idempotencyKey);
       delete refundRequestKeys.current[requestFingerprint];
       setRefundForm((current) => ({ ...current, [payment.id]: "" }));
       setNotice("Refund initiated to the original payment method.");
@@ -203,14 +203,14 @@ export default function AdminProfilePage() {
   };
 
   const handleOpenInvoice = async (payment: Payment) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setError("");
     setNotice("");
 
     try {
-      await openPaymentInvoice(token, payment.id);
+      await openPaymentInvoice(payment.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to open invoice.");
     }
@@ -220,11 +220,11 @@ export default function AdminProfilePage() {
     ticket: Ticket,
     payload: { status?: Ticket["status"]; adminNote?: string },
   ) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     try {
-      await updateTicket(token, ticket.id, payload);
+      await updateTicket(ticket.id, payload);
       setNotice("Ticket updated.");
       await loadAdminData();
     } catch (err) {
@@ -282,8 +282,8 @@ export default function AdminProfilePage() {
     appointment: BookingResponse,
     status: BookingResponse["status"],
   ) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
     if (
       status === "CANCELLED" &&
       !window.confirm(
@@ -299,7 +299,6 @@ export default function AdminProfilePage() {
       const updated = await updateAppointmentStatus(
         appointment.id,
         status,
-        token,
       );
       updateAppointmentRecord(updated);
       setNotice(`Appointment marked ${status.toLowerCase()}.`);
@@ -317,8 +316,8 @@ export default function AdminProfilePage() {
     payload: AppointmentOperationsUpdate,
     successMessage: string,
   ) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
     setSavingAppointmentId(appointment.id);
     setError("");
     setNotice("");
@@ -326,7 +325,6 @@ export default function AdminProfilePage() {
       const updated = await updateAppointmentOperations(
         appointment.id,
         payload,
-        token,
       );
       updateAppointmentRecord(updated);
       setNotice(successMessage);
@@ -357,15 +355,15 @@ export default function AdminProfilePage() {
 
   const handleCreateTherapist = async (event: FormEvent) => {
     event.preventDefault();
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setIsSaving(true);
     setError("");
     setNotice("");
 
     try {
-      const therapist = await createTherapist(token, {
+      const therapist = await createTherapist({
         email: email.trim().toLowerCase(),
       });
       setNotice(

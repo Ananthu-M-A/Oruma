@@ -257,7 +257,7 @@ npm.cmd run migration:run:prod
 
 **Render, required in production:**
 
-`NODE_ENV`, `CLIENT_ORIGIN`, `CLIENT_LOGIN_URL`, `TRUST_PROXY`, `JWT_SECRET`, `DATABASE_URL`, `DATABASE_MIGRATION_URL`, `DATABASE_SYNC`, `DATABASE_SSL`, `RESEND_API_KEY`, `EMAIL_FROM`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_UPLOAD_PRESET`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+`NODE_ENV`, `CLIENT_ORIGIN`, `CLIENT_LOGIN_URL`, `TRUST_PROXY`, `TRUST_PROXY_HOPS`, `JWT_SECRET`, `DATABASE_URL`, `DATABASE_MIGRATION_URL`, `DATABASE_SYNC`, `DATABASE_SSL`, `RESEND_API_KEY`, `EMAIL_FROM`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_UPLOAD_PRESET`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
 
 **Vercel:**
 
@@ -267,7 +267,9 @@ Optional settings and their defaults are listed in `server/.env.example` and `cl
 
 **Must stay off in production:** `DATABASE_SYNC`, `PAYMENT_BYPASS_ENABLED`, `BOOKING_LEAD_TIME_BYPASS_ENABLED`, `ALLOW_PRODUCTION_DATABASE_CLEAR`, `OTP_DEV_CODE_ENABLED`, `VITE_PAYMENT_BYPASS_ENABLED`, `VITE_BOOKING_LEAD_TIME_BYPASS_ENABLED`.
 
-**Set on Render:** `TRUST_PROXY=true` and `TRUST_PROXY_HOPS` (1 for Render alone, 2 if Cloudflare proxies `api.oruma.me`), so rate limits key on the real visitor IP.
+**Set on Render:** `TRUST_PROXY=true` and `TRUST_PROXY_HOPS=2` (Cloudflare proxies `api.oruma.me`, then Render). Rate limits then key on the real visitor IP. If Cloudflare proxying (orange cloud) is ever turned off, change it to 1.
+
+**Sign-in cookie:** the API keeps the session in an httpOnly cookie, `oruma_session`. Leave `SESSION_COOKIE_SAMESITE` unset (`lax`) for `oruma.me`. Use `none` only while testing a preview on another domain such as `*.vercel.app`. Changing a password signs that account out everywhere.
 
 **Off until the owners approve retention periods:** `DATA_RETENTION_WORKER_ENABLED`, `PRIVACY_AUTO_ERASURE_ENABLED`.
 
@@ -292,7 +294,7 @@ Optional settings and their defaults are listed in `server/.env.example` and `cl
 - Cancelling a booking doesn't refund it automatically (section 4).
 - Automatic data retention and erasure are off until retention periods are approved.
 - Google Analytics and Tag Manager are off until their IDs are set in Vercel. A cookie consent banner is built in and on by default.
-- Dependency audit (6 Nov 2026): client production dependencies have no findings. The server has 3 moderate findings in `glob` and `minimatch` inside `typeorm`. They need a breaking `typeorm` upgrade, so they were left. They affect file-pattern matching at startup, not user input.
+- Dependency audit (15 Nov 2026): no findings in the client or server production dependencies. The server was upgraded to TypeORM 1.1.3 to clear the earlier `glob` and `minimatch` findings.
 - Each new marketing tag added in Tag Manager (for example Meta Pixel or Google Ads) needs its domains added to the Content-Security-Policy in `client/vercel.json`, or the browser will block it.
 - [FILL: anything else still open at handover, or "None"]
 

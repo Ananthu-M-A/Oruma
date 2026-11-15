@@ -1,9 +1,30 @@
 import { expect, Page, test } from "@playwright/test";
 
-function tokenFor(role: "PATIENT" | "THERAPIST" | "ADMIN") {
-  const encode = (value: object) =>
-    Buffer.from(JSON.stringify(value)).toString("base64url");
-  return `${encode({ alg: "none", typ: "JWT" })}.${encode({ userId: `${role.toLowerCase()}-1`, email: `${role.toLowerCase()}@oruma.test`, role, exp: Math.floor(Date.now() / 1000) + 3600 })}.test`;
+type Role = "PATIENT" | "THERAPIST" | "ADMIN";
+
+// The real token is an httpOnly cookie the page can't see; the browser keeps
+// only this non-secret session hint for the UI.
+function sessionHintFor(role: Role) {
+  return JSON.stringify({
+    userId: `${role.toLowerCase()}-1`,
+    email: `${role.toLowerCase()}@oruma.test`,
+    role,
+    mustChangePassword: false,
+    exp: Math.floor(Date.now() / 1000) + 3600,
+  });
+}
+
+function loginResponseFor(role: Role) {
+  return {
+    user: {
+      id: `${role.toLowerCase()}-1`,
+      email: `${role.toLowerCase()}@oruma.test`,
+      role,
+      createdAt: new Date().toISOString(),
+      mustChangePassword: false,
+    },
+    expiresAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+  };
 }
 
 async function mockFailingDashboardApi(page: Page) {
@@ -40,7 +61,6 @@ test("patient registration submits and returns to login", async ({ page }) => {
 test("password login stores the session and reaches the patient dashboard", async ({
   page,
 }) => {
-  const token = tokenFor("PATIENT");
   await page.route("**/api/**", (route) =>
     route.fulfill({
       status: 503,
@@ -52,7 +72,7 @@ test("password login stores the session and reaches the patient dashboard", asyn
     route.fulfill({
       status: 201,
       contentType: "application/json",
-      body: JSON.stringify({ accessToken: token }),
+      body: JSON.stringify(loginResponseFor("PATIENT")),
     }),
   );
   await page.goto("/login");
@@ -88,8 +108,8 @@ for (const dashboard of [
   }) => {
     await mockFailingDashboardApi(page);
     await page.addInitScript(
-      (token) => localStorage.setItem("oruma_access_token", token),
-      tokenFor(dashboard.role),
+      (hint) => localStorage.setItem("oruma_session", hint),
+      sessionHintFor(dashboard.role),
     );
     await page.goto(dashboard.path);
     await expect(
@@ -143,8 +163,8 @@ test("therapist profile uses controlled choices for standard fields", async ({
     });
   });
   await page.addInitScript(
-    (token) => localStorage.setItem("oruma_access_token", token),
-    tokenFor("THERAPIST"),
+    (hint) => localStorage.setItem("oruma_session", hint),
+    sessionHintFor("THERAPIST"),
   );
 
   await page.goto("/profile/therapist");
@@ -241,8 +261,8 @@ test("admin verifies a complete therapist before publishing", async ({
     });
   });
   await page.addInitScript(
-    (token) => localStorage.setItem("oruma_access_token", token),
-    tokenFor("ADMIN"),
+    (hint) => localStorage.setItem("oruma_session", hint),
+    sessionHintFor("ADMIN"),
   );
 
   await page.goto("/profile/admin/therapists");

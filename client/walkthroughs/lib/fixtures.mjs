@@ -25,8 +25,32 @@ export function sampleToken(role, userId, extra = {}) {
   ].join(".");
 }
 
+// The real app keeps the token in an httpOnly cookie the page can't read.
+// The fake API remembers the signed-in token itself instead.
+let activeToken = null;
+
+function payloadOf(token) {
+  return JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
+}
+
+/** What the real API returns on sign-in: the user and the session expiry. */
+function sessionBody(token) {
+  activeToken = token;
+  const payload = payloadOf(token);
+  return {
+    user: {
+      id: payload.userId,
+      email: payload.email,
+      role: payload.role,
+      mustChangePassword: Boolean(payload.mustChangePassword),
+      createdAt: new Date().toISOString(),
+    },
+    expiresAt: new Date(payload.exp * 1000).toISOString(),
+  };
+}
+
 function decodeToken(header) {
-  const token = header?.replace(/^Bearer\s+/i, "");
+  const token = header?.replace(/^Bearer\s+/i, "") || activeToken;
   if (!token) return null;
   try {
     return JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
@@ -403,6 +427,10 @@ export async function installFakeApi(context, world) {
     const segments = path.split("/").filter(Boolean);
 
     // ---- Accounts --------------------------------------------------------
+    if (method === "POST" && path === "/auth/logout") {
+      activeToken = null;
+      return route.fulfill({ status: 204, body: "" });
+    }
     if (method === "POST" && path === "/auth/register") {
       world.flags.newPatientEmail = body.email;
       return json(route, { id: "patient-new-1", role: "PATIENT" }, 201);
@@ -410,24 +438,20 @@ export async function installFakeApi(context, world) {
     if (method === "POST" && path === "/auth/login/otp/request")
       return json(route, { message: "We sent a 6-digit login code to your email." });
     if (method === "POST" && path === "/auth/login/otp/verify")
-      return json(route, {
-        accessToken: sampleToken("PATIENT", "patient-new-1", {
+      return json(route, sessionBody(sampleToken("PATIENT", "patient-new-1", {
           email: body.identifier ?? world.flags.newPatientEmail ?? "patient@example.com",
-        }),
-      });
+        })));
     if (method === "POST" && path === "/auth/login") {
       const isTherapist = String(body.email).includes("anjali");
       const isAdmin = String(body.email).startsWith("admin");
       if (isTherapist)
-        return json(route, {
-          accessToken: sampleToken("THERAPIST", "therapist-user-1", {
+        return json(route, sessionBody(sampleToken("THERAPIST", "therapist-user-1", {
             email: body.email,
             mustChangePassword:
               world.flags.therapistMustChangePassword && !world.flags.therapistPasswordChanged,
-          }),
-        });
-      if (isAdmin) return json(route, { accessToken: sampleToken("ADMIN", world.admin.id, { email: body.email }) });
-      return json(route, { accessToken: sampleToken("PATIENT", "patient-sample-1", { email: body.email }) });
+          })));
+      if (isAdmin) return json(route, sessionBody(sampleToken("ADMIN", world.admin.id, { email: body.email })));
+      return json(route, sessionBody(sampleToken("PATIENT", "patient-sample-1", { email: body.email })));
     }
     if (method === "PATCH" && path === "/user/me/password") {
       world.flags.therapistPasswordChanged = true;
@@ -736,13 +760,22 @@ export async function installFakeApi(context, world) {
 
 /** Signs a role in before any page loads. */
 export async function signIn(context, token) {
+  activeToken = token;
+  const payload = payloadOf(token);
+  const hint = JSON.stringify({
+    userId: payload.userId,
+    email: payload.email,
+    role: payload.role,
+    mustChangePassword: Boolean(payload.mustChangePassword),
+    exp: payload.exp,
+  });
   await context.addInitScript((value) => {
     try {
-      window.localStorage.setItem("oruma_access_token", value);
+      window.localStorage.setItem("oruma_session", value);
     } catch {
       // Storage is always available on the walkthrough origin.
     }
-  }, token);
+  }, hint);
 }
 
 /**

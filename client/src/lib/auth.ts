@@ -37,8 +37,8 @@ type RegisterPayload = LoginPayload & {
 };
 
 type AuthResponse = {
-  accessToken?: string;
   user?: AuthAccount;
+  expiresAt?: string;
   id?: string;
   email?: string;
   role?: AuthRole;
@@ -53,11 +53,18 @@ const configuredApiBaseUrl = import.meta.env.VITE_API_URL?.trim().replace(
 export const API_BASE_URL =
   configuredApiBaseUrl ||
   (import.meta.env.PROD ? "https://api.oruma.me" : "/api");
-const ACCESS_TOKEN_KEY = "oruma_access_token";
+const SESSION_HINT_KEY = "oruma_session";
+// Tokens stored by older builds; removed on the next sign-in or sign-out.
+const LEGACY_ACCESS_TOKEN_KEY = "oruma_access_token";
 export const AUTH_CHANGED_EVENT = "oruma-auth-changed";
 
+/** fetch() that sends the httpOnly session cookie to the API. */
+export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  return fetch(input, { ...init, credentials: "include" });
+}
+
 async function requestAuth<T = AuthResponse>(path: string, payload: Record<string, unknown>) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await apiFetch(`${API_BASE_URL}${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -80,17 +87,14 @@ async function requestAuth<T = AuthResponse>(path: string, payload: Record<strin
 }
 
 async function requestWithAuth<T>(path: string) {
-  const token = getAccessToken();
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  const response = await apiFetch(`${API_BASE_URL}${path}`);
 
   const data = (await response.json().catch(() => ({}))) as T & {
     message?: string | string[];
   };
 
   if (!response.ok) {
-    if (response.status === 401) clearAccessToken();
+    if (response.status === 401) clearSession();
     const message = Array.isArray(data.message)
       ? data.message.join(" ")
       : data.message ?? "Your session could not be verified.";
@@ -101,12 +105,10 @@ async function requestWithAuth<T>(path: string) {
 }
 
 async function writeWithAuth<T>(path: string, payload: unknown, method: "PATCH" | "POST" = "PATCH") {
-  const token = getAccessToken();
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await apiFetch(`${API_BASE_URL}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(payload),
   });
@@ -116,7 +118,7 @@ async function writeWithAuth<T>(path: string, payload: unknown, method: "PATCH" 
   };
 
   if (!response.ok) {
-    if (response.status === 401) clearAccessToken();
+    if (response.status === 401) clearSession();
     const message = Array.isArray(data.message)
       ? data.message.join(" ")
       : data.message ?? "Unable to save profile.";
@@ -174,42 +176,94 @@ export async function changePassword(payload: {
   return writeWithAuth<{ message: string }>("/user/me/password", payload);
 }
 
-export function saveAccessToken(token: string) {
-  window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
+/**
+ * The access token lives in an httpOnly cookie set by the API, so page scripts
+ * can't read it. The browser keeps only this non-secret hint (who is signed
+ * in, and until when) to drive the UI. The API checks the cookie on every call.
+ */
+type SessionHint = {
+  userId: string;
+  email: string;
+  role: AuthRole;
+  mustChangePassword?: boolean;
+  exp: number;
+};
+
+type SessionResponse = {
+  user?: Pick<AuthAccount, "id" | "email" | "role" | "mustChangePassword">;
+  expiresAt?: string;
+};
+
+export function saveSession(response: SessionResponse) {
+  if (!response.user || !response.expiresAt) return;
+  const hint: SessionHint = {
+    userId: response.user.id,
+    email: response.user.email,
+    role: response.user.role,
+    mustChangePassword: response.user.mustChangePassword ?? false,
+    exp: Math.floor(new Date(response.expiresAt).getTime() / 1000),
+  };
+  try {
+    window.localStorage.setItem(SESSION_HINT_KEY, JSON.stringify(hint));
+    window.localStorage.removeItem(LEGACY_ACCESS_TOKEN_KEY);
+  } catch {
+    // Storage can be unavailable (private mode); the cookie still works.
+  }
   window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
 }
 
-export function getAccessToken() {
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY);
-}
-
-export function clearAccessToken() {
-  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+/** Forgets the local session hint. Use logout() to also end the API session. */
+export function clearSession() {
+  try {
+    window.localStorage.removeItem(SESSION_HINT_KEY);
+    window.localStorage.removeItem(LEGACY_ACCESS_TOKEN_KEY);
+  } catch {
+    // Ignore unavailable storage.
+  }
   window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
 }
 
-function decodeBase64Url(value: string) {
-  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
-  return window.atob(padded);
+/** Forgets the local hint at once, then clears the httpOnly cookie on the API. */
+export async function logout() {
+  clearSession();
+  try {
+    await apiFetch(`${API_BASE_URL}/auth/logout`, {
+      method: "POST",
+      keepalive: true,
+    });
+  } catch {
+    // Signed out locally even if the API can't be reached.
+  }
+}
+
+export function isSignedIn() {
+  return getCurrentUser() !== null;
 }
 
 export function getCurrentUser(): AuthUser | null {
-  const token = getAccessToken();
-
-  if (!token) return null;
+  let raw: string | null;
+  try {
+    raw = window.localStorage.getItem(SESSION_HINT_KEY);
+  } catch {
+    return null;
+  }
+  if (!raw) return null;
 
   try {
-    const payload = JSON.parse(decodeBase64Url(token.split(".")[1])) as AuthUser;
-
-    if (payload.exp && payload.exp * 1000 < Date.now()) {
-      clearAccessToken();
+    const hint = JSON.parse(raw) as SessionHint;
+    if (!hint.userId || !hint.role || !hint.exp || hint.exp * 1000 < Date.now()) {
+      clearSession();
       return null;
     }
-
-    return payload;
+    return {
+      userId: hint.userId,
+      email: hint.email,
+      role: hint.role,
+      mustChangePassword: hint.mustChangePassword,
+      exp: hint.exp,
+    };
   } catch {
-    clearAccessToken();
+    clearSession();
     return null;
   }
 }

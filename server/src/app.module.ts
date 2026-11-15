@@ -18,6 +18,7 @@ import { NotificationModule } from './notification/notification.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AuditModule } from './audit/audit.module';
 import { PrivacyModule } from './privacy/privacy.module';
+import { SecurityModule } from './security/security.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { PrivacyModule } from './privacy/privacy.module';
     AdminModule,
     AuditModule,
     PrivacyModule,
+    SecurityModule,
   ],
   controllers: [AppController],
   providers: [AppService],

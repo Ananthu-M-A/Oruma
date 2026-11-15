@@ -18,6 +18,7 @@ import { PrivacyRequest } from './privacy/entities/privacy-request.entity';
 import { ProviderJob } from './reliability/entities/provider-job.entity';
 import { PaymentRefund } from './payment/entities/payment-refund.entity';
 import { Enquiry } from './enquiry/entities/enquiry.entity';
+import { RateLimitBucket } from './security/rate-limit-bucket.entity';
 
 function loadEnvFile() {
   const envPath = resolve(process.cwd(), '.env');
@@ -69,6 +70,7 @@ export default new DataSource({
     ProviderJob,
     PaymentRefund,
     Enquiry,
+    RateLimitBucket,
   ],
   migrations: [resolve(__dirname, 'migrations/*{.ts,.js}')],
   synchronize: false,

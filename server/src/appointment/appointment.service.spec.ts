@@ -44,7 +44,7 @@ describe('AppointmentService booking eligibility', () => {
       findOne: jest.fn().mockResolvedValue(null),
       create: jest.fn((value: unknown) => value),
       save: jest.fn((value: unknown) =>
-        Promise.resolve({ id: 'appointment-1', ...value }),
+        Promise.resolve({ id: 'appointment-1', ...(value as object) }),
       ),
     };
     const patientRepository = {
@@ -238,7 +238,12 @@ describe('AppointmentService manual operations', () => {
         markReminderSent: true,
         staffNotes: 'Patient contacted from the official number.',
       },
-      { userId: 'admin-1', email: 'admin@example.com', role: Role.ADMIN },
+      {
+        userId: 'admin-1',
+        email: 'admin@example.com',
+        role: Role.ADMIN,
+        mustChangePassword: false,
+      },
     );
 
     expect(result.meetingLink).toBe('https://us06web.zoom.us/j/123456789');
@@ -323,7 +328,12 @@ describe('AppointmentService manual operations', () => {
     const result = await service.updateOperations(
       currentAppointment.id,
       { meetingLink: 'https://meet.google.com/abc-defg-hij' },
-      { userId: 'admin-1', email: 'admin@example.com', role: Role.ADMIN },
+      {
+        userId: 'admin-1',
+        email: 'admin@example.com',
+        role: Role.ADMIN,
+        mustChangePassword: false,
+      },
     );
 
     expect(result.meetingLink).toBe('https://meet.google.com/abc-defg-hij');
@@ -357,7 +367,12 @@ describe('AppointmentService manual operations', () => {
       service.updateStatus(
         currentAppointment.id,
         { status: AppointmentStatus.CONFIRMED },
-        { userId: 'admin-1', email: 'admin@example.com', role: Role.ADMIN },
+        {
+          userId: 'admin-1',
+          email: 'admin@example.com',
+          role: Role.ADMIN,
+          mustChangePassword: false,
+        },
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(appointmentRepository.save).not.toHaveBeenCalled();
