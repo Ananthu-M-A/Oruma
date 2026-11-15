@@ -1,7 +1,11 @@
 .env
 server/.env
+docs/private/
 node_modules/
 dist/
 coverage/
 test-results/
 playwright-report/
+client/walkthroughs/.work/
+client/walkthroughs/output/
+.tmp/

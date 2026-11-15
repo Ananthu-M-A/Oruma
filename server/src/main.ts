@@ -1,8 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded, Request, type Application } from 'express';
+import { DataSource } from 'typeorm';
 import { AppModule } from './app.module';
+import { PostgresRateLimitStore } from './security/rate-limit-store';
 import {
+  getTrustProxyHops,
   originGuard,
   rateLimit,
   requireProductionSecrets,
@@ -31,7 +34,9 @@ async function bootstrap() {
   expressApp.disable('x-powered-by');
 
   if (process.env.TRUST_PROXY === 'true') {
-    expressApp.set('trust proxy', 1);
+    // Number of proxies in front of the API (Render = 1; add 1 for Cloudflare
+    // proxying). Express then ignores X-Forwarded-For entries a client forged.
+    expressApp.set('trust proxy', getTrustProxyHops());
   }
 
   app.use(
@@ -52,6 +57,11 @@ async function bootstrap() {
     }),
   );
 
+  // Sign-in and contact-form limits are kept in PostgreSQL so they survive
+  // restarts and are shared across instances. The high-volume global limit
+  // stays in memory to avoid a database write on every request.
+  const sharedRateLimitStore = new PostgresRateLimitStore(app.get(DataSource));
+
   app.use(securityHeaders());
   app.use(originGuard(allowedOrigins));
   app.use(
@@ -69,7 +79,19 @@ async function bootstrap() {
       max: Number(process.env.AUTH_RATE_LIMIT_PER_15_MINUTES ?? 30),
       keyPrefix: 'auth',
       message: 'Too many authentication attempts. Please try again later.',
-      skip: (req) => !req.path.startsWith('/auth'),
+      // Only sign-in style requests count; reading the profile does not.
+      skip: (req) => req.method !== 'POST' || !req.path.startsWith('/auth'),
+      store: sharedRateLimitStore,
+    }),
+  );
+  app.use(
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: Number(process.env.ENQUIRY_RATE_LIMIT_PER_15_MINUTES ?? 5),
+      keyPrefix: 'enquiry',
+      message: 'Too many messages sent. Please try again later or email us.',
+      skip: (req) => req.method !== 'POST' || req.path !== '/enquiries',
+      store: sharedRateLimitStore,
     }),
   );
 
@@ -82,6 +104,7 @@ async function bootstrap() {
       'Content-Type',
       'X-Requested-With',
       'X-Request-ID',
+      'Idempotency-Key',
     ],
     exposedHeaders: ['X-Request-ID'],
     maxAge: 600,

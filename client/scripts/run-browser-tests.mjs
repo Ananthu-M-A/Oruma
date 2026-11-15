@@ -5,6 +5,9 @@ import { createServer } from "vite";
 // Keep browser tests hermetic even when a developer's ignored .env points at
 // a live API. Every network dependency in the suite is explicitly mocked.
 process.env.VITE_API_URL = "/api";
+// Keep analytics (and its consent banner) off unless a test turns it on.
+process.env.VITE_GTM_ID = "";
+process.env.VITE_GA_MEASUREMENT_ID = "";
 const server = await createServer({ server: { host: "127.0.0.1", port: 4173, strictPort: true } });
 let exitCode;
 try {

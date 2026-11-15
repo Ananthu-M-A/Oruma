@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -15,6 +16,7 @@ export class Ticket {
   id: string;
 
   @ManyToOne(() => User, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ foreignKeyConstraintName: 'FK_ticket_created_by' })
   createdBy: User | null;
 
   @Column()

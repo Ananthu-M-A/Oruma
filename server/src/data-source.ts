@@ -16,6 +16,9 @@ import { AuditEvent } from './audit/entities/audit-event.entity';
 import { PaymentWebhookEvent } from './payment/entities/payment-webhook-event.entity';
 import { PrivacyRequest } from './privacy/entities/privacy-request.entity';
 import { ProviderJob } from './reliability/entities/provider-job.entity';
+import { PaymentRefund } from './payment/entities/payment-refund.entity';
+import { Enquiry } from './enquiry/entities/enquiry.entity';
+import { RateLimitBucket } from './security/rate-limit-bucket.entity';
 
 function loadEnvFile() {
   const envPath = resolve(process.cwd(), '.env');
@@ -41,9 +44,16 @@ function loadEnvFile() {
 
 loadEnvFile();
 process.env.TZ = IST_TIME_ZONE;
+const migrationDatabaseUrl = process.env.DATABASE_MIGRATION_URL?.trim();
+const readMigrationEnv = (key: string) => {
+  if (key === 'DATABASE_URL' && migrationDatabaseUrl) {
+    return migrationDatabaseUrl;
+  }
+  return process.env[key];
+};
 
 export default new DataSource({
-  ...getDatabaseConnectionOptions((key) => process.env[key]),
+  ...getDatabaseConnectionOptions(readMigrationEnv),
   entities: [
     Appointment,
     LoginOtp,
@@ -58,6 +68,9 @@ export default new DataSource({
     PaymentWebhookEvent,
     PrivacyRequest,
     ProviderJob,
+    PaymentRefund,
+    Enquiry,
+    RateLimitBucket,
   ],
   migrations: [resolve(__dirname, 'migrations/*{.ts,.js}')],
   synchronize: false,

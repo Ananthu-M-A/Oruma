@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
+  HttpStatus,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -9,7 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomInt } from 'crypto';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { RegisterDto } from './dto/register.dto';
 import { UserService } from '../user/user.service';
 import { Role, User } from '../user/entities/user.entity';
@@ -23,8 +25,10 @@ type RegisteredUser = Pick<
   User,
   'id' | 'email' | 'role' | 'createdAt' | 'mustChangePassword'
 >;
-type AuthenticatedUser = {
+export type AuthenticatedUser = {
   accessToken: string;
+  /** When the access token (and so the session cookie) expires. */
+  expiresAt: Date;
   user: Pick<
     User,
     'id' | 'email' | 'role' | 'createdAt' | 'mustChangePassword'
@@ -86,7 +90,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.createAuthResponse(user);
+    return this.issueSession(user);
   }
 
   async requestLoginOtp(dto: RequestLoginOtpDto): Promise<{
@@ -106,7 +110,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired login code');
     }
 
-    return this.createAuthResponse(user);
+    return this.issueSession(user);
   }
 
   requestQuickBookingOtp(dto: RequestLoginOtpDto) {
@@ -150,7 +154,7 @@ export class AuthService {
     const normalized = this.normalizeIdentifier(dto.identifier);
     if (!this.isEmail(normalized)) {
       throw new BadRequestException(
-        'Use your email for verification. WhatsApp is handled manually by the care team.',
+        'Use your email for verification. Booking updates are sent by email and shown in the patient dashboard.',
       );
     }
     if (requireAccount) {
@@ -160,6 +164,7 @@ export class AuthService {
           message: 'If an eligible account exists, a code has been sent.',
         };
     }
+    await this.assertOtpRequestAllowed(normalized);
     const code = String(randomInt(100000, 1000000));
     await this.loginOtpRepository.update(
       { identifier: normalized, purpose, used: false },
@@ -187,10 +192,59 @@ export class AuthService {
     );
     return {
       message: 'If the contact is eligible, a code has been sent.',
-      ...(this.configService.get<string>('NODE_ENV') === 'production'
-        ? {}
-        : { devCode: code }),
+      ...(this.isDevCodeEnabled() ? { devCode: code } : {}),
     };
+  }
+
+  /**
+   * Codes go out by email, so cap them per address as well as per IP.
+   * Without this, anyone could use the booking code form to send repeated
+   * emails to a stranger's inbox and spend the Resend quota.
+   */
+  private async assertOtpRequestAllowed(identifier: string) {
+    const now = Date.now();
+    const maxPerHour = this.readPositiveInt('OTP_MAX_REQUESTS_PER_HOUR', 5);
+    const cooldownSeconds = this.readPositiveInt(
+      'OTP_RESEND_COOLDOWN_SECONDS',
+      60,
+    );
+    const recentCount = await this.loginOtpRepository.count({
+      where: {
+        identifier,
+        createdAt: MoreThan(new Date(now - 60 * 60 * 1000)),
+      },
+    });
+    if (recentCount >= maxPerHour) {
+      throw new HttpException(
+        'Too many codes requested for this email. Please try again in an hour.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    const lastCodeCount = await this.loginOtpRepository.count({
+      where: {
+        identifier,
+        createdAt: MoreThan(new Date(now - cooldownSeconds * 1000)),
+      },
+    });
+    if (lastCodeCount > 0) {
+      throw new HttpException(
+        `Please wait ${cooldownSeconds} seconds before requesting another code.`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
+
+  /** Returning the code in the response is an explicit development opt-in. */
+  private isDevCodeEnabled() {
+    return (
+      this.configService.get<string>('NODE_ENV') !== 'production' &&
+      this.configService.get<string>('OTP_DEV_CODE_ENABLED') === 'true'
+    );
+  }
+
+  private readPositiveInt(key: string, fallback: number) {
+    const value = Number(this.configService.get<string>(key));
+    return Number.isInteger(value) && value > 0 ? value : fallback;
   }
 
   private async verifyOtp(
@@ -222,16 +276,27 @@ export class AuthService {
     await this.loginOtpRepository.save(otp);
   }
 
-  private createAuthResponse(user: User): AuthenticatedUser {
+  /**
+   * Signs an access token that carries the account's current token version,
+   * so it stops working once the password changes.
+   */
+  async issueSession(user: User): Promise<AuthenticatedUser> {
+    const session = await this.userService.findForSession(user.id);
     const accessToken = this.jwtService.sign({
       userId: user.id,
       email: user.email,
       role: user.role,
       mustChangePassword: user.mustChangePassword,
+      tv: session?.tokenVersion ?? 0,
     });
+    const { exp } = this.jwtService.decode<{ exp?: number }>(accessToken) ?? {};
+    const expiresAt = new Date(
+      typeof exp === 'number' ? exp * 1000 : Date.now() + 60 * 60 * 1000,
+    );
 
     return {
       accessToken,
+      expiresAt,
       user: {
         id: user.id,
         email: user.email,

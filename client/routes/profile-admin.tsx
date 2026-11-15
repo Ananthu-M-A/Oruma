@@ -1,12 +1,13 @@
 // @refresh reset
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 import PasswordChangeForm from "../components/PasswordChangeForm";
 import ProfileTabs from "../components/ProfileTabs";
+import AdminEnquiries from "../components/AdminEnquiries";
 import { LucideIcon } from "@site-builder/icons";
-import { getAccessToken, getCurrentUser } from "../src/lib/auth";
+import { isSignedIn, getCurrentUser } from "../src/lib/auth";
 import {
   AdminSummary, AuditEvent, executePrivacyRequest, getAdminSummary,
   getAuditEvents, getPaymentWebhookEvents, getPrivacyRequests,
@@ -65,6 +66,7 @@ export default function AdminProfilePage() {
     reference: "",
   });
   const [refundForm, setRefundForm] = useState<Record<string, string>>({});
+  const refundRequestKeys = useRef<Record<string, string>>({});
   const [ticketNotes, setTicketNotes] = useState<Record<string, string>>({});
   const [appointmentDrafts, setAppointmentDrafts] = useState<
     Record<string, { meetingLink: string; staffNotes: string }>
@@ -72,8 +74,8 @@ export default function AdminProfilePage() {
   const [savingAppointmentId, setSavingAppointmentId] = useState("");
 
   const loadAdminData = async () => {
-    const token = getAccessToken();
-    if (!token) {
+    const signedIn = isSignedIn();
+    if (!signedIn) {
       setIsLoading(false);
       return;
     }
@@ -90,16 +92,16 @@ export default function AdminProfilePage() {
       privacyData,
       auditData,
     ] = await Promise.all([
-      getAppointments(token),
-      getAdminTherapists(token),
-      getAdminSummary(token),
-      getPayments(token),
-      getTickets(token),
-      getCaseSheets(token),
-      getProviderDeliveries(token),
-      getPaymentWebhookEvents(token),
-      getPrivacyRequests(token),
-      getAuditEvents(token),
+      getAppointments(),
+      getAdminTherapists(),
+      getAdminSummary(),
+      getPayments(),
+      getTickets(),
+      getCaseSheets(),
+      getProviderDeliveries(),
+      getPaymentWebhookEvents(),
+      getPrivacyRequests(),
+      getAuditEvents(),
     ]);
     setAppointments(appointmentData);
     setAppointmentDrafts(
@@ -130,34 +132,34 @@ export default function AdminProfilePage() {
   };
 
   const retryReliabilityItem = async (type: "delivery" | "webhook", id: string) => {
-    const token = getAccessToken(); if (!token) return;
-    try { if (type === "delivery") await retryProviderDelivery(token, id); else await retryPaymentWebhook(token, id); setNotice("Retry queued."); await loadAdminData(); }
+    const signedIn = isSignedIn(); if (!signedIn) return;
+    try { if (type === "delivery") await retryProviderDelivery(id); else await retryPaymentWebhook(id); setNotice("Retry queued."); await loadAdminData(); }
     catch (error) { setError(error instanceof Error ? error.message : "Unable to retry item."); }
   };
 
   const reviewPrivacy = async (id: string, status: "APPROVED" | "REJECTED") => {
-    const token = getAccessToken(); if (!token) return;
-    try { await reviewPrivacyRequest(token, id, status); setNotice(`Privacy request ${status.toLowerCase()}.`); await loadAdminData(); }
+    const signedIn = isSignedIn(); if (!signedIn) return;
+    try { await reviewPrivacyRequest(id, status); setNotice(`Privacy request ${status.toLowerCase()}.`); await loadAdminData(); }
     catch (error) { setError(error instanceof Error ? error.message : "Unable to review request."); }
   };
 
   const executePrivacy = async (id: string) => {
-    const token = getAccessToken(); if (!token || !window.confirm("Execute this approved erasure now?")) return;
-    try { await executePrivacyRequest(token, id); setNotice("Approved erasure completed."); await loadAdminData(); }
+    const signedIn = isSignedIn(); if (!signedIn || !window.confirm("Execute this approved erasure now?")) return;
+    try { await executePrivacyRequest(id); setNotice("Approved erasure completed."); await loadAdminData(); }
     catch (error) { setError(error instanceof Error ? error.message : "Unable to execute request."); }
   };
 
   const handleRecordPayment = async (event: FormEvent) => {
     event.preventDefault();
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setIsSaving(true);
     setError("");
     setNotice("");
 
     try {
-      await createPayment(token, {
+      await createPayment({
         appointmentId: paymentForm.appointmentId,
         amount: Number(paymentForm.amount),
         reference: paymentForm.reference,
@@ -175,16 +177,21 @@ export default function AdminProfilePage() {
   };
 
   const handleRefund = async (payment: Payment) => {
-    const token = getAccessToken();
+    const signedIn = isSignedIn();
     const amount = Number(refundForm[payment.id]);
-    if (!token || !amount) return;
+    if (!signedIn || !amount) return;
 
     setIsSaving(true);
     setError("");
     setNotice("");
 
     try {
-      await refundPayment(token, payment.id, { amount });
+      const requestFingerprint = `${payment.id}:${amount}`;
+      const idempotencyKey =
+        refundRequestKeys.current[requestFingerprint] ?? crypto.randomUUID();
+      refundRequestKeys.current[requestFingerprint] = idempotencyKey;
+      await refundPayment(payment.id, { amount }, idempotencyKey);
+      delete refundRequestKeys.current[requestFingerprint];
       setRefundForm((current) => ({ ...current, [payment.id]: "" }));
       setNotice("Refund initiated to the original payment method.");
       await loadAdminData();
@@ -196,14 +203,14 @@ export default function AdminProfilePage() {
   };
 
   const handleOpenInvoice = async (payment: Payment) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setError("");
     setNotice("");
 
     try {
-      await openPaymentInvoice(token, payment.id);
+      await openPaymentInvoice(payment.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to open invoice.");
     }
@@ -213,11 +220,11 @@ export default function AdminProfilePage() {
     ticket: Ticket,
     payload: { status?: Ticket["status"]; adminNote?: string },
   ) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     try {
-      await updateTicket(token, ticket.id, payload);
+      await updateTicket(ticket.id, payload);
       setNotice("Ticket updated.");
       await loadAdminData();
     } catch (err) {
@@ -275,8 +282,8 @@ export default function AdminProfilePage() {
     appointment: BookingResponse,
     status: BookingResponse["status"],
   ) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
     if (
       status === "CANCELLED" &&
       !window.confirm(
@@ -292,7 +299,6 @@ export default function AdminProfilePage() {
       const updated = await updateAppointmentStatus(
         appointment.id,
         status,
-        token,
       );
       updateAppointmentRecord(updated);
       setNotice(`Appointment marked ${status.toLowerCase()}.`);
@@ -310,8 +316,8 @@ export default function AdminProfilePage() {
     payload: AppointmentOperationsUpdate,
     successMessage: string,
   ) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
     setSavingAppointmentId(appointment.id);
     setError("");
     setNotice("");
@@ -319,7 +325,6 @@ export default function AdminProfilePage() {
       const updated = await updateAppointmentOperations(
         appointment.id,
         payload,
-        token,
       );
       updateAppointmentRecord(updated);
       setNotice(successMessage);
@@ -350,15 +355,15 @@ export default function AdminProfilePage() {
 
   const handleCreateTherapist = async (event: FormEvent) => {
     event.preventDefault();
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setIsSaving(true);
     setError("");
     setNotice("");
 
     try {
-      const therapist = await createTherapist(token, {
+      const therapist = await createTherapist({
         email: email.trim().toLowerCase(),
       });
       setNotice(
@@ -419,6 +424,7 @@ export default function AdminProfilePage() {
               { id: "payments", label: "Payments" },
               { id: "cases", label: "Case sheets" },
               { id: "tickets", label: "Tickets" },
+              { id: "enquiries", label: "Enquiries" },
               { id: "reliability", label: "Reliability & privacy" },
               { id: "account", label: "Account" },
             ]}
@@ -516,7 +522,7 @@ export default function AdminProfilePage() {
                 </h2>
                 <p className="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-[#5F7F7A]">
                   ORUMA is the booking record. After payment, confirm the
-                  appointment, create one unique Zoom meeting, add its link,
+                  appointment, create one unique Google Meet or Zoom meeting, add its link,
                   and use the prepared WhatsApp messages to contact the patient.
                 </p>
                 <div className="mt-6 grid gap-5">
@@ -852,6 +858,8 @@ export default function AdminProfilePage() {
               </section>
             )}
 
+            {activeTab === "enquiries" && <AdminEnquiries />}
+
             {activeTab === "account" && <PasswordChangeForm />}
             {activeTab === "reliability" && <section className="grid gap-6 lg:grid-cols-2">
               <div className="rounded-lg border border-[#E2E8E6] bg-white p-6">
@@ -952,7 +960,7 @@ function createManualWhatsAppMessage(
       "",
       "Your secure ORUMA consultation link is ready.",
       ...sharedDetails,
-      `Join Zoom: ${appointment.meetingLink ?? "Link pending"}`,
+      `Join session: ${appointment.meetingLink ?? "Link pending"}`,
       "",
       "Please join a few minutes early. Use your ORUMA dashboard for the official appointment status.",
     ].join("\n");
@@ -964,7 +972,7 @@ function createManualWhatsAppMessage(
       "",
       "This is a reminder for your upcoming ORUMA consultation.",
       ...sharedDetails,
-      `Join Zoom: ${appointment.meetingLink ?? "Link pending"}`,
+      `Join session: ${appointment.meetingLink ?? "Link pending"}`,
       "",
       "If you need help, reply to this official ORUMA WhatsApp chat.",
     ].join("\n");
@@ -975,7 +983,7 @@ function createManualWhatsAppMessage(
     "",
     "Your ORUMA appointment is confirmed.",
     ...sharedDetails,
-    "Our care team will share a unique Zoom link before the session.",
+    "Our care team will share a unique session link before the session.",
     "For cancellations or support, please use your ORUMA dashboard.",
   ].join("\n");
 }
@@ -1082,7 +1090,7 @@ function AppointmentOperationsCard({
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={!isConfirmed || !phone || isSaving}
+                disabled={!isPaid || !isConfirmed || !phone || isSaving}
                 onClick={() => onOpenWhatsApp("confirmation")}
                 className={`${statusButtonClass} bg-[#25D366] text-[#063E2A]`}
               >
@@ -1106,13 +1114,13 @@ function AppointmentOperationsCard({
 
           <section className="rounded-lg border border-[#E2E8E6] bg-white p-4">
             <p className="text-[10px] font-black uppercase tracking-widest text-[#0A7F7A]">
-              2. Unique Zoom link
+              2. Unique session link (Google Meet or Zoom)
             </p>
             <input
               type="url"
               value={draft.meetingLink}
               disabled={!isConfirmed || isSaving}
-              placeholder="https://us06web.zoom.us/j/..."
+              placeholder="https://meet.google.com/abc-defg-hij"
               onChange={(event) =>
                 onDraftChange({ ...draft, meetingLink: event.target.value })
               }
@@ -1125,12 +1133,12 @@ function AppointmentOperationsCard({
                 onClick={() =>
                   onSave(
                     { meetingLink: draft.meetingLink.trim() },
-                    "Secure Zoom link saved to the appointment.",
+                    "Session link saved to the appointment.",
                   )
                 }
                 className={`${statusButtonClass} bg-[#064F4B] text-white`}
               >
-                Save Zoom link
+                Save session link
               </button>
               {appointment.meetingLink && (
                 <a
@@ -1157,7 +1165,7 @@ function AppointmentOperationsCard({
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={!appointment.meetingLink || !phone || isSaving}
+                disabled={!isPaid || !appointment.meetingLink || !phone || isSaving}
                 onClick={() => onOpenWhatsApp("meeting-link")}
                 className={`${statusButtonClass} bg-[#25D366] text-[#063E2A]`}
               >
@@ -1169,7 +1177,7 @@ function AppointmentOperationsCard({
                 onClick={() =>
                   onSave(
                     { markMeetingLinkSent: true },
-                    "Manual Zoom link delivery recorded.",
+                    "Manual session link delivery recorded.",
                   )
                 }
                 className={`${statusButtonClass} border border-[#DDE8E5] bg-white text-[#064F4B]`}
@@ -1191,7 +1199,7 @@ function AppointmentOperationsCard({
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={!appointment.meetingLinkSentAt || !phone || isSaving}
+                disabled={!isPaid || !appointment.meetingLinkSentAt || !phone || isSaving}
                 onClick={() => onOpenWhatsApp("reminder")}
                 className={`${statusButtonClass} bg-[#25D366] text-[#063E2A]`}
               >

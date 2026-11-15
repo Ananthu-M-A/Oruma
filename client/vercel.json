@@ -1,5 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "trailingSlash": false,
   "functions": {
     "api/therapist-profile.mjs": {
       "includeFiles": "dist/index.html",
@@ -8,16 +10,38 @@
   },
   "headers": [
     {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "0" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" },
+        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://cdn.razorpay.com https://api.sardine.ai https://www.googletagmanager.com https://tagmanager.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://tagmanager.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https://res.cloudinary.com https://*.razorpay.com https://www.googletagmanager.com https://*.google-analytics.com https://ssl.gstatic.com; connect-src 'self' https://api.oruma.me https://*.razorpay.com https://api.sardine.ai https://*.sardine.ai https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com; frame-src https://api.razorpay.com https://*.razorpay.com https://www.youtube.com https://www.youtube-nocookie.com https://www.googletagmanager.com https://www.google.com; media-src 'self' https://res.cloudinary.com; worker-src 'self' blob:; upgrade-insecure-requests" }
+      ]
+    },
+    {
       "source": "/login",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Cache-Control", "value": "private, no-store" }
+      ]
     },
     {
       "source": "/register",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Cache-Control", "value": "private, no-store" }
+      ]
     },
     {
       "source": "/profile/(.*)",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Cache-Control", "value": "private, no-store" }
+      ]
     },
     {
       "source": "/robots.txt",
@@ -28,11 +52,15 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, s-maxage=3600" }]
     }
   ],
+  "redirects": [
+    { "source": "/terms-and-conditions", "destination": "/terms", "permanent": true },
+    { "source": "/concerns/all-concerns", "destination": "/concerns", "permanent": true },
+    { "source": "/team", "destination": "/therapists", "permanent": true }
+  ],
   "rewrites": [
     {
       "source": "/therapists/:id",
       "destination": "/api/therapist-profile?id=:id"
-    },
-    { "source": "/(.*)", "destination": "/index.html" }
+    }
   ]
 }

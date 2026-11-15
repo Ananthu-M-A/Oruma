@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./auth";
+import { API_BASE_URL, apiFetch } from "./auth";
 
 export type UploadedMedia = {
   url: string;
@@ -8,15 +8,12 @@ export type UploadedMedia = {
   size: number;
 };
 
-export async function uploadMedia(accessToken: string, file: File) {
+export async function uploadMedia(file: File) {
   const form = new FormData();
   form.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/media/upload`, {
+  const response = await apiFetch(`${API_BASE_URL}/media/upload`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
     body: form,
   });
   const data = (await response.json().catch(() => ({}))) as UploadedMedia & {
@@ -34,15 +31,13 @@ export async function uploadMedia(accessToken: string, file: File) {
 }
 
 export async function deleteMedia(
-  accessToken: string,
   media: Pick<UploadedMedia, "publicId" | "resourceType">,
 ) {
   if (!media.publicId) return;
-  const response = await fetch(`${API_BASE_URL}/media`, {
+  const response = await apiFetch(`${API_BASE_URL}/media`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(media),
   });

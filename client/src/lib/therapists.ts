@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./auth";
+import { API_BASE_URL, apiFetch } from "./auth";
 import {
   formatIstDate,
   formatIstDateTime,
@@ -87,17 +87,51 @@ export type TherapistPerformance = {
 };
 
 function parseTherapistList(data: unknown): Therapist[] {
-  if (Array.isArray(data)) return data as Therapist[];
+  const records = Array.isArray(data)
+    ? data
+    : data &&
+        typeof data === "object" &&
+        Array.isArray((data as { data?: unknown }).data)
+      ? (data as { data: unknown[] }).data
+      : null;
 
-  if (
-    data &&
-    typeof data === "object" &&
-    Array.isArray((data as { data?: unknown }).data)
-  ) {
-    return (data as { data: Therapist[] }).data;
-  }
+  if (records) return records.map(normalizeTherapistRecord);
 
   throw new Error("Unable to load therapists. Please try again later.");
+}
+
+function normalizeStringList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string");
+  }
+  if (typeof value !== "string") return [];
+
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+  if (trimmed.startsWith("[")) {
+    try {
+      const parsed: unknown = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((item): item is string => typeof item === "string");
+      }
+    } catch {
+      // Fall back to the legacy comma-separated representation.
+    }
+  }
+  return trimmed.split(/[,;\n]/).map((item) => item.trim()).filter(Boolean);
+}
+
+function normalizeTherapistRecord(value: unknown): Therapist {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Unable to load therapist. Please try again later.");
+  }
+  const therapist = value as Therapist;
+  return {
+    ...therapist,
+    tags: normalizeStringList(therapist.tags),
+    areasOfPractice: normalizeStringList(therapist.areasOfPractice),
+    languages: normalizeStringList(therapist.languages),
+  };
 }
 
 export type AvailabilitySlot = {
@@ -109,7 +143,7 @@ export type AvailabilitySlot = {
 };
 
 export async function getTherapists() {
-  const response = await fetch(`${API_BASE_URL}/therapists`);
+  const response = await apiFetch(`${API_BASE_URL}/therapists`);
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
@@ -125,11 +159,8 @@ export async function getTherapists() {
   return parseTherapistList(data);
 }
 
-export async function getAdminTherapists(accessToken: string) {
-  const response = await fetch(`${API_BASE_URL}/therapists/admin`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+export async function getAdminTherapists() {
+  const response = await apiFetch(`${API_BASE_URL}/therapists/admin`, {
   });
   const data = (await response.json().catch(() => ({}))) as
     | Therapist[]
@@ -147,14 +178,11 @@ export async function getAdminTherapists(accessToken: string) {
     throw new Error(message);
   }
 
-  return data as Therapist[];
+  return parseTherapistList(data);
 }
 
-export async function getTherapistPerformance(accessToken: string) {
-  const response = await fetch(`${API_BASE_URL}/therapists/admin/performance`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+export async function getTherapistPerformance() {
+  const response = await apiFetch(`${API_BASE_URL}/therapists/admin/performance`, {
   });
   const data = (await response.json().catch(() => ({}))) as
     | TherapistPerformance[]
@@ -177,15 +205,13 @@ export async function getTherapistPerformance(accessToken: string) {
 
 async function writeTherapist(
   path: string,
-  accessToken: string,
   method: "POST" | "PATCH",
   payload: Partial<TherapistPayload>,
 ) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await apiFetch(`${API_BASE_URL}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
   });
@@ -204,50 +230,42 @@ async function writeTherapist(
     throw new Error(message);
   }
 
-  return data as Therapist;
+  return normalizeTherapistRecord(data);
 }
 
 export function createTherapist(
-  accessToken: string,
   payload: { email: string },
 ) {
-  return writeTherapist("/therapists", accessToken, "POST", payload);
+  return writeTherapist("/therapists", "POST", payload);
 }
 
 export function updateTherapist(
-  accessToken: string,
   id: string,
   payload: Partial<TherapistPayload>,
 ) {
-  return writeTherapist(`/therapists/${id}`, accessToken, "PATCH", payload);
+  return writeTherapist(`/therapists/${id}`, "PATCH", payload);
 }
 
 export function approveTherapistProfileChanges(
-  accessToken: string,
   id: string,
 ) {
   return writeTherapist(
     `/therapists/${id}/profile-changes/approve`,
-    accessToken,
     "PATCH",
     {},
   );
 }
 
-export function rejectTherapistProfileChanges(accessToken: string, id: string) {
+export function rejectTherapistProfileChanges(id: string) {
   return writeTherapist(
     `/therapists/${id}/profile-changes/reject`,
-    accessToken,
     "PATCH",
     {},
   );
 }
 
-export async function getMyTherapistProfile(accessToken: string) {
-  const response = await fetch(`${API_BASE_URL}/therapists/me/profile`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+export async function getMyTherapistProfile() {
+  const response = await apiFetch(`${API_BASE_URL}/therapists/me/profile`, {
   });
   const data = (await response.json().catch(() => ({}))) as
     | Therapist
@@ -269,23 +287,18 @@ export async function getMyTherapistProfile(accessToken: string) {
 }
 
 export function updateMyTherapistProfile(
-  accessToken: string,
   payload: Partial<TherapistPayload>,
 ) {
   return writeTherapist(
     "/therapists/me/profile",
-    accessToken,
     "PATCH",
     payload,
   );
 }
 
-export async function deleteTherapist(accessToken: string, id: string) {
-  const response = await fetch(`${API_BASE_URL}/therapists/${id}`, {
+export async function deleteTherapist(id: string) {
+  const response = await apiFetch(`${API_BASE_URL}/therapists/${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
   });
   const data = (await response.json().catch(() => ({}))) as {
     message?: string | string[];
@@ -299,12 +312,12 @@ export async function deleteTherapist(accessToken: string, id: string) {
   }
 }
 
-export function restoreTherapist(accessToken: string, id: string) {
-  return writeTherapist(`/therapists/${id}/restore`, accessToken, "PATCH", {});
+export function restoreTherapist(id: string) {
+  return writeTherapist(`/therapists/${id}/restore`, "PATCH", {});
 }
 
 export async function getTherapist(id: string) {
-  const response = await fetch(`${API_BASE_URL}/therapists/${id}`);
+  const response = await apiFetch(`${API_BASE_URL}/therapists/${id}`);
   const data = (await response.json().catch(() => ({}))) as
     | Therapist
     | {
@@ -320,7 +333,7 @@ export async function getTherapist(id: string) {
     throw new Error(message);
   }
 
-  const therapist = data as Therapist;
+  const therapist = normalizeTherapistRecord(data);
   if (!therapist.isActive)
     throw new Error("This therapist profile is currently unavailable.");
 
@@ -328,7 +341,7 @@ export async function getTherapist(id: string) {
 }
 
 export async function getAvailabilitySlots(therapistId: string) {
-  const response = await fetch(`${API_BASE_URL}/availability/${therapistId}`);
+  const response = await apiFetch(`${API_BASE_URL}/availability/${therapistId}`);
   const data = (await response.json().catch(() => ({}))) as
     | AvailabilitySlot[]
     | {
@@ -353,11 +366,8 @@ export async function getAvailabilitySlots(therapistId: string) {
     );
 }
 
-export async function getMyAvailabilitySlots(accessToken: string) {
-  const response = await fetch(`${API_BASE_URL}/availability/me`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+export async function getMyAvailabilitySlots() {
+  const response = await apiFetch(`${API_BASE_URL}/availability/me`, {
   });
   const data = (await response.json().catch(() => ({}))) as
     | AvailabilitySlot[]
@@ -381,14 +391,12 @@ export async function getMyAvailabilitySlots(accessToken: string) {
 }
 
 export async function createMyAvailabilitySlot(
-  accessToken: string,
   payload: { startTime: string; endTime: string },
 ) {
-  const response = await fetch(`${API_BASE_URL}/availability/me`, {
+  const response = await apiFetch(`${API_BASE_URL}/availability/me`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
   });
@@ -411,15 +419,13 @@ export async function createMyAvailabilitySlot(
 }
 
 export async function updateMyAvailabilitySlot(
-  accessToken: string,
   id: string,
   payload: { startTime: string; endTime: string },
 ) {
-  const response = await fetch(`${API_BASE_URL}/availability/${id}`, {
+  const response = await apiFetch(`${API_BASE_URL}/availability/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
   });
@@ -442,14 +448,10 @@ export async function updateMyAvailabilitySlot(
 }
 
 export async function deleteMyAvailabilitySlot(
-  accessToken: string,
   id: string,
 ) {
-  const response = await fetch(`${API_BASE_URL}/availability/${id}`, {
+  const response = await apiFetch(`${API_BASE_URL}/availability/${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
   });
   const data = (await response.json().catch(() => ({}))) as {
     message?: string | string[];

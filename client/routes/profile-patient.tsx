@@ -9,7 +9,7 @@ import {
   AuthAccount,
   createPrivacyRequest,
   exportMyData,
-  getAccessToken,
+  isSignedIn,
   getCurrentUser,
   getMyAccount,
   updateMyAccount,
@@ -36,6 +36,7 @@ import {
   parsePhoneInput,
 } from "../src/lib/phone";
 import { formatIstDateTime } from "../src/lib/dateTime";
+import { createWhatsAppUrl } from "../src/config/business";
 
 function formatDate(value?: string) {
   return formatIstDateTime(value, "To be scheduled");
@@ -63,18 +64,26 @@ function AppointmentCard({
   const canOpenInvoice =
     payment?.status === "PAID" || payment?.status === "REFUNDED";
   const canCancel = canPatientCancelAppointment(appointment, policyNow);
+  const canOpenBookingChat = isPaid && appointment.status !== "CANCELLED";
+  const bookingChatLink = createWhatsAppUrl(
+    [
+      "Hello ORUMA care team, I have a paid appointment and need help with this booking.",
+      `Booking reference: ${appointment.id.slice(0, 8).toUpperCase()}`,
+      "Please check the booking and tell me whether confirmation or session joining details are still needed.",
+    ].join("\n"),
+  );
   const careTeamUpdate = (() => {
     if (appointment.status === "PENDING") {
-      return "Payment received and booking recorded. Our care team is confirming the appointment and will contact you from the official ORUMA WhatsApp number.";
+      return "Payment received and booking recorded. Our care team is confirming the appointment. You can email us with questions, or use the booking-specific WhatsApp option below.";
     }
     if (appointment.status !== "CONFIRMED") return null;
     if (!appointment.meetingLink) {
-      return "Your appointment is confirmed. Our care team is creating a unique Zoom link and will share it before the session.";
+      return "Your appointment is confirmed. Our care team is creating a unique session link and will share it before the session.";
     }
     if (appointment.meetingLinkSentAt) {
-      return `Your secure Zoom link is ready below and was shared by the care team on ${formatDate(appointment.meetingLinkSentAt)}.`;
+      return `Your secure session link is ready below and was shared by the care team on ${formatDate(appointment.meetingLinkSentAt)}.`;
     }
-    return "Your secure Zoom link is ready below. The care team will also share it through the official ORUMA WhatsApp number.";
+    return "Your secure session link is ready below. The care team will share booking updates by email; use the booking-specific WhatsApp option below if you need help.";
   })();
 
   return (
@@ -122,6 +131,17 @@ function AppointmentCard({
             >
               <LucideIcon name="video" size={14} />
               Join session
+            </a>
+          )}
+          {canOpenBookingChat && (
+            <a
+              href={bookingChatLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-[#B9E7CD] bg-[#EAF8EF] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#12683B]"
+            >
+              <LucideIcon name="message-circle" size={14} />
+              WhatsApp about this booking
             </a>
           )}
           {canCancel && (
@@ -245,17 +265,17 @@ export default function PatientProfilePage() {
   }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) {
+    const signedIn = isSignedIn();
+    if (!signedIn) {
       setIsLoading(false);
       return;
     }
 
     Promise.all([
-      getMyAppointments(token),
+      getMyAppointments(),
       getMyAccount(),
-      getTickets(token),
-      getMyPayments(token),
+      getTickets(),
+      getMyPayments(),
     ])
       .then(([appointmentData, accountData, ticketData, paymentData]) => {
         setAppointments(appointmentData);
@@ -379,14 +399,14 @@ export default function PatientProfilePage() {
 
   const submitTicket = async (event: React.FormEvent) => {
     event.preventDefault();
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setIsSaving(true);
     setError("");
     setNotice("");
     try {
-      const ticket = await createTicket(token, ticketForm);
+      const ticket = await createTicket(ticketForm);
       setTickets((current) => [ticket, ...current]);
       setTicketForm({ subject: "", category: "Booking", message: "" });
       setNotice("Support ticket created.");
@@ -398,22 +418,22 @@ export default function PatientProfilePage() {
   };
 
   const openInvoice = async (payment: Payment) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
 
     setError("");
     setNotice("");
 
     try {
-      await openPaymentInvoice(token, payment.id);
+      await openPaymentInvoice(payment.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to open invoice.");
     }
   };
 
   const cancelBooking = async (appointment: BookingResponse) => {
-    const token = getAccessToken();
-    if (!token) return;
+    const signedIn = isSignedIn();
+    if (!signedIn) return;
     if (
       !window.confirm(
         "Cancel this appointment? The slot will be released. Any eligible refund is processed separately under the Refund Policy.",
@@ -429,7 +449,6 @@ export default function PatientProfilePage() {
     try {
       const cancelledAppointment = await cancelAppointment(
         appointment.id,
-        token,
       );
       setAppointments((current) =>
         current.map((item) =>

@@ -1,10 +1,6 @@
-import { createWhatsAppUrl } from "../src/config/business";
 import { LucideIcon } from "@site-builder/icons";
 
 export default function AnxietyMechanism() {
-  const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help choosing an anxiety counselling or wellness service.",
-  );
   const steps = [
     { icon: "shield", title: "Safe Space" },
     { icon: "user-check", title: "Expert Guidance" },
@@ -35,12 +31,6 @@ export default function AnxietyMechanism() {
           ))}
         </div>
 
-        <a
-          href={whatsappLink}
-          className="inline-block mt-12 bg-[#0A7F7A] text-white px-10 py-3.5 rounded-full font-bold text-sm hover:bg-[#064F4B] shadow-xl shadow-[#0A7F7A]/20 transition-all hover:scale-105 active:scale-95"
-        >
-          Get Therapy
-        </a>
       </div>
     </section>
   );

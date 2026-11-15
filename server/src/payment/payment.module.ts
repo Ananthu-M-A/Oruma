@@ -8,10 +8,16 @@ import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { NotificationModule } from '../notification/notification.module';
 import { PaymentWebhookEvent } from './entities/payment-webhook-event.entity';
+import { PaymentRefund } from './entities/payment-refund.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Payment, Appointment, PaymentWebhookEvent]),
+    TypeOrmModule.forFeature([
+      Payment,
+      Appointment,
+      PaymentWebhookEvent,
+      PaymentRefund,
+    ]),
     AuthModule,
     NotificationModule,
     AppointmentModule,

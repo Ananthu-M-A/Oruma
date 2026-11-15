@@ -72,7 +72,7 @@ export class NotificationService {
   async notifyAdmins(input: Omit<CreateNotificationInput, 'recipientId'>) {
     const admins = await this.userRepo.find({
       where: { role: Role.ADMIN },
-      select: ['id'],
+      select: { id: true },
     });
 
     return this.createMany(

@@ -61,7 +61,8 @@ if (!fs.existsSync(configPath)) {
 
 const appSource = read("client/src/App.tsx");
 const footerSource = read("client/components/Footer.tsx");
-const sitemap = read("client/public/sitemap.xml");
+// sitemap.xml is generated at build time from the public SEO routes.
+const sitemapRoutes = read("client/src/lib/seo-routes.ts");
 for (const route of [
   "/terms",
   "/privacy-policy",
@@ -85,7 +86,7 @@ for (const route of [
   if (!footerSource.includes(`href: "${route}"`)) {
     errors.push(`Footer is missing legal link: ${route}`);
   }
-  if (!sitemap.includes(`https://oruma.me${route}`)) {
+  if (!sitemapRoutes.includes(`"${route}": {`)) {
     errors.push(`Sitemap is missing policy route: ${route}`);
   }
 }

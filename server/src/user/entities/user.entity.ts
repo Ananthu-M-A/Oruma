@@ -51,6 +51,13 @@ export class User {
   @Column({ default: false })
   mustChangePassword: boolean;
 
+  /**
+   * Bumped when the password changes. Access tokens carry the version they
+   * were issued with, so older tokens stop working straight away.
+   */
+  @Column({ type: 'integer', default: 0, select: false })
+  tokenVersion: number;
+
   @CreateDateColumn()
   createdAt: Date;
 }

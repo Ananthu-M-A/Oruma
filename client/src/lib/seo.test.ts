@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { applyDocumentSeo, publicSeoRoutes, resolvePageSeo } from "./seo";
+import { indexablePublicPaths } from "./seo-routes";
+import { seoServices } from "../content/seoServices";
 
 afterEach(() => {
   document.head.innerHTML = "";
@@ -48,14 +50,51 @@ describe("SEO metadata", () => {
     );
   });
 
-  it("canonicalizes duplicate routes and excludes account pages", () => {
-    expect(resolvePageSeo("/concerns/all-concerns").canonicalPath).toBe(
-      "/concerns",
-    );
+  it("excludes account pages and unknown routes from search", () => {
     applyDocumentSeo("/profile/patient");
-
     expect(
       document.querySelector('meta[name="robots"]')?.getAttribute("content"),
     ).toBe("noindex, nofollow");
+
+    expect(resolvePageSeo("/no-such-page").noIndex).toBe(true);
+    expect(resolvePageSeo("/no-such-page").title).toContain("Not Found");
+  });
+
+  it("keeps service page titles and descriptions within search result limits", () => {
+    for (const service of seoServices) {
+      expect(service.seoTitle.length, service.path).toBeLessThanOrEqual(60);
+      expect(
+        service.seoDescription.length,
+        service.path,
+      ).toBeGreaterThanOrEqual(120);
+      expect(service.seoDescription.length, service.path).toBeLessThanOrEqual(
+        160,
+      );
+      expect(service.faqs.length, service.path).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("indexes published service pages and keeps unpublished ones out", () => {
+    for (const service of seoServices) {
+      const seo = resolvePageSeo(service.path);
+      expect(seo.title).toBe(service.seoTitle);
+      expect(Boolean(seo.noIndex), service.path).toBe(!service.published);
+      expect(indexablePublicPaths().includes(service.path)).toBe(
+        service.published,
+      );
+    }
+  });
+
+  it("adds Service, FAQ and breadcrumb schema to service pages", () => {
+    applyDocumentSeo("/services/marriage-counselling");
+    const schema = JSON.parse(
+      document.querySelector("#oruma-page-schema")?.textContent ?? "{}",
+    ) as { "@graph": Array<{ "@type": string }> };
+    expect(schema["@graph"].map((node) => node["@type"])).toEqual([
+      "WebPage",
+      "BreadcrumbList",
+      "Service",
+      "FAQPage",
+    ]);
   });
 });

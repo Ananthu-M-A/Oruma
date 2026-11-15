@@ -94,7 +94,7 @@ D:\TOOLS\PostgreSQL\18\bin\psql.exe -U postgres
 ```
 
 ```sql
-CREATE USER teamoruma WITH PASSWORD 'Pswd4teamorum@';
+CREATE USER teamoruma WITH PASSWORD '<strong-local-password>';
 CREATE DATABASE oruma OWNER teamoruma;
 GRANT ALL PRIVILEGES ON DATABASE oruma TO teamoruma;
 ```
@@ -102,7 +102,7 @@ GRANT ALL PRIVILEGES ON DATABASE oruma TO teamoruma;
 Verify the app credentials:
 
 ```powershell
-$env:PGPASSWORD='Pswd4teamorum@'
+$env:PGPASSWORD='<strong-local-password>'
 D:\TOOLS\PostgreSQL\18\bin\psql.exe -h 127.0.0.1 -U teamoruma -d oruma -c "select current_database(), current_user;"
 ```
 
@@ -138,6 +138,12 @@ The browser client is allowed through `CLIENT_ORIGIN`. For multiple origins, use
 ```env
 CLIENT_ORIGIN=http://localhost:5173,https://your-client-domain.com
 ```
+
+In Razorpay Live Mode, configure the webhook URL as
+`https://api.oruma.me/payments/razorpay/webhook`, use the same secret as
+`RAZORPAY_WEBHOOK_SECRET`, and subscribe to `payment.captured` and
+`payment.failed`. The client polls the authenticated order-status endpoint
+while Checkout is open, but webhooks remain the source of truth.
 
 ## Invoice Generation
 

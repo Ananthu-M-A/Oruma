@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./auth";
+import { API_BASE_URL, apiFetch } from "./auth";
 
 type ApiMessage = { message?: string | string[] };
 
@@ -27,25 +27,22 @@ export type AppNotification = {
   createdAt: string;
 };
 
-export async function getNotifications(accessToken: string) {
-  const response = await fetch(`${API_BASE_URL}/notifications`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+export async function getNotifications() {
+  const response = await apiFetch(`${API_BASE_URL}/notifications`, {
   });
   return readResponse<AppNotification[]>(response, "Unable to load notifications.");
 }
 
-export async function markNotificationRead(accessToken: string, id: string) {
-  const response = await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
+export async function markNotificationRead(id: string) {
+  const response = await apiFetch(`${API_BASE_URL}/notifications/${id}/read`, {
     method: "PATCH",
-    headers: { Authorization: `Bearer ${accessToken}` },
   });
   return readResponse<AppNotification>(response, "Unable to update notification.");
 }
 
-export async function markAllNotificationsRead(accessToken: string) {
-  const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+export async function markAllNotificationsRead() {
+  const response = await apiFetch(`${API_BASE_URL}/notifications/read-all`, {
     method: "PATCH",
-    headers: { Authorization: `Bearer ${accessToken}` },
   });
   return readResponse<{ updated: number }>(response, "Unable to update notifications.");
 }

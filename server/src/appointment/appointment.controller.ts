@@ -7,8 +7,12 @@ import {
   Patch,
   Post,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { Response } from 'express';
+import { setSessionCookie } from '../auth/session-cookie';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -25,7 +29,10 @@ type AuthenticatedRequest = {
 
 @Controller('appointments')
 export class AppointmentController {
-  constructor(private readonly appointmentService: AppointmentService) {}
+  constructor(
+    private readonly appointmentService: AppointmentService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -35,8 +42,15 @@ export class AppointmentController {
   }
 
   @Post('quick')
-  createQuickBooking(@Body() dto: CreateAppointmentDto) {
-    return this.appointmentService.createQuickBooking(dto);
+  async createQuickBooking(
+    @Body() dto: CreateAppointmentDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { accessToken, expiresAt, ...result } =
+      await this.appointmentService.createQuickBooking(dto);
+    // Signs the new patient in through the httpOnly cookie only.
+    setSessionCookie(res, accessToken, expiresAt, this.configService);
+    return { ...result, expiresAt: expiresAt.toISOString() };
   }
 
   @Get()

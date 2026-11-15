@@ -1,5 +1,5 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
+import { PostgresDataSourceOptions as PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresDataSourceOptions';
 import { IST_TIME_ZONE } from '../common/ist-date-time';
 
 type EnvReader = (key: string) => string | undefined;

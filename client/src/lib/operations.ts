@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./auth";
+import { API_BASE_URL, apiFetch } from "./auth";
 import { BookingResponse } from "./booking";
 
 type ApiMessage = { message?: string | string[] };
@@ -48,6 +48,12 @@ type RazorpayOrder = {
   discountPercent?: number;
 };
 
+export type RazorpayOrderStatus = {
+  orderId: string;
+  status: "PENDING" | "PAID" | "REFUNDED" | "FAILED";
+  updatedAt: string;
+};
+
 export type Ticket = {
   id: string;
   createdBy: { id: string; email: string; fullName?: string | null } | null;
@@ -73,25 +79,20 @@ export type CaseSheet = {
   updatedAt: string;
 };
 
-export async function getPayments(accessToken: string) {
-  const response = await fetch(`${API_BASE_URL}/payments`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+export async function getPayments() {
+  const response = await apiFetch(`${API_BASE_URL}/payments`, {
   });
   return readResponse<Payment[]>(response, "Unable to load payments.");
 }
 
-export async function getMyPayments(accessToken: string) {
-  const response = await fetch(`${API_BASE_URL}/payments/me`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+export async function getMyPayments() {
+  const response = await apiFetch(`${API_BASE_URL}/payments/me`, {
   });
   return readResponse<Payment[]>(response, "Unable to load your payments.");
 }
 
-export async function openPaymentInvoice(accessToken: string, id: string) {
-  const response = await fetch(`${API_BASE_URL}/payments/${id}/invoice`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+export async function openPaymentInvoice(id: string) {
+  const response = await apiFetch(`${API_BASE_URL}/payments/${id}/invoice`, {
   });
   const text = await response.text();
 
@@ -120,7 +121,6 @@ export async function openPaymentInvoice(accessToken: string, id: string) {
 }
 
 export async function createPayment(
-  accessToken: string,
   payload: {
     appointmentId: string;
     amount: number;
@@ -128,11 +128,10 @@ export async function createPayment(
     notes?: string;
   },
 ) {
-  const response = await fetch(`${API_BASE_URL}/payments`, {
+  const response = await apiFetch(`${API_BASE_URL}/payments`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
   });
@@ -140,7 +139,6 @@ export async function createPayment(
 }
 
 export async function refundPayment(
-  accessToken: string,
   id: string,
   payload: {
     amount: number;
@@ -148,12 +146,13 @@ export async function refundPayment(
     receipt?: string;
     speed?: "normal" | "optimum";
   },
+  idempotencyKey: string,
 ) {
-  const response = await fetch(`${API_BASE_URL}/payments/${id}/refund`, {
+  const response = await apiFetch(`${API_BASE_URL}/payments/${id}/refund`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
+      "Idempotency-Key": idempotencyKey,
     },
     body: JSON.stringify(payload),
   });
@@ -161,29 +160,41 @@ export async function refundPayment(
 }
 
 export async function createRazorpayOrder(
-  accessToken: string,
   appointmentId: string,
 ) {
-  const response = await fetch(`${API_BASE_URL}/payments/razorpay/order`, {
+  const response = await apiFetch(`${API_BASE_URL}/payments/razorpay/order`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({ appointmentId }),
   });
   return readResponse<RazorpayOrder>(response, "Unable to start payment.");
 }
 
+export async function getRazorpayOrderStatus(
+  orderId: string,
+  signal?: AbortSignal,
+) {
+  const response = await fetch(
+    `${API_BASE_URL}/payments/razorpay/order/${encodeURIComponent(orderId)}/status`,
+    {
+      signal,
+    },
+  );
+  return readResponse<RazorpayOrderStatus>(
+    response,
+    "Unable to check payment status.",
+  );
+}
+
 export async function completeDevelopmentPayment(
-  accessToken: string,
   appointmentId: string,
 ) {
-  const response = await fetch(`${API_BASE_URL}/payments/development/complete`, {
+  const response = await apiFetch(`${API_BASE_URL}/payments/development/complete`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({ appointmentId }),
   });
@@ -194,40 +205,35 @@ export async function completeDevelopmentPayment(
 }
 
 export async function verifyRazorpayPayment(
-  accessToken: string,
   payload: {
     razorpayOrderId: string;
     razorpayPaymentId: string;
     razorpaySignature: string;
   },
 ) {
-  const response = await fetch(`${API_BASE_URL}/payments/razorpay/verify`, {
+  const response = await apiFetch(`${API_BASE_URL}/payments/razorpay/verify`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
   });
   return readResponse<Payment>(response, "Unable to verify payment.");
 }
 
-export async function getTickets(accessToken: string) {
-  const response = await fetch(`${API_BASE_URL}/tickets`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+export async function getTickets() {
+  const response = await apiFetch(`${API_BASE_URL}/tickets`, {
   });
   return readResponse<Ticket[]>(response, "Unable to load tickets.");
 }
 
 export async function createTicket(
-  accessToken: string,
   payload: { subject: string; message: string; category?: string },
 ) {
-  const response = await fetch(`${API_BASE_URL}/tickets`, {
+  const response = await apiFetch(`${API_BASE_URL}/tickets`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
   });
@@ -235,30 +241,26 @@ export async function createTicket(
 }
 
 export async function updateTicket(
-  accessToken: string,
   id: string,
   payload: { status?: Ticket["status"]; adminNote?: string },
 ) {
-  const response = await fetch(`${API_BASE_URL}/tickets/${id}`, {
+  const response = await apiFetch(`${API_BASE_URL}/tickets/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
   });
   return readResponse<Ticket>(response, "Unable to update ticket.");
 }
 
-export async function getCaseSheets(accessToken: string) {
-  const response = await fetch(`${API_BASE_URL}/case-sheets`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+export async function getCaseSheets() {
+  const response = await apiFetch(`${API_BASE_URL}/case-sheets`, {
   });
   return readResponse<CaseSheet[]>(response, "Unable to load case sheets.");
 }
 
 export async function upsertCaseSheet(
-  accessToken: string,
   payload: {
     appointmentId: string;
     presentingConcern?: string;
@@ -267,13 +269,86 @@ export async function upsertCaseSheet(
     followUpPlan?: string;
   },
 ) {
-  const response = await fetch(`${API_BASE_URL}/case-sheets`, {
+  const response = await apiFetch(`${API_BASE_URL}/case-sheets`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
   });
   return readResponse<CaseSheet>(response, "Unable to save case sheet.");
+}
+
+export const enquirySubjects = [
+  "Choosing a practitioner",
+  "Booking or rescheduling",
+  "Payment or refund",
+  "Services and fees",
+  "Programs and workshops",
+  "Practitioner application",
+  "Something else",
+] as const;
+
+export type EnquirySubject = (typeof enquirySubjects)[number];
+export type EnquiryContactMethod = "email" | "phone" | "whatsapp";
+
+export type Enquiry = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  preferredContact: EnquiryContactMethod;
+  subject: EnquirySubject;
+  message: string;
+  pagePath: string | null;
+  status: "NEW" | "REPLIED" | "CLOSED";
+  adminNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EnquiryInput = {
+  name: string;
+  email: string;
+  phone?: string;
+  preferredContact: EnquiryContactMethod;
+  subject: EnquirySubject;
+  message: string;
+  pagePath?: string;
+  consent: boolean;
+  /** Hidden honeypot field; people leave it empty. */
+  website?: string;
+};
+
+/** Public contact form submission. No account needed. */
+export async function submitEnquiry(payload: EnquiryInput) {
+  const response = await apiFetch(`${API_BASE_URL}/enquiries`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return readResponse<{ received: boolean }>(
+    response,
+    "Unable to send your message. Please email us instead.",
+  );
+}
+
+export async function getEnquiries() {
+  const response = await apiFetch(`${API_BASE_URL}/enquiries`, {
+  });
+  return readResponse<Enquiry[]>(response, "Unable to load enquiries.");
+}
+
+export async function updateEnquiry(
+  id: string,
+  payload: { status?: Enquiry["status"]; adminNote?: string },
+) {
+  const response = await apiFetch(`${API_BASE_URL}/enquiries/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  return readResponse<Enquiry>(response, "Unable to update enquiry.");
 }

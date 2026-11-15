@@ -32,5 +32,20 @@
     "cancellation": "oruma9987@gmail.com",
     "privacy": "oruma9987@gmail.com"
   },
-  "gstin": null
+  "gstin": null,
+  "socialProfiles": [
+    "https://www.instagram.com/orumacounselling",
+    "https://www.facebook.com/share/14dGCeongmy/",
+    "https://www.linkedin.com/in/oruma-counselling-0833143b4",
+    "https://youtube.com/@orumacounselling"
+  ],
+  "publicContact": {
+    "whatsapp": true,
+    "phone": true
+  },
+  "googleBusinessProfile": {
+    "mapsUrl": null,
+    "reviewUrl": null,
+    "mapEmbedUrl": null
+  }
 }

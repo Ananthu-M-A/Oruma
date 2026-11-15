@@ -1,9 +1,14 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { createHmac } from 'crypto';
 import { PaymentService } from './payment.service';
 import { PaymentStatus } from './entities/payment-status.enum';
 import { Role } from '../user/entities/user.entity';
 import { Payment } from './entities/payment.entity';
+import { PaymentRefundStatus } from './entities/payment-refund.entity';
 
 describe('PaymentService', () => {
   const secret = 'test_razorpay_secret';
@@ -11,7 +16,24 @@ describe('PaymentService', () => {
     userId: 'patient-1',
     email: 'patient@example.com',
     role: Role.PATIENT,
+    mustChangePassword: false,
   };
+
+  beforeEach(() => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        id: 'pay_123',
+        order_id: 'order_123',
+        amount: 120000,
+        currency: 'INR',
+        status: 'captured',
+        captured: true,
+      }),
+    } as unknown as Response);
+  });
+
+  afterEach(() => jest.restoreAllMocks());
 
   const createService = (payment: Record<string, unknown>) => {
     const paymentRepo = {
@@ -48,9 +70,11 @@ describe('PaymentService', () => {
     };
     const webhookEventRepo = {};
     const configService = {
-      get: jest.fn((key: string) =>
-        key === 'RAZORPAY_KEY_SECRET' ? secret : undefined,
-      ),
+      get: jest.fn((key: string) => {
+        if (key === 'RAZORPAY_KEY_SECRET') return secret;
+        if (key === 'RAZORPAY_KEY_ID') return 'rzp_test_key';
+        return undefined;
+      }),
     };
     const notificationService = {
       create: jest.fn().mockResolvedValue({}),
@@ -64,6 +88,7 @@ describe('PaymentService', () => {
       paymentRepo as never,
       appointmentRepo as never,
       webhookEventRepo as never,
+      {} as never,
       dataSource as never,
       configService as never,
       notificationService as never,
@@ -86,6 +111,7 @@ describe('PaymentService', () => {
   it('queues booking notifications after the first successful Razorpay verification', async () => {
     const payment = {
       id: 'payment-1',
+      amount: 1200,
       status: PaymentStatus.PENDING,
       appointment: {
         id: 'appointment-1',
@@ -130,6 +156,7 @@ describe('PaymentService', () => {
   it('does not duplicate booking notifications when payment is already paid', async () => {
     const payment = {
       id: 'payment-1',
+      amount: 1200,
       status: PaymentStatus.PAID,
       appointment: {
         id: 'appointment-1',
@@ -155,6 +182,93 @@ describe('PaymentService', () => {
     expect(appointmentService.notifyBookingAfterPayment).not.toHaveBeenCalled();
   });
 
+  const failedAttempt = () => ({
+    id: 'payment-1',
+    amount: 1200,
+    status: PaymentStatus.FAILED,
+    providerPaymentId: 'pay_failed_1',
+    reference: 'pay_failed_1',
+    appointment: {
+      id: 'appointment-1',
+      contactEmail: 'patient@example.com',
+    },
+    patient: {
+      id: 'patient-1',
+      email: 'patient@example.com',
+    },
+    notes: 'Razorpay webhook marked payment failed',
+  });
+
+  it('confirms a verified retry on the same order after a failed attempt', async () => {
+    const payment = failedAttempt();
+    const { service, paymentRepo, appointmentService } = createService(payment);
+
+    const result = await service.verifyRazorpayPayment(
+      {
+        razorpayOrderId: 'order_123',
+        razorpayPaymentId: 'pay_123',
+        razorpaySignature: signatureFor('order_123', 'pay_123'),
+      },
+      patient,
+    );
+
+    expect(result.status).toBe(PaymentStatus.PAID);
+    expect(paymentRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ providerPaymentId: 'pay_123' }),
+    );
+    expect(appointmentService.notifyBookingAfterPayment).toHaveBeenCalled();
+  });
+
+  it('confirms a webhook capture on the same order after a failed attempt', async () => {
+    const payment = failedAttempt();
+    const { service, paymentRepo, appointmentService } = createService(payment);
+    const webhookHandler = service as unknown as {
+      applyRazorpayWebhook(payload: unknown): Promise<void>;
+    };
+
+    await webhookHandler.applyRazorpayWebhook({
+      event: 'payment.captured',
+      payload: {
+        payment: {
+          entity: {
+            id: 'pay_123',
+            order_id: 'order_123',
+            amount: 120000,
+            currency: 'INR',
+            status: 'captured',
+            captured: true,
+          },
+        },
+      },
+    });
+
+    expect(payment.status).toBe(PaymentStatus.PAID);
+    expect(paymentRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ providerPaymentId: 'pay_123' }),
+    );
+    expect(appointmentService.notifyBookingAfterPayment).toHaveBeenCalled();
+  });
+
+  it('still rejects a capture when the order is already paid by a different payment', async () => {
+    const payment = {
+      ...failedAttempt(),
+      status: PaymentStatus.PAID,
+      providerPaymentId: 'pay_other',
+    };
+    const { service } = createService(payment);
+
+    await expect(
+      service.verifyRazorpayPayment(
+        {
+          razorpayOrderId: 'order_123',
+          razorpayPaymentId: 'pay_123',
+          razorpaySignature: signatureFor('order_123', 'pay_123'),
+        },
+        patient,
+      ),
+    ).rejects.toThrow('This order is already linked to a different payment');
+  });
+
   it('rejects invalid Razorpay signatures', async () => {
     const payment = {
       id: 'payment-1',
@@ -178,6 +292,129 @@ describe('PaymentService', () => {
     expect(paymentRepo.save).not.toHaveBeenCalled();
   });
 
+  it('returns Razorpay order status only for the owning patient', async () => {
+    const payment = {
+      providerOrderId: 'order_123',
+      status: PaymentStatus.PAID,
+      updatedAt: new Date('2026-10-01T12:00:00.000Z'),
+    };
+    const { service, paymentRepo } = createService(payment);
+
+    await expect(
+      service.getRazorpayOrderStatus('order_123', patient),
+    ).resolves.toEqual({
+      orderId: 'order_123',
+      status: PaymentStatus.PAID,
+      updatedAt: payment.updatedAt,
+    });
+    expect(paymentRepo.findOne).toHaveBeenCalledWith({
+      where: {
+        providerOrderId: 'order_123',
+        patient: { id: 'patient-1' },
+      },
+    });
+  });
+
+  it('reconciles a captured order directly when the webhook is delayed', async () => {
+    const payment = {
+      id: 'payment-1',
+      providerOrderId: 'order_123',
+      providerPaymentId: null,
+      amount: 1200,
+      status: PaymentStatus.PENDING,
+      updatedAt: new Date('2026-10-01T12:00:00.000Z'),
+      appointment: {
+        id: 'appointment-1',
+        status: 'PENDING',
+        contactEmail: 'patient@example.com',
+        reservationExpiresAt: new Date('2026-10-01T12:15:00.000Z'),
+      },
+      patient: { id: 'patient-1', email: 'patient@example.com' },
+      notes: null,
+    };
+    const { service, paymentRepo } = createService(payment);
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        items: [
+          {
+            id: 'pay_123',
+            order_id: 'order_123',
+            amount: 120000,
+            currency: 'INR',
+            status: 'captured',
+            captured: true,
+          },
+        ],
+      }),
+    } as unknown as Response);
+
+    await expect(
+      service.getRazorpayOrderStatus('order_123', patient),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        orderId: 'order_123',
+        status: PaymentStatus.PAID,
+      }),
+    );
+    expect(paymentRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerPaymentId: 'pay_123',
+        status: PaymentStatus.PAID,
+      }),
+    );
+  });
+
+  it('reconciles a provider-side failure when Checkout cannot report it', async () => {
+    const payment = {
+      id: 'payment-1',
+      providerOrderId: 'order_123',
+      providerPaymentId: null,
+      amount: 1,
+      status: PaymentStatus.PENDING,
+      updatedAt: new Date('2026-10-01T18:02:00.000Z'),
+      appointment: { id: 'appointment-1', status: 'PENDING' },
+      patient: { id: 'patient-1', email: 'patient@example.com' },
+      notes: null,
+    };
+    const { service, paymentRepo } = createService(payment);
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        items: [
+          {
+            id: 'pay_failed',
+            order_id: 'order_123',
+            amount: 100,
+            currency: 'INR',
+            status: 'failed',
+            captured: false,
+            method: 'upi',
+            error_reason: 'payment_risk_check_failed',
+            error_description:
+              'Payment blocked as website does not match registered website(s)',
+            created_at: 1790877771,
+          },
+        ],
+      }),
+    } as unknown as Response);
+
+    await expect(
+      service.getRazorpayOrderStatus('order_123', patient),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        orderId: 'order_123',
+        status: PaymentStatus.FAILED,
+      }),
+    );
+    expect(paymentRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerPaymentId: 'pay_failed',
+        status: PaymentStatus.FAILED,
+      }),
+    );
+  });
+
   it('completes the post-payment flow when the development bypass is enabled', async () => {
     const appointment = {
       id: 'appointment-1',
@@ -199,7 +436,7 @@ describe('PaymentService', () => {
         .fn()
         .mockImplementation((value: unknown) => Promise.resolve(value)),
     };
-    const appointmentRepo = {
+    const appointmentRepo: Record<string, jest.Mock> = {
       findOne: jest.fn().mockResolvedValue(appointment),
       save: jest.fn().mockImplementation((value: unknown) => value),
     };
@@ -241,6 +478,7 @@ describe('PaymentService', () => {
     const service = new PaymentService(
       paymentRepo as never,
       appointmentRepo as never,
+      {} as never,
       {} as never,
       dataSource as never,
       configService as never,
@@ -289,6 +527,7 @@ describe('PaymentService', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
       configService as never,
       {} as never,
       {} as never,
@@ -316,5 +555,90 @@ describe('PaymentService', () => {
       refunds: 200,
       pending: 1200,
     });
+  });
+
+  it('reconciles a previously requested Razorpay refund instead of submitting it again', async () => {
+    const payment = {
+      id: 'payment-1',
+      provider: 'razorpay',
+      providerPaymentId: 'pay_123',
+      status: PaymentStatus.PAID,
+    };
+    const operation = {
+      id: 'refund-1',
+      status: PaymentRefundStatus.REQUESTED,
+      receipt: 'oru_rfnd_existing',
+    };
+    const { service } = createService(payment);
+    const reserveRefundOperation = jest.fn().mockResolvedValue({
+      payment,
+      operation,
+      shouldSubmit: false,
+    });
+    const reconcileUncertainRefund = jest.fn().mockResolvedValue(payment);
+    Object.assign(service, {
+      reserveRefundOperation,
+      reconcileUncertainRefund,
+    });
+
+    await expect(
+      service.refund('payment-1', { amount: 500 }, 'same-refund-key'),
+    ).resolves.toBe(payment);
+
+    expect(reconcileUncertainRefund).toHaveBeenCalledWith(payment, operation, {
+      amount: 500,
+    });
+  });
+
+  it('marks an ambiguous Razorpay error unknown rather than allowing a blind retry', async () => {
+    const payment = {
+      id: 'payment-1',
+      provider: 'razorpay',
+      providerPaymentId: 'pay_123',
+      status: PaymentStatus.PAID,
+      appointment: { id: 'appointment-1' },
+    };
+    const operation = {
+      id: 'refund-1',
+      status: PaymentRefundStatus.REQUESTED,
+      receipt: 'oru_rfnd_existing',
+    };
+    const refundRepo = { update: jest.fn().mockResolvedValue(undefined) };
+    const configService = {
+      get: jest.fn((key: string) =>
+        key === 'RAZORPAY_KEY_ID' ? 'rzp_test_key' : secret,
+      ),
+    };
+    const service = new PaymentService(
+      {} as never,
+      {} as never,
+      {} as never,
+      refundRepo as never,
+      {} as never,
+      configService as never,
+      {} as never,
+      {} as never,
+    );
+    Object.assign(service, {
+      reserveRefundOperation: jest.fn().mockResolvedValue({
+        payment,
+        operation,
+        shouldSubmit: true,
+      }),
+    });
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: jest.fn().mockResolvedValue({ error: { description: 'timeout' } }),
+    } as unknown as Response);
+
+    await expect(
+      service.refund('payment-1', { amount: 500 }, 'ambiguous-refund-key'),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+
+    expect(refundRepo.update).toHaveBeenCalledWith(
+      { id: operation.id },
+      expect.objectContaining({ status: PaymentRefundStatus.UNKNOWN }),
+    );
   });
 });

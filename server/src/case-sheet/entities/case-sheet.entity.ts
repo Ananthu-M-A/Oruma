@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -20,9 +21,11 @@ export class CaseSheet {
     nullable: true,
     onDelete: 'SET NULL',
   })
+  @JoinColumn({ foreignKeyConstraintName: 'FK_case_appointment' })
   appointment: Appointment | null;
 
   @ManyToOne(() => User, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ foreignKeyConstraintName: 'FK_case_patient' })
   patient: User | null;
 
   @ManyToOne(() => Therapist, {
@@ -30,6 +33,7 @@ export class CaseSheet {
     nullable: true,
     onDelete: 'SET NULL',
   })
+  @JoinColumn({ foreignKeyConstraintName: 'FK_case_therapist' })
   therapist: Therapist | null;
 
   @Column({ type: 'text', nullable: true })

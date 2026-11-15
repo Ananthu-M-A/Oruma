@@ -1,4 +1,5 @@
 import rawBusinessConfig from "../../../config/business.json";
+import { seoServices } from "../content/seoServices";
 
 type BusinessConfig = typeof rawBusinessConfig;
 
@@ -51,6 +52,21 @@ export function validateBusinessConfig(config: BusinessConfig) {
 export const businessConfig = Object.freeze(rawBusinessConfig);
 export const businessConfigWarnings = validateBusinessConfig(businessConfig);
 export const businessAddress = businessConfig.address.lines.join(", ");
+
+/**
+ * Which contact channels the public site shows, besides email. WhatsApp was
+ * removed on 11 Oct 2026 (commit 56f55f7) and restored at the owners' request;
+ * set either to false in config/business.json to hide it everywhere.
+ */
+export const publicContact: { whatsapp: boolean; phone: boolean } =
+  businessConfig.publicContact;
+
+/** Google Business Profile links. Null until the owners' profile is verified. */
+export const googleBusinessProfile: {
+  mapsUrl: string | null;
+  reviewUrl: string | null;
+  mapEmbedUrl: string | null;
+} = businessConfig.googleBusinessProfile;
 export const ownershipDisclosure = `${businessConfig.brandName} is a brand operated by ${businessConfig.operatorLegalName}, an individual business providing online counselling and wellness services.`;
 
 export const businessLinks = Object.freeze({
@@ -64,6 +80,89 @@ export const businessLinks = Object.freeze({
 
 export function createWhatsAppUrl(message: string) {
   return `https://wa.me/${businessConfig.whatsappPhone.digits}?text=${encodeURIComponent(message)}`;
+}
+
+export function createSupportEmailUrl(message: string, subject?: string) {
+  const firstLine = message.trim().split(/\r?\n/, 1)[0] ?? "";
+  const generatedSubject = firstLine.replace(/^hello,?\s*/i, "").trim();
+  const query = new URLSearchParams({
+    subject: (subject || generatedSubject || "Oruma support enquiry").slice(0, 120),
+    body: message,
+  });
+  return `${businessLinks.supportEmail}?${query.toString()}`;
+}
+
+const supportEmailPageTopics: Record<string, string> = {
+  "/": "choosing counselling or wellness support",
+  "/about": "learning how Oruma's services work",
+  "/articles": "reading Oruma's emotional wellbeing articles",
+  "/concerns": "choosing a counselling or wellness concern area",
+  "/concerns/all-concerns": "choosing a counselling or wellness concern area",
+  "/concerns/relationship-marriage": "relationship and marriage counselling",
+  "/concerns/breakup-recovery": "breakup recovery counselling",
+  "/concerns/anxiety-stress": "anxiety and stress counselling",
+  "/concerns/emotional-wellbeing": "emotional wellbeing support",
+  "/concerns/postpartum-support": "postpartum counselling support",
+  "/concerns/depression": "depression and low mood support",
+  "/concerns/teenage-wellbeing": "teenage and student counselling",
+  "/concerns/trauma-ptsd": "trauma and PTSD counselling",
+  "/therapists": "choosing a verified practitioner",
+  "/find-your-psychologist": "finding a practitioner for a specific need",
+  "/online-counselling": "understanding online counselling at Oruma",
+  "/consultation": "an online consultation from outside India",
+  "/privacy-policy": "understanding Oruma's privacy practices",
+  "/refund-policy": "understanding a refund request or policy step",
+  "/cancellation-policy": "understanding a cancellation or rescheduling step",
+  "/service-delivery-policy": "understanding booking confirmation or session delivery",
+  "/terms": "understanding Oruma's terms and responsibilities",
+  "/services": "choosing an Oruma counselling service",
+  "/services/individual-therapy": "individual counselling",
+  "/services/couple-therapy": "couple and relationship counselling",
+  "/services/parenting-support": "parenting and caregiver support",
+  "/services/child-teen-counselling": "counselling for a child or teenager",
+  "/services/family-counselling": "family counselling",
+  "/services/postpartum-support": "postpartum support",
+  "/services/sexual-wellness": "sexual wellness counselling",
+  "/services/follow-up": "an existing counselling follow-up booking",
+  "/programs": "Oruma courses, workshops, or webinars",
+  "/programs/courses": "Oruma courses",
+  "/programs/workshops": "Oruma offline workshops",
+  "/programs/webinars": "Oruma webinars and events",
+  "/resources": "Oruma resources and information",
+  "/careers": "applying as an Oruma practitioner",
+  "/contact": "a service, booking, payment, cancellation, or refund question",
+};
+
+for (const service of seoServices) {
+  supportEmailPageTopics[service.path] = service.enquiryTopic;
+}
+
+function pageTopicFor(pathname: string) {
+  return (
+    supportEmailPageTopics[pathname] ??
+    (pathname.startsWith("/therapists/")
+      ? "reviewing a specific practitioner profile"
+      : "an Oruma counselling or wellness service")
+  );
+}
+
+/** WhatsApp click-to-chat link with a message naming the current page. */
+export function createPageWhatsAppUrl(pathname: string, request: string) {
+  return createWhatsAppUrl(
+    `Hello Oruma, I am viewing the page about ${pageTopicFor(pathname)}. I would like help with ${request}.`,
+  );
+}
+
+export function createPageSupportEmailUrl(pathname: string, request: string) {
+  const pageTopic = pageTopicFor(pathname);
+  return createSupportEmailUrl(
+    [
+      `Hello Oruma, I am viewing the page about ${pageTopic}.`,
+      `I would like help with ${request}.`,
+      "Please reply to this email with the relevant next step and any information needed to help.",
+    ].join("\n"),
+    `Enquiry about ${pageTopic}`,
+  );
 }
 
 if (businessConfigWarnings.length > 0) {

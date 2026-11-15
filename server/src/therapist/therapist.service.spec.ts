@@ -49,24 +49,21 @@ describe('TherapistService', () => {
     create: jest.fn(),
   };
   const providerJobService = {
-    enqueueEmail:
-      jest.fn<
-        (
-          input: SendMailInput,
-          options?: { deduplicationKey?: string },
-        ) => Promise<unknown>
-      >(),
+    enqueueEmail: jest.fn<
+      Promise<unknown>,
+      [input: SendMailInput, options?: { deduplicationKey?: string }]
+    >(),
   };
   const mediaService = {
     delete: jest.fn().mockResolvedValue(undefined),
   };
   const transactionalTherapistRepository = {
     create: jest.fn((value: Partial<Therapist>) => value as Therapist),
-    save: jest.fn<(value: Therapist) => Promise<Therapist>>(),
+    save: jest.fn<Promise<Therapist>, [value: Therapist]>(),
   };
   const transactionalUserRepository = {
     create: jest.fn((value: Partial<User>) => value as User),
-    save: jest.fn<(value: User) => Promise<User>>(),
+    save: jest.fn<Promise<User>, [value: User]>(),
     update: jest.fn(),
   };
   const dataSource = {

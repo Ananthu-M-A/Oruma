@@ -6,9 +6,11 @@ import WhyChooseService from "../../components/WhyChooseService";
 import FAQSection from "../../components/FAQSection";
 import Footer from "../../components/Footer";
 import FloatingActions from "../../components/FloatingActions";
-import { createWhatsAppUrl } from "../../src/config/business";
+import { createSupportEmailUrl } from "../../src/config/business";
 import CoupleTherapyVideo from "../../components/CoupleTherapyVideo";
 import ServiceScopeNotice from "../../components/ServiceScopeNotice";
+
+const coupleTherapyAreas = ["Relationship Issues", "Couple Therapy"];
 
 const bookingChecks = [
   {
@@ -35,17 +37,22 @@ export default function CoupleTherapyPage() {
       <ServiceHero
         title="Connect, Re-build, Bond Together"
         subtitle="Online relationship counselling can provide a structured setting to discuss communication and shared concerns. Review the selected practitioner's verified profile before booking."
-        img="/assets/couple-therapy-new-hero-image.webp"
+        img="/assets/relationship-healing-connection-v2.webp"
+        imageAlt="A couple offering each other comfort and support"
       />
 
-      <AssessmentBanner />
+      <AssessmentBanner service="couple" />
 
       <section className="bg-[#F5F8F7] py-20">
         <div className="mx-auto max-w-7xl px-6">
           <h2 className="mb-10 text-4xl font-heading font-black uppercase tracking-tighter text-[#064F4B]">
             Available Practitioners
           </h2>
-          <TherapistGrid />
+          <TherapistGrid
+            specialtyAreas={coupleTherapyAreas}
+            emptyTitle="No couple counselling practitioners are listed right now."
+            emptyDescription="No current profiles list couple or relationship work. Use the page-specific Ask booking support message to request a suitable match."
+          />
         </div>
       </section>
 
@@ -73,8 +80,11 @@ export default function CoupleTherapyPage() {
 
           <div className="mt-16">
             <a
-              href={createWhatsAppUrl(
-                "Hello, I need information about a couple counselling session.",
+              href={createSupportEmailUrl(
+                [
+                  "Hello, my partner and I are considering an online couple counselling session.",
+                  "Please share practitioner profiles for our concern, their professional role and scope, session fees, next available times, and the steps to book together.",
+                ].join("\n"),
               )}
               className="rounded-full bg-[#064F4B] px-10 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-[#064F4B]/20 transition-all hover:scale-105"
             >

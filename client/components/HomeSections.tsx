@@ -1,12 +1,13 @@
 import { LucideIcon } from "@site-builder/icons";
-import { createWhatsAppUrl } from "../src/config/business";
+import { createSupportEmailUrl } from "../src/config/business";
+import { concernPaths } from "../src/lib/concerns";
 
 const supportPathways = [
   {
     title: "Relationship & Marriage",
     description: "Connection, communication, trust and emotional distance",
     icon: "heart-handshake",
-    href: "/concerns#relationship",
+    href: concernPaths.relationship,
     color: "bg-[#F4F0E7]",
   },
   {
@@ -27,7 +28,7 @@ const supportPathways = [
     title: "Emotional Wellbeing",
     description: "Anxiety, stress, self-esteem and life transitions",
     icon: "brain",
-    href: "/concerns#anxiety",
+    href: concernPaths.emotionalWellbeing,
     color: "bg-[#EAF3F7]",
   },
 ];
@@ -37,47 +38,63 @@ const services = [
     title: "Individual Therapy",
     icon: "user",
     href: "/services/individual-therapy",
+    color: "from-[#EAF3F7] to-[#F5FAFC]",
+    iconColor: "text-[#287A92]",
   },
   {
     title: "Couple Therapy",
     icon: "heart-handshake",
     href: "/services/couple-therapy",
+    color: "from-[#F7E7E6] to-[#FFF6F2]",
+    iconColor: "text-[#B85E61]",
   },
   {
     title: "Parenting Support",
     icon: "users",
     href: "/services/parenting-support",
+    color: "from-[#FBEDE3] to-[#FFF8F1]",
+    iconColor: "text-[#B46F40]",
   },
   {
     title: "Child & Teen Counselling",
     icon: "user-round-check",
     href: "/services/child-teen-counselling",
+    color: "from-[#F1ECF7] to-[#FAF7FD]",
+    iconColor: "text-[#755A9C]",
   },
   {
     title: "Family Counselling",
     icon: "heart",
     href: "/services/family-counselling",
+    color: "from-[#E8F1E8] to-[#F6FAF4]",
+    iconColor: "text-[#58805B]",
   },
   {
     title: "Postpartum Support",
     icon: "baby",
     href: "/services/postpartum-support",
+    color: "from-[#FCF1D8] to-[#FFFAEF]",
+    iconColor: "text-[#AA8125]",
   },
   {
     title: "Sexual Wellness",
     icon: "sparkles",
     href: "/services/sexual-wellness",
+    color: "from-[#F7EAF1] to-[#FFF6FA]",
+    iconColor: "text-[#A7527B]",
   },
 ];
 
 const concerns = [
-  { title: "Relationship Issues", href: "/concerns#relationship" },
-  { title: "Breakup Recovery", href: "/concerns#breakup" },
-  { title: "Anxiety & Stress", href: "/concerns#anxiety" },
+  { title: "Relationship Issues", href: concernPaths.relationship },
+  { title: "Breakup Recovery", href: concernPaths.breakup },
+  { title: "Anxiety & Stress", href: concernPaths.anxiety },
   { title: "Parenting Challenges", href: "/services/parenting-support" },
-  { title: "Teenage Concerns", href: "/concerns#student" },
-  { title: "Trauma & PTSD", href: "/concerns#trauma" },
-  { title: "Emotional Wellbeing", href: "/concerns#depression" },
+  { title: "Teenage Concerns", href: concernPaths.student },
+  { title: "Trauma & PTSD", href: concernPaths.trauma },
+  { title: "Postpartum Support", href: concernPaths.postpartum },
+  { title: "Depression & Low Mood", href: concernPaths.depression },
+  { title: "Emotional Wellbeing", href: concernPaths.emotionalWellbeing },
 ];
 
 const programs = [
@@ -87,7 +104,7 @@ const programs = [
     description:
       "Structured psychology-based learning created to support practical, lasting growth.",
     action: "Explore Courses",
-    href: "/programs#courses",
+    href: "/programs/courses",
     icon: "graduation-cap",
     color: "bg-[#EFF2D9]",
   },
@@ -97,7 +114,7 @@ const programs = [
     description:
       "Thoughtful group experiences designed for learning, reflection and connection.",
     action: "View Workshops",
-    href: "/programs#workshops",
+    href: "/programs/workshops",
     icon: "users",
     color: "bg-[#FAE8DE]",
   },
@@ -107,7 +124,7 @@ const programs = [
     description:
       "Live online conversations and expert-led sessions from the Oruma community.",
     action: "Explore Webinars",
-    href: "/programs#webinars",
+    href: "/programs/webinars",
     icon: "video",
     color: "bg-[#EEE9F7]",
   },
@@ -236,7 +253,7 @@ export function OrumaIntroductionVideo() {
             A Little About Oruma
           </h2>
           <p className="mt-5 max-w-lg text-base font-medium leading-7 text-[#5F7773]">
-            Watch this short introduction to understand how Oruma can support you on your healing journey.
+            Watch our videos to learn more about Oruma and the support we offer.
           </p>
           <ul className="mt-7 space-y-3">
             {points.map((point) => (
@@ -250,15 +267,27 @@ export function OrumaIntroductionVideo() {
           </ul>
         </div>
 
-        <div className="relative aspect-video overflow-hidden rounded-[1.75rem] border-8 border-white bg-[#064F4B] shadow-2xl shadow-[#064F4B]/15 sm:rounded-[2.25rem]">
-          <iframe
-            className="absolute inset-0 h-full w-full"
-            src="https://www.youtube.com/embed/R9m-SGecnVc?rel=0&modestbranding=1"
-            title="A little about Oruma"
-            loading="lazy"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="relative aspect-video overflow-hidden rounded-[1.75rem] border-8 border-white bg-[#064F4B] shadow-2xl shadow-[#064F4B]/15 sm:rounded-[2.25rem]">
+            <iframe
+              className="absolute inset-0 h-full w-full"
+              src="https://www.youtube-nocookie.com/embed/R9m-SGecnVc?rel=0&modestbranding=1"
+              title="A little about Oruma"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+          <div className="relative aspect-video overflow-hidden rounded-[1.75rem] border-8 border-white bg-[#064F4B] shadow-2xl shadow-[#064F4B]/15 sm:rounded-[2.25rem]">
+            <iframe
+              className="absolute inset-0 h-full w-full"
+              src="https://www.youtube-nocookie.com/embed/7jd_snHx3CM?rel=0&modestbranding=1"
+              title="Oruma video"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
         </div>
       </div>
     </section>
@@ -279,15 +308,15 @@ export function CounsellingServices() {
             <a
               key={service.title}
               href={service.href}
-              className="group flex min-h-[175px] flex-col items-center justify-center rounded-[1.5rem] border border-[#DDE6E2] bg-white px-3 py-6 text-center transition hover:-translate-y-1 hover:border-[#0A7F7A]/30 hover:bg-[#F7FAF8] hover:shadow-lg"
+              className={`group flex min-h-[190px] flex-col items-center justify-center rounded-[1.5rem] border border-white/80 bg-gradient-to-br ${service.color} px-3 py-6 text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#064F4B]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A7F7A]`}
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF4EF] text-[#0A7F7A] transition group-hover:bg-[#064F4B] group-hover:text-white">
-                <LucideIcon name={service.icon} size={24} />
+              <span className={`mb-1 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/75 ${service.iconColor} shadow-sm transition-transform duration-300 group-hover:rotate-3 group-hover:scale-110`}>
+                <LucideIcon name={service.icon} size={30} />
               </span>
-              <h3 className="mt-4 text-sm font-black leading-5 text-[#123E3A]">
+              <h3 className="mt-4 text-sm font-black leading-5 text-[#123E3A] sm:text-base">
                 {service.title}
               </h3>
-              <LucideIcon name="arrow-right" size={15} className="mt-3 text-[#7F9B43] transition-transform group-hover:translate-x-1" />
+              <LucideIcon name="arrow-right" size={16} className={`mt-3 ${service.iconColor} transition-transform group-hover:translate-x-1`} />
             </a>
           ))}
         </div>
@@ -354,15 +383,16 @@ export function ProgramsSection() {
           {programs.map((program) => (
             <a
               key={program.title}
-              id={program.title === "Oruma Courses" ? "courses-home" : undefined}
               href={program.href}
               className={`${program.color} group flex min-h-[290px] flex-col rounded-[2rem] border border-[#064F4B]/5 p-7 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-[#064F4B]/10 sm:p-8`}
             >
-              <div className="flex items-start justify-between gap-4">
-                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80 text-[#064F4B] shadow-sm">
-                  <LucideIcon name={program.icon} size={27} />
+              <div className="relative flex h-28 items-center justify-center overflow-hidden rounded-2xl bg-white/55 sm:h-32">
+                <span className="absolute -right-5 -top-8 h-28 w-28 rounded-full bg-white/45" />
+                <span className="absolute -bottom-12 -left-3 h-32 w-32 rounded-full bg-white/35" />
+                <span className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white/85 text-[#064F4B] shadow-sm transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-3">
+                  <LucideIcon name={program.icon} size={30} />
                 </span>
-                <LucideIcon name="arrow-right" size={20} className="text-[#064F4B] transition-transform group-hover:translate-x-1" />
+                <LucideIcon name="arrow-right" size={20} className="absolute right-4 top-4 text-[#064F4B]/70 transition-transform group-hover:translate-x-1" />
               </div>
               <p className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-[#0A7F7A]">
                 {program.eyebrow}
@@ -415,8 +445,13 @@ export function TestimonialsSection() {
 }
 
 export function FinalBookingSection() {
-  const whatsappLink = createWhatsAppUrl(
-    "Hello, I would like to begin my healing journey with Oruma.",
+  const emailLink = createSupportEmailUrl(
+    [
+      "Hello, I am looking for online counselling through Oruma.",
+      "Please help me identify the right service and practitioners, with their professional roles, session fees, upcoming availability, and booking steps.",
+      "My support area is [add a short concern, or say not sure yet].",
+      "Preferred language: [add language if relevant].",
+    ].join("\n"),
   );
 
   return (
@@ -432,7 +467,7 @@ export function FinalBookingSection() {
             Your healing journey can begin today.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base font-medium leading-7 text-white/70">
-            Browse available psychologists or talk to the Oruma team on WhatsApp.
+            Browse practitioner profiles or email the Oruma care team.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <a
@@ -442,12 +477,10 @@ export function FinalBookingSection() {
               <LucideIcon name="calendar-check" size={18} /> Book a Session
             </a>
             <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={emailLink}
               className="inline-flex items-center justify-center gap-2 rounded-full border border-white/35 px-7 py-4 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-white hover:text-[#064F4B]"
             >
-              <LucideIcon name="message-circle" size={18} /> Chat on WhatsApp
+              <LucideIcon name="mail" size={18} /> Email Oruma
             </a>
           </div>
         </div>

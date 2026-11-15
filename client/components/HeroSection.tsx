@@ -1,5 +1,5 @@
 import { LucideIcon } from "@site-builder/icons";
-import { createWhatsAppUrl } from "../src/config/business";
+import { createSupportEmailUrl } from "../src/config/business";
 
 const trustPoints = [
   { icon: "lock", label: "Confidential support" },
@@ -9,8 +9,12 @@ const trustPoints = [
 ];
 
 export default function HeroSection() {
-  const whatsappLink = createWhatsAppUrl(
-    "Hello, I would like help choosing and booking an Oruma psychologist.",
+  const emailLink = createSupportEmailUrl(
+    [
+      "Hello, I am exploring online counselling through Oruma.",
+      "Please help me compare the service and practitioner options, professional roles and scope, session fees, available times, and the steps needed to book.",
+      "My main support need is [add a short area, or say not sure yet].",
+    ].join("\n"),
   );
 
   return (
@@ -45,13 +49,11 @@ export default function HeroSection() {
                 Find Your Psychologist
               </a>
               <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={emailLink}
                 className="inline-flex min-h-13 items-center justify-center gap-2 rounded-full border border-[#064F4B]/25 bg-white px-6 py-4 text-sm font-black text-[#064F4B] transition hover:-translate-y-0.5 hover:border-[#0A7F7A] hover:bg-[#F5F8F7]"
               >
-                <LucideIcon name="message-circle" size={18} />
-                Chat on WhatsApp
+                <LucideIcon name="mail" size={18} />
+                Email Oruma
               </a>
             </div>
 

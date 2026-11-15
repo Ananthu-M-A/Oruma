@@ -1,12 +1,12 @@
-import { createWhatsAppUrl } from "../src/config/business";
 import { LucideIcon } from "@site-builder/icons";
+import { concernPaths, therapistDirectoryHref } from "../src/lib/concerns";
 
 export default function ConcernsGrid() {
   const concerns = [
     {
       title: "Performance anxiety issues",
       icon: "zap",
-      href: "/concerns#anxiety",
+      href: concernPaths.anxiety,
     },
     {
       title: "Low desire or mismatched libido",
@@ -16,17 +16,17 @@ export default function ConcernsGrid() {
     {
       title: "Relationship intimacy concerns",
       icon: "heart",
-      href: "/concerns#relationship",
+      href: concernPaths.relationship,
     },
     {
       title: "Healing trauma & past experiences",
       icon: "sparkles",
-      href: "/concerns#trauma",
+      href: concernPaths.trauma,
     },
     {
       title: "Body image & self-esteem blocks",
       icon: "user",
-      href: "/concerns#depression",
+      href: concernPaths.depression,
     },
     {
       title: "Gender dysphoria concerns",
@@ -36,7 +36,7 @@ export default function ConcernsGrid() {
     {
       title: "Postpartum intimacy concerns",
       icon: "baby",
-      href: "/concerns#postpartum",
+      href: concernPaths.postpartum,
     },
     {
       title: "Queer affirmative counseling",
@@ -44,10 +44,6 @@ export default function ConcernsGrid() {
       href: "/services/sexual-wellness",
     },
   ];
-
-  const bookingLink = createWhatsAppUrl(
-    "Hello, I need help choosing a counselling or wellness practitioner.",
-  );
 
   return (
     <section className="py-24 bg-white">
@@ -79,7 +75,7 @@ export default function ConcernsGrid() {
         </div>
 
         <a
-          href={bookingLink}
+          href={therapistDirectoryHref(["Sexual Wellness"])}
           className="inline-block mt-16 bg-[#064F4B] text-white px-10 py-4 rounded-full font-black shadow-xl shadow-[#064F4B]/20 hover:bg-[#0A7F7A] transition-all active:scale-95"
         >
           Book Consultation

@@ -9,23 +9,24 @@ import {
 import {
   createAppointment,
   createQuickAppointment,
-  cancelAppointment,
   isBookingLeadTimeBypassEnabled,
   POST_PAYMENT_NOTICE_KEY,
 } from "../src/lib/booking";
 import {
-  getAccessToken,
+  isSignedIn,
   getCurrentUser,
   getMyAccount,
-  saveAccessToken,
+  saveSession,
   requestBookingOtp,
   verifyBookingOtp,
 } from "../src/lib/auth";
 import {
   completeDevelopmentPayment,
   createRazorpayOrder,
+  getRazorpayOrderStatus,
   verifyRazorpayPayment,
 } from "../src/lib/operations";
+import { trackEvent } from "../src/lib/analytics";
 import {
   calculateSessionPackagePricing,
   formatINR,
@@ -34,6 +35,9 @@ import {
 import {
   getRazorpayCheckoutDescription,
   getRazorpayPaymentFailureMessage,
+  RAZORPAY_CHECKOUT_TIMEOUT_SECONDS,
+  RAZORPAY_STATUS_POLL_INTERVAL_MS,
+  RAZORPAY_STATUS_POLL_WINDOW_MS,
   RAZORPAY_UPI_CHECKOUT_CONFIG,
 } from "../src/lib/razorpay";
 import { getTherapistBookingModes } from "../src/lib/therapistProfileOptions";
@@ -104,6 +108,8 @@ export default function BookingModal({
   const [bookingOtpLoading, setBookingOtpLoading] = useState(false);
   const [bookingDevCode, setBookingDevCode] = useState("");
   const dialogRef = useRef<HTMLDivElement>(null);
+  const paymentPollTimerRef = useRef<number | null>(null);
+  const paymentPollAbortRef = useRef<AbortController | null>(null);
   const bookingModes = getTherapistBookingModes(therapist?.consultationType);
   const [formData, setFormData] = useState({
     service: "Individual Therapy",
@@ -116,6 +122,15 @@ export default function BookingModal({
     phone: "",
     mode: "Video",
   });
+
+  useEffect(() => {
+    return () => {
+      paymentPollAbortRef.current?.abort();
+      if (paymentPollTimerRef.current !== null) {
+        window.clearTimeout(paymentPollTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -307,11 +322,18 @@ export default function BookingModal({
 
   async function handleBooking() {
     let appointmentId: string | null = null;
-    let accessToken = getAccessToken();
+    const signedIn = isSignedIn();
     const currentUser = getCurrentUser();
-    const isQuickBooking = !currentUser || !accessToken;
+    const isQuickBooking = !currentUser || !signedIn;
     let paymentCompleted = false;
     let paymentVerificationStarted = false;
+    let paymentFailed = false;
+
+    paymentPollAbortRef.current?.abort();
+    if (paymentPollTimerRef.current !== null) {
+      window.clearTimeout(paymentPollTimerRef.current);
+      paymentPollTimerRef.current = null;
+    }
 
     try {
       setSubmitError("");
@@ -358,13 +380,11 @@ export default function BookingModal({
       if (!isQuickBooking) {
         const appointment = await createAppointment(
           bookingPayload,
-          accessToken!,
         );
         appointmentId = appointment.id;
       } else {
         const result = await createQuickAppointment(bookingPayload);
-        saveAccessToken(result.accessToken);
-        accessToken = result.accessToken;
+        saveSession(result);
         appointmentId = result.appointment.id;
       }
 
@@ -376,7 +396,7 @@ export default function BookingModal({
       setPaymentStatus("Payment pending");
 
       if (isPaymentBypassEnabled) {
-        await completeDevelopmentPayment(accessToken!, appointmentId);
+        await completeDevelopmentPayment(appointmentId);
         paymentCompleted = true;
         setSubmitSuccess(true);
         setSubmitError("");
@@ -395,7 +415,106 @@ export default function BookingModal({
         throw new Error("Razorpay checkout is unavailable.");
       }
 
-      const order = await createRazorpayOrder(accessToken!, appointmentId);
+      const order = await createRazorpayOrder(appointmentId);
+      const pollController = new AbortController();
+      const pollStartedAt = Date.now();
+      paymentPollAbortRef.current = pollController;
+
+      const stopPaymentStatusPolling = () => {
+        pollController.abort();
+        if (paymentPollAbortRef.current === pollController) {
+          paymentPollAbortRef.current = null;
+        }
+        if (paymentPollTimerRef.current !== null) {
+          window.clearTimeout(paymentPollTimerRef.current);
+          paymentPollTimerRef.current = null;
+        }
+      };
+      const showPaymentConfirmed = () => {
+        if (paymentCompleted) return;
+        paymentCompleted = true;
+        // Booking reference and amount only: never patient or clinical details.
+        trackEvent("purchase", {
+          transaction_id: appointmentId,
+          value: order.amount,
+          currency: order.currency,
+          items: [{ item_name: formData.service }],
+        });
+        stopPaymentStatusPolling();
+        setPaymentStatus("Paid");
+        setSubmitSuccess(true);
+        setSubmitError("");
+        setIsSubmitting(false);
+        window.setTimeout(() => {
+          onClose();
+          redirectToPatientProfile(
+            `Payment confirmed for booking ${appointmentId}. Staff will confirm the appointment and send joining instructions.`,
+          );
+        }, 1000);
+      };
+      const showPaymentRefunded = () => {
+        if (paymentCompleted) return;
+        paymentCompleted = true;
+        stopPaymentStatusPolling();
+        setPaymentStatus("Refunded");
+        setSubmitError(
+          "The payment was received after the booking could no longer be completed, so a refund was initiated. Check your patient profile for details.",
+        );
+        setIsSubmitting(false);
+      };
+      const pollPaymentStatus = async () => {
+        if (pollController.signal.aborted || paymentCompleted) return;
+
+        try {
+          const result = await getRazorpayOrderStatus(
+            order.orderId,
+            pollController.signal,
+          );
+          if (result.status === "PAID") {
+            showPaymentConfirmed();
+            return;
+          }
+          if (result.status === "REFUNDED") {
+            showPaymentRefunded();
+            return;
+          }
+          if (result.status === "FAILED" && !paymentFailed) {
+            paymentFailed = true;
+            setPaymentStatus("Payment failed");
+            setSubmitError(
+              "The payment was not completed. If money was debited, do not pay again while the gateway confirmation is being reconciled.",
+            );
+            setIsSubmitting(false);
+          }
+        } catch {
+          if (pollController.signal.aborted) return;
+          // Checkout callbacks remain the immediate path while polling retries
+          // transient network or webhook delays.
+        }
+
+        if (
+          !pollController.signal.aborted &&
+          !paymentCompleted &&
+          Date.now() - pollStartedAt < RAZORPAY_STATUS_POLL_WINDOW_MS
+        ) {
+          paymentPollTimerRef.current = window.setTimeout(
+            pollPaymentStatus,
+            RAZORPAY_STATUS_POLL_INTERVAL_MS,
+          );
+          return;
+        }
+
+        if (!paymentCompleted && !paymentFailed) {
+          setPaymentStatus("Confirmation delayed");
+          setSubmitError(
+            "Payment confirmation is taking longer than expected. If money was debited, do not pay again; check your patient profile or contact support with the booking reference.",
+          );
+          setIsSubmitting(false);
+        }
+        stopPaymentStatusPolling();
+      };
+
+      void pollPaymentStatus();
       const checkout = new window.Razorpay({
         key: order.keyId,
         amount: Math.round(order.amount * 100),
@@ -408,45 +527,42 @@ export default function BookingModal({
           email: formData.email,
           contact: formData.phone,
         },
+        timeout: RAZORPAY_CHECKOUT_TIMEOUT_SECONDS,
+        retry: { enabled: false },
         config: RAZORPAY_UPI_CHECKOUT_CONFIG,
         handler: async (response) => {
           paymentVerificationStarted = true;
           try {
-            await verifyRazorpayPayment(accessToken!, {
+            const verifiedPayment = await verifyRazorpayPayment({
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
             });
-            paymentCompleted = true;
-            setPaymentStatus("Paid");
-            setSubmitSuccess(true);
-            setSubmitError("");
-            setTimeout(() => {
-              onClose();
-              redirectToPatientProfile(
-                `Payment confirmed for booking ${appointmentId}. Staff will confirm the appointment and send joining instructions.`,
-              );
-            }, 1000);
+            if (verifiedPayment.status === "REFUNDED") {
+              showPaymentRefunded();
+            } else {
+              showPaymentConfirmed();
+            }
           } catch (err) {
             setSubmitError(
-              err instanceof Error ? err.message : "Unable to verify payment.",
+              `${
+                err instanceof Error ? err.message : "Unable to verify payment."
+              } Your booking remains reserved while the server reconciles the gateway result; do not make a second payment.`,
             );
-            if (appointmentId) {
-              await cancelAppointment(appointmentId, accessToken!);
-            }
           } finally {
             setIsSubmitting(false);
           }
         },
         modal: {
-          ondismiss: async () => {
+          ondismiss: () => {
             if (
               !paymentCompleted &&
               !paymentVerificationStarted &&
-              appointmentId
+              !paymentFailed
             ) {
-              await cancelAppointment(appointmentId, accessToken!).catch(
-                () => undefined,
+              setPaymentStatus("Awaiting confirmation");
+              setSubmitError(
+                "Checkout was closed. The booking remains reserved temporarily so a delayed bank confirmation can be reconciled safely.",
               );
             }
             setIsSubmitting(false);
@@ -455,10 +571,17 @@ export default function BookingModal({
       });
 
       checkout.on("payment.failed", (response) => {
+        paymentFailed = true;
         setPaymentStatus("Payment failed");
         setSubmitError(getRazorpayPaymentFailureMessage(response));
+        setIsSubmitting(false);
       });
 
+      trackEvent("begin_checkout", {
+        value: order.amount,
+        currency: order.currency,
+        items: [{ item_name: formData.service }],
+      });
       checkout.open();
     } catch (error) {
       setSubmitError(
@@ -466,11 +589,6 @@ export default function BookingModal({
           ? error.message
           : "Failed to book appointment. Please try again.",
       );
-      if (appointmentId && accessToken) {
-        await cancelAppointment(appointmentId, accessToken).catch(
-          () => undefined,
-        );
-      }
       setIsSubmitting(false);
     }
   }
@@ -539,15 +657,24 @@ export default function BookingModal({
             <div className="space-y-6">
               {therapist && (
                 <div className="flex items-center gap-4 p-4 bg-[#B7C8A3]/10 rounded-2xl mb-4">
-                  <img
-                    src={therapist.image || therapist.img}
-                    className="w-12 h-12 rounded-full object-cover"
-                    alt={therapist.name}
-                    width="48"
-                    height="48"
-                    loading="lazy"
-                    decoding="async"
-                  />
+                  {therapist.image || therapist.img ? (
+                    <img
+                      src={therapist.image || therapist.img}
+                      className="w-12 h-12 rounded-full object-cover"
+                      alt={therapist.name}
+                      width="48"
+                      height="48"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#E5ECCE] text-[#607D2E]"
+                    >
+                      <LucideIcon name="user" size={22} />
+                    </span>
+                  )}
                   <div>
                     <p className="font-bold text-[#064F4B]">{therapist.name}</p>
                     <p className="text-xs text-[#064F4B]/60">
@@ -771,7 +898,7 @@ export default function BookingModal({
               </label>
               <label className="block space-y-1">
                 <span className="text-sm font-bold text-gray-700">
-                  WhatsApp number for care-team contact
+                  Phone number for booking records and payment
                 </span>
                 <input
                   type="tel"
@@ -815,8 +942,8 @@ export default function BookingModal({
                   </p>
                   <p className="mt-1 text-xs text-[#5F7F7A]">
                     We will send a six-digit verification code to{" "}
-                    {bookingIdentifier || "your email"}. Staff will use WhatsApp
-                    only for appointment support and joining instructions.
+                    {bookingIdentifier || "your email"}. Booking updates and
+                    joining instructions are shared through your email and patient dashboard.
                   </p>
                   {!bookingVerificationToken && !bookingOtpRequested && (
                     <button
@@ -1009,8 +1136,8 @@ export default function BookingModal({
                 Appointment booked successfully.
               </p>
               <p className="text-xs text-green-600 mt-1">
-                Your booking is recorded on ORUMA. The care team will contact
-                you manually on WhatsApp with confirmation and joining details.
+                Your booking is recorded on ORUMA. The care team will send
+                confirmation and joining details by email and through your patient dashboard.
               </p>
             </div>
           )}

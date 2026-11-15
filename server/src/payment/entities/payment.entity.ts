@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -33,9 +34,11 @@ export class Payment {
     nullable: true,
     onDelete: 'SET NULL',
   })
+  @JoinColumn({ foreignKeyConstraintName: 'FK_payment_appointment' })
   appointment: Appointment | null;
 
   @ManyToOne(() => User, { eager: true, nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ foreignKeyConstraintName: 'FK_payment_patient' })
   patient: User | null;
 
   @Column({ default: 0 })

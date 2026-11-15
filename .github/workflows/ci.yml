@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit dependencies
+        run: npm audit --omit=dev --audit-level=critical
+
       - name: Type-check
         run: npm run typecheck
 
@@ -38,6 +41,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_API_URL: https://api.oruma.me
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
@@ -64,6 +69,8 @@ jobs:
           --health-retries 5
     env:
       NODE_ENV: test
+      # Same time zone the API sets for itself in main.ts.
+      TZ: Asia/Kolkata
       DATABASE_URL: postgres://oruma:oruma_test@localhost:5432/oruma_test
       DATABASE_SSL: "false"
       DATABASE_SYNC: "false"
@@ -74,6 +81,7 @@ jobs:
       DATA_RETENTION_WORKER_ENABLED: "false"
       PAYMENT_BYPASS_ENABLED: "true"
       BOOKING_LEAD_TIME_BYPASS_ENABLED: "true"
+      OTP_DEV_CODE_ENABLED: "true"
     defaults:
       run:
         working-directory: server
@@ -91,8 +99,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit dependencies
+        run: npm audit --omit=dev --audit-level=critical
+
       - name: Build
         run: npm run build
+
+      - name: Build production image and verify business identity
+        working-directory: .
+        run: |
+          docker build -f server/Dockerfile -t oruma-api:ci .
+          docker run --rm --entrypoint test oruma-api:ci -f /app/config/business.json
 
       - name: Run migrations on clean PostgreSQL
         run: npm run migration:run

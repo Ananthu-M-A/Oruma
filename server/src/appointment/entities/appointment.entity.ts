@@ -24,18 +24,23 @@ export class Appointment {
 
   @ManyToOne(() => User, {
     eager: true,
+    nullable: false,
   })
+  @JoinColumn({ foreignKeyConstraintName: 'FK_appointment_patient' })
   patient: User;
 
   @ManyToOne(() => Therapist, {
     eager: true,
+    nullable: false,
   })
+  @JoinColumn({ foreignKeyConstraintName: 'FK_appointment_therapist' })
   therapist: Therapist;
 
   @ManyToOne(() => AvailabilitySlot, {
     eager: true,
+    nullable: false,
   })
-  @JoinColumn()
+  @JoinColumn({ foreignKeyConstraintName: 'FK_appointment_slot' })
   @Index('IDX_appointment_slot')
   slot: AvailabilitySlot;
 

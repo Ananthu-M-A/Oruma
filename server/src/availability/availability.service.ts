@@ -284,7 +284,7 @@ export class AvailabilityService {
   private async findOwnedSlot(slotId: string, user: JwtPayload) {
     const slot = await this.slotRepo.findOne({
       where: { id: slotId },
-      relations: ['therapist', 'therapist.account'],
+      relations: { therapist: { account: true } },
     });
 
     if (!slot) {

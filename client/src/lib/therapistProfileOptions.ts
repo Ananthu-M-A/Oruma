@@ -62,7 +62,12 @@ export const therapistAreaOfPracticeOptions = [
   "Trauma & PTSD",
   "Relationship Issues",
   "Couple Therapy",
+  "Marriage Counselling",
+  "Premarital Counselling",
+  "Trust & Infidelity Recovery",
   "Breakup Recovery",
+  "Clinical Hypnotherapy",
+  "NRI Counselling",
   "Parenting Challenges",
   "Family Counselling",
   "Child Behaviour",
@@ -117,11 +122,19 @@ function canonicalLanguage(value: string) {
   );
 }
 
-export function splitTherapistTags(tags: string[] | null | undefined) {
+export function splitTherapistTags(
+  tags: string[] | string | null | undefined,
+) {
   const areasOfPractice: string[] = [];
   const languages: string[] = [];
+  const tagList = Array.isArray(tags)
+    ? tags
+    : typeof tags === "string"
+      ? tags.split(/[,;\n]/)
+      : [];
 
-  for (const rawTag of tags ?? []) {
+  for (const rawTag of tagList) {
+    if (typeof rawTag !== "string") continue;
     const tag = rawTag.trim();
     if (!tag) continue;
     const language = canonicalLanguage(tag);

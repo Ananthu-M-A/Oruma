@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
+import { MemoryRateLimitStore, RateLimitStore } from './rate-limit-store';
+import { readSessionCookie } from '../auth/session-cookie';
 
 type RateLimitOptions = {
   windowMs: number;
@@ -7,21 +9,9 @@ type RateLimitOptions = {
   keyPrefix: string;
   message: string;
   skip?: (req: Request) => boolean;
+  /** Where counts are kept. Defaults to a per-process in-memory store. */
+  store?: RateLimitStore;
 };
-
-type RateLimitEntry = {
-  count: number;
-  resetAt: number;
-};
-
-const rateLimitBuckets = new Map<string, RateLimitEntry>();
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitBuckets.entries()) {
-    if (entry.resetAt <= now) rateLimitBuckets.delete(key);
-  }
-}).unref();
 
 export function securityHeaders() {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -68,7 +58,15 @@ export function originGuard(allowedOrigins: Set<string>) {
     if (isWebhookRequest(req)) return next();
 
     const origin = req.headers.origin;
-    if (!origin) return next();
+    if (!origin) {
+      // Browsers always send Origin on cross-origin writes. A write that
+      // relies on the session cookie but has no Origin is not from our site,
+      // so refuse it (CSRF). Bearer-token API clients are unaffected.
+      if (readSessionCookie(req)) {
+        return res.status(403).json({ message: 'Origin is required' });
+      }
+      return next();
+    }
 
     if (!allowedOrigins.has(origin)) {
       return res.status(403).json({ message: 'Origin is not allowed' });
@@ -79,39 +77,44 @@ export function originGuard(allowedOrigins: Set<string>) {
 }
 
 export function rateLimit(options: RateLimitOptions) {
+  const store = options.store ?? new MemoryRateLimitStore();
+  const max =
+    Number.isFinite(options.max) && options.max > 0 ? options.max : 60;
+
   return (req: Request, res: Response, next: NextFunction) => {
     if (options.skip?.(req)) return next();
 
-    const max =
-      Number.isFinite(options.max) && options.max > 0 ? options.max : 60;
-    const now = Date.now();
     const key = `${options.keyPrefix}:${getClientIp(req)}`;
-    const entry = rateLimitBuckets.get(key);
-
-    if (!entry || entry.resetAt <= now) {
-      rateLimitBuckets.set(key, {
-        count: 1,
-        resetAt: now + options.windowMs,
-      });
-      return next();
-    }
-
-    entry.count += 1;
-    const retryAfterSeconds = Math.ceil((entry.resetAt - now) / 1000);
-    res.setHeader('Retry-After', String(retryAfterSeconds));
-    res.setHeader('X-RateLimit-Limit', String(max));
-    res.setHeader(
-      'X-RateLimit-Remaining',
-      String(Math.max(0, max - entry.count)),
-    );
-    res.setHeader('X-RateLimit-Reset', String(Math.ceil(entry.resetAt / 1000)));
-
-    if (entry.count > max) {
-      return res.status(429).json({ message: options.message });
-    }
-
-    next();
+    store
+      .hit(key, options.windowMs)
+      .then((entry) => {
+        if (entry.count > max) {
+          setRateLimitHeaders(res, max, entry);
+          return res.status(429).json({ message: options.message });
+        }
+        if (entry.count > 1) setRateLimitHeaders(res, max, entry);
+        next();
+      })
+      .catch(next);
   };
+}
+
+function setRateLimitHeaders(
+  res: Response,
+  max: number,
+  entry: { count: number; resetAt: number },
+) {
+  const retryAfterSeconds = Math.max(
+    0,
+    Math.ceil((entry.resetAt - Date.now()) / 1000),
+  );
+  res.setHeader('Retry-After', String(retryAfterSeconds));
+  res.setHeader('X-RateLimit-Limit', String(max));
+  res.setHeader(
+    'X-RateLimit-Remaining',
+    String(Math.max(0, max - entry.count)),
+  );
+  res.setHeader('X-RateLimit-Reset', String(Math.ceil(entry.resetAt / 1000)));
 }
 
 export function requireProductionSecrets() {
@@ -158,6 +161,46 @@ export function requireProductionSecrets() {
       `Production media management requires: ${missingMediaSecrets.join(', ')}`,
     );
   }
+
+  const missingEmailSecrets = ['RESEND_API_KEY', 'EMAIL_FROM'].filter(
+    (key) => !process.env[key]?.trim(),
+  );
+  if (missingEmailSecrets.length > 0) {
+    throw new Error(
+      `Production email delivery requires: ${missingEmailSecrets.join(', ')}`,
+    );
+  }
+
+  const missingPaymentSecrets = [
+    'RAZORPAY_KEY_ID',
+    'RAZORPAY_KEY_SECRET',
+    'RAZORPAY_WEBHOOK_SECRET',
+  ].filter((key) => !process.env[key]?.trim());
+  if (missingPaymentSecrets.length > 0) {
+    throw new Error(
+      `Production Razorpay processing requires: ${missingPaymentSecrets.join(', ')}`,
+    );
+  }
+  if (!process.env.RAZORPAY_KEY_ID?.startsWith('rzp_live_')) {
+    throw new Error(
+      'Production Razorpay processing requires a Live Mode RAZORPAY_KEY_ID.',
+    );
+  }
+
+  if (process.env.PROVIDER_WORKER_ENABLED === 'false') {
+    throw new Error('Production requires PROVIDER_WORKER_ENABLED=true.');
+  }
+  if (process.env.RESERVATION_CLEANUP_ENABLED === 'false') {
+    throw new Error('Production requires RESERVATION_CLEANUP_ENABLED=true.');
+  }
+  if (process.env.PAYMENT_BYPASS_ENABLED === 'true') {
+    throw new Error('Production must not enable PAYMENT_BYPASS_ENABLED.');
+  }
+  if (process.env.BOOKING_LEAD_TIME_BYPASS_ENABLED === 'true') {
+    throw new Error(
+      'Production must not enable BOOKING_LEAD_TIME_BYPASS_ENABLED.',
+    );
+  }
 }
 
 function isWebhookRequest(req: Request) {
@@ -173,9 +216,12 @@ function isSensitivePath(path: string) {
     '/media',
     '/notifications',
     '/payments',
+    '/privacy',
     '/profile',
     '/tickets',
+    '/user',
     '/users',
+    '/admin',
   ].some((prefix) => path.startsWith(prefix));
 }
 
@@ -187,11 +233,15 @@ function getRequestId(req: Request) {
     : randomUUID();
 }
 
-function getClientIp(req: Request) {
-  const forwardedFor = req.headers['x-forwarded-for'];
-  if (process.env.TRUST_PROXY === 'true' && typeof forwardedFor === 'string') {
-    return forwardedFor.split(',')[0].trim();
-  }
+// Express resolves req.ip from X-Forwarded-For using the "trust proxy" hop
+// count set in main.ts, so it only trusts entries added by our own proxies.
+// Reading the header's first entry directly would let a client pick its own
+// rate-limit key by sending a forged X-Forwarded-For.
+export function getClientIp(req: Request) {
+  return req.ip || req.socket?.remoteAddress || 'unknown';
+}
 
-  return req.ip || req.socket.remoteAddress || 'unknown';
+export function getTrustProxyHops() {
+  const hops = Number(process.env.TRUST_PROXY_HOPS ?? 1);
+  return Number.isInteger(hops) && hops > 0 ? hops : 1;
 }

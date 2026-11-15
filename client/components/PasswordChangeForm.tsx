@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { LucideIcon } from "@site-builder/icons";
 import PasswordInput from "./PasswordInput";
-import { changePassword, clearAccessToken } from "../src/lib/auth";
+import { changePassword, logout } from "../src/lib/auth";
 
 export default function PasswordChangeForm() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -30,8 +30,10 @@ export default function PasswordChangeForm() {
       setNewPassword("");
       setConfirmPassword("");
       window.setTimeout(() => {
-        clearAccessToken();
-        window.location.replace("/login?passwordChanged=1");
+        // The password change already ended every session on the server.
+        void logout().finally(() =>
+          window.location.replace("/login?passwordChanged=1"),
+        );
       }, 800);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to update password.");

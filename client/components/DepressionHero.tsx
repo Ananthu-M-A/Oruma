@@ -1,10 +1,4 @@
-import { createWhatsAppUrl } from "../src/config/business";
-
 export default function DepressionHero() {
-  const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help choosing a counselling or wellness service.",
-  );
-
   return (
     <section className="relative w-full overflow-hidden bg-white border-t border-gray-100">
       <div className="flex flex-col lg:flex-row min-h-[600px]">
@@ -24,12 +18,6 @@ export default function DepressionHero() {
             Depression can feel like an invisible weight. Our therapists provide
             a safe, non-judgmental space to rediscover hope.
           </p>
-          <a
-            href={whatsappLink}
-            className="bg-white text-[#0A7F7A] px-12 py-5 rounded-full font-black text-sm uppercase tracking-widest hover:bg-[#B7C8A3] hover:text-[#064F4B] transition-all shadow-2xl shadow-black/20 active:scale-95"
-          >
-            Start Healing
-          </a>
         </div>
 
         {/* Right Side - Image with Quote */}

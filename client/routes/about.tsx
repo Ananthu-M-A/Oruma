@@ -29,17 +29,28 @@ export default function AboutPage() {
       <section className="px-6 py-20">
         <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2">
           <article className="rounded-[2rem] bg-[#064F4B] p-8 text-white md:p-10">
-            <p className="text-xs font-black uppercase tracking-widest text-[#B7C8A3]">
-              Individual operator
-            </p>
-            <h2 className="mt-4 text-4xl font-heading font-black">
-              {businessConfig.operatorLegalName}
-            </h2>
-            <p className="mt-5 font-medium leading-relaxed text-white/75">
-              Website operator and owner of the {businessConfig.brandName}{" "}
-              brand. No professional healthcare qualification or separate
-              legal-entity status is claimed here.
-            </p>
+            <div className="grid items-center gap-6 sm:grid-cols-[1fr_150px]">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-[#B7C8A3]">
+                  Individual operator
+                </p>
+                <h2 className="mt-4 text-4xl font-heading font-black">
+                  {businessConfig.operatorLegalName}
+                </h2>
+                <p className="mt-5 font-medium leading-relaxed text-white/75">
+                  Website operator and owner of the {businessConfig.brandName}{" "}
+                  brand. No professional healthcare qualification or separate
+                  legal-entity status is claimed here.
+                </p>
+              </div>
+              <img
+                src="/assets/ranjini-r-founder-director.webp"
+                alt="Ranjini R, Oruma's individual operator"
+                loading="lazy"
+                decoding="async"
+                className="h-48 w-full rounded-2xl object-cover object-center sm:h-56"
+              />
+            </div>
           </article>
           <article className="rounded-[2rem] border border-[#DDE8E5] bg-[#F5F8F7] p-8 md:p-10">
             <p className="text-xs font-black uppercase tracking-widest text-[#0A7F7A]">

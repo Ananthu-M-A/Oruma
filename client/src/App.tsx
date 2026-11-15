@@ -8,12 +8,15 @@ import {
 } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { applyDocumentSeo, trackPageView } from "./lib/seo";
+import { seoServices } from "./content/seoServices";
+import ConsentBanner from "../components/ConsentBanner";
 
 const Index = lazy(() => import("../routes/index"));
 const About = lazy(() => import("../routes/about"));
 const Articles = lazy(() => import("../routes/articles"));
 const Careers = lazy(() => import("../routes/careers"));
 const Concerns = lazy(() => import("../routes/concerns"));
+const ConcernDetail = lazy(() => import("../routes/concern-detail"));
 const Consultation = lazy(() => import("../routes/consultation"));
 const Contact = lazy(() => import("../routes/contact"));
 const FindYourPsychologist = lazy(
@@ -29,6 +32,8 @@ const ServiceDeliveryPolicy = lazy(
 );
 const Register = lazy(() => import("../routes/register"));
 const Programs = lazy(() => import("../routes/programs"));
+const ProgramDetail = lazy(() => import("../routes/program-detail"));
+const Resources = lazy(() => import("../routes/resources"));
 const Services = lazy(() => import("../routes/services"));
 const CoupleTherapy = lazy(() => import("../routes/services/couple-therapy"));
 const FollowUp = lazy(() => import("../routes/services/follow-up"));
@@ -46,6 +51,8 @@ const PatientProfile = lazy(() => import("../routes/profile-patient"));
 const TherapistProfile = lazy(() => import("../routes/profile-therapist"));
 const AdminProfile = lazy(() => import("../routes/profile-admin"));
 const AdminTherapists = lazy(() => import("../routes/admin-therapists"));
+const SeoService = lazy(() => import("../routes/services/seo-service"));
+const NotFound = lazy(() => import("../routes/not-found"));
 
 function RouteEffects() {
   const { pathname } = useLocation();
@@ -75,7 +82,14 @@ export default function App() {
           <Route path="/articles" element={<Articles />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/concerns" element={<Concerns />} />
-          <Route path="/concerns/all-concerns" element={<Concerns />} />
+          <Route
+            path="/concerns/all-concerns"
+            element={<Navigate to="/concerns" replace />}
+          />
+          <Route
+            path="/concerns/:concernSlug"
+            element={<ConcernDetail />}
+          />
           <Route path="/consultation" element={<Consultation />} />
           <Route path="/contact" element={<Contact />} />
           <Route
@@ -89,6 +103,8 @@ export default function App() {
           <Route path="/cancellation-policy" element={<CancellationPolicy />} />
           <Route path="/register" element={<Register />} />
           <Route path="/programs" element={<Programs />} />
+          <Route path="/programs/:programSlug" element={<ProgramDetail />} />
+          <Route path="/resources" element={<Resources />} />
           <Route
             path="/service-delivery-policy"
             element={<ServiceDeliveryPolicy />}
@@ -155,11 +171,22 @@ export default function App() {
           <Route path="/therapists" element={<Therapists />} />
           <Route path="/therapists/:id" element={<TherapistDetail />} />
           <Route path="/team" element={<Navigate to="/therapists" replace />} />
+          {seoServices.map((service) => (
+            <Route
+              key={service.slug}
+              path={service.path}
+              element={<SeoService slug={service.slug} />}
+            />
+          ))}
           <Route path="/terms" element={<Terms />} />
-          <Route path="/terms-and-conditions" element={<Terms />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="/terms-and-conditions"
+            element={<Navigate to="/terms" replace />}
+          />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      <ConsentBanner />
     </BrowserRouter>
   );
 }

@@ -1,41 +1,43 @@
 # ORUMA SEO Setup and Release Checklist
 
-Code status checked: 19 August 2026
+Code status checked: 6 November 2026 (branch `handover/final`)
 
 ## Implemented in the repository
 
-- A canonical `https://oruma.me` URL, unique title, unique meta description, crawler directives, Open Graph tags, Twitter card tags, and page-level JSON-LD are applied to every public route.
-- Duplicate public aliases use one canonical URL: `/concerns/all-concerns` points to `/concerns`, and `/terms-and-conditions` points to `/terms`.
-- Public therapist profile routes are indexable. Login, registration, patient, therapist, and admin account routes intentionally use `noindex, nofollow` because they are private or utility pages.
-- `client/public/robots.txt` allows public crawling and references the XML sitemap.
-- `client/public/sitemap.xml` contains the 19 canonical public landing, service, contact, policy, and practitioner-directory URLs, including the Service Delivery Policy. Individual practitioner profiles remain crawlable from the directory and are not hard-coded because they are production data.
-- ProfessionalService, Brand, Person-operator, WebSite, WebPage, and practitioner ProfilePage schema use `config/business.json`. The schema identifies Oruma as the brand and RANJINI R as its individual operator; it does not claim an incorporated company or separate legal person.
-- GA4 is loaded only when `VITE_GA_MEASUREMENT_ID` contains a valid `G-...` measurement ID. SPA route changes send `page_view` events.
-- Search Console HTML-tag verification is injected into the built HTML when `VITE_GOOGLE_SITE_VERIFICATION` is set. A Search Console Domain property can instead be verified by DNS without this variable.
-- All 71 local images are WebP. Every rendered image has alternative text and an explicit loading policy; below-the-fold images and YouTube frames are lazy-loaded, while critical hero media is prioritized.
-- Desktop Chrome and Pixel 7 browser checks cover responsiveness, horizontal overflow, navigation, route metadata, crawler files, and private-route indexing.
+- **One source for route SEO.** `client/src/lib/seo-routes.ts` holds every route's title, description and canonical URL. The app, the build-time prerender and the sitemap all read it, so they can't drift apart.
+- **Prerendered HTML per page.** At build time, `vite.config.ts` writes one HTML file per route (for example `dist/services/marriage-counselling.html`) with that page's title, description, canonical URL, Open Graph and Twitter tags, and JSON-LD already in the HTML. Crawlers and WhatsApp, Facebook and LinkedIn previews see the right page without running JavaScript. Vercel serves these through `cleanUrls`.
+- **Generated sitemap.** `sitemap.xml` is generated at build time from the indexable routes, with `lastmod` dates. Private and unpublished pages are left out. The dev server serves the same sitemap. There is no hand-written sitemap any more.
+- **Real 404s.** Unknown URLs return HTTP 404 with a "Page not found" page (`dist/404.html`, marked `noindex`). Old aliases redirect permanently: `/terms-and-conditions` → `/terms`, `/concerns/all-concerns` → `/concerns`, `/team` → `/therapists`.
+- **Service pages.** 7 pages are built from `client/src/content/seoServices.ts` using the `routes/services/seo-service.tsx` template: Relationship Counselling, Marriage Counselling, Trust Healing, Breakup Recovery, Clinical Hypnotherapy, Premarital Counselling and NRI Online Counselling. Couple Therapy keeps its existing page. Clinical Hypnotherapy has `published: false`, which keeps it `noindex` and out of the sitemap and menus until a practitioner with verified hypnotherapy training is live.
+- **Schema.** Site-wide: ProfessionalService (with `sameAs` social profiles, and `hasMap` once the Google Business Profile link is set), Brand, Person (operator) and WebSite. Per page: WebPage plus BreadcrumbList. Service pages also have Service and FAQPage. Practitioner profiles have ProfilePage, Person and BreadcrumbList.
+- **No competing pages.** The concern pages `/concerns/relationship-marriage` and `/concerns/breakup-recovery` are educational and titled "…: Signs and Support", so they don't compete in search with the service pages of the same topic.
+- **Analytics.** `client/src/lib/analytics.ts` loads Google Tag Manager when `VITE_GTM_ID` is set, or GA4 directly when only `VITE_GA_MEASUREMENT_ID` is set. Never both. Consent Mode v2 defaults to "denied" and a cookie banner asks for consent unless `VITE_ANALYTICS_CONSENT_REQUIRED=false`. Events: `page_view` (public pages only), `whatsapp_click`, `email_click`, `begin_checkout`, `purchase` (booking reference and amount only) and `generate_lead` (contact form).
+- **Search Console.** The HTML verification tag is added when `VITE_GOOGLE_SITE_VERIFICATION` is set. A Domain property verified by DNS doesn't need it.
+- **Google Business Profile.** Set `googleBusinessProfile.mapsUrl`, `reviewUrl` and, only if the address is public, `mapEmbedUrl` in `config/business.json`. The contact page then shows "Find us on Google", "Leave a Google review" and the map, and the schema gains `hasMap` and `sameAs`.
+- **Images.** Every rendered image has alt text and an explicit loading policy. Service page hero images load with high priority.
+- **Tests.** Unit tests check title length (60 characters or fewer) and description length (120–160) for every service page, and the schema types. Browser tests run on desktop, phone (Pixel 7) and tablet (iPad) viewports: no horizontal scroll, one H1 per service page, real 404, sitemap content, contact form and WhatsApp link.
 
-## Production environment
-
-Set these values in the frontend hosting project before building:
+## Production environment (Vercel)
 
 ```env
 VITE_API_URL=https://api.oruma.me
-VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
-VITE_GOOGLE_SITE_VERIFICATION=<Search Console HTML verification content>
+VITE_GTM_ID=GTM-XXXXXXX            # or leave empty and set VITE_GA_MEASUREMENT_ID
+VITE_GA_MEASUREMENT_ID=            # only when VITE_GTM_ID is empty
+VITE_ANALYTICS_CONSENT_REQUIRED=true
+VITE_GOOGLE_SITE_VERIFICATION=     # optional with DNS verification
 ```
 
-`VITE_GOOGLE_SITE_VERIFICATION` is optional when the domain is verified with a DNS TXT record. Never place a private Analytics service-account key in a `VITE_` variable; frontend variables are public.
+All `VITE_` values are public. Never put a secret or service-account key in one.
 
-## Tasks that require external accounts or the live deployment
+## Adding a new service page
 
-1. In Google Analytics, create or select the ORUMA GA4 property and Web data stream, copy its `G-...` measurement ID to the production frontend environment, deploy, and verify the visit in Realtime/DebugView.
-2. In Google Search Console, add the `oruma.me` Domain property, verify it by DNS (preferred) or set the HTML verification value above, and confirm ownership.
-3. After deployment, submit `https://oruma.me/sitemap.xml` in Search Console. Inspect the home, About, Contact, Services, Concerns, Therapists, and one therapist-profile URL, then request indexing where appropriate.
-4. Verify that these live URLs return HTTP 200 and the correct content type: `/robots.txt`, `/sitemap.xml`, `/about`, and `/contact`. Confirm `http://oruma.me` and `https://www.oruma.me` redirect once to `https://oruma.me`.
-5. Run PageSpeed Insights for the home, therapist directory, one service page, About, and Contact on mobile and desktop after CDN caching is warm. Record Core Web Vitals and fix any production-only bottleneck.
-6. Validate the deployed schema with Schema Markup Validator and Google Rich Results Test. Confirm the published operating address exactly matches the owner-approved KYC address evidence.
-7. Confirm the privacy/legal basis for GA4 and deploy a consent mechanism if required for the intended audiences and jurisdictions.
+1. Add an entry to `client/src/content/seoServices.ts`. Keep `seoTitle` to 60 characters or fewer and `seoDescription` between 120 and 160.
+2. Run `npm.cmd test -- --run` (the length checks) and `npm.cmd run build`.
+3. The route, menu entry, services-hub card, sitemap entry, prerendered HTML and schema are all created from that one entry.
+
+## Tasks that need external accounts or the live site
+
+See `docs/OWNER_REQUIREMENTS_PLAN.md`, Tracks B and D.
 
 ## Verification commands
 
@@ -48,5 +50,3 @@ npm.cmd test -- --run
 npm.cmd run build
 $env:PLAYWRIGHT_BROWSER_CHANNEL='chrome'; npm.cmd run test:browser
 ```
-
-The browser-channel variable is only needed when the Playwright-managed Chromium binary is not installed and system Chrome is available.

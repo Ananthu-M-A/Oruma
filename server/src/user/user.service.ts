@@ -20,16 +20,16 @@ export class UserService {
       where: {
         email,
       },
-      select: [
-        'id',
-        'email',
-        'password',
-        'role',
-        'mustChangePassword',
-        'disabledAt',
-        'anonymizedAt',
-        'createdAt',
-      ],
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        role: true,
+        mustChangePassword: true,
+        disabledAt: true,
+        anonymizedAt: true,
+        createdAt: true,
+      },
     });
   }
 
@@ -52,6 +52,15 @@ export class UserService {
     }
 
     return query.getOne();
+  }
+
+  /** Loads what the JWT strategy needs, including the hidden token version. */
+  findForSession(id: string): Promise<User | null> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.tokenVersion')
+      .where('user.id = :id', { id })
+      .getOne();
   }
 
   findById(id: string): Promise<User | null> {
@@ -107,7 +116,7 @@ export class UserService {
   ): Promise<{ message: string }> {
     const user = await this.userRepository.findOne({
       where: { id },
-      select: ['id', 'password', 'mustChangePassword'],
+      select: { id: true, password: true, mustChangePassword: true },
     });
 
     if (!user) {
@@ -126,6 +135,8 @@ export class UserService {
     user.password = await bcrypt.hash(newPassword, 10);
     user.mustChangePassword = false;
     await this.userRepository.save(user);
+    // Sign out every existing session for this account.
+    await this.userRepository.increment({ id }, 'tokenVersion', 1);
 
     return { message: 'Password updated successfully' };
   }

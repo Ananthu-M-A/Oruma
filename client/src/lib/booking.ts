@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./auth";
+import { API_BASE_URL, apiFetch } from "./auth";
 
 export const PATIENT_CANCELLATION_WINDOW_MS = 60 * 60 * 1000;
 export const POST_PAYMENT_NOTICE_KEY = "oruma_post_payment_notice";
@@ -78,7 +78,6 @@ export type AppointmentOperationsUpdate = {
 
 interface QuickBookingResponse {
   appointment: BookingResponse;
-  accessToken: string;
   createdAccount: boolean;
   user: {
     id: string;
@@ -120,13 +119,11 @@ function cleanBookingData(bookingData: BookingData) {
 
 export async function createAppointment(
   bookingData: BookingData,
-  accessToken: string,
 ): Promise<BookingResponse> {
-  const response = await fetch(`${API_BASE_URL}/appointments`, {
+  const response = await apiFetch(`${API_BASE_URL}/appointments`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(cleanBookingData(bookingData)),
   });
@@ -140,13 +137,9 @@ export async function createAppointment(
 }
 
 export async function getAppointments(
-  accessToken: string,
 ): Promise<BookingResponse[]> {
-  const response = await fetch(`${API_BASE_URL}/appointments`, {
+  const response = await apiFetch(`${API_BASE_URL}/appointments`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
   });
 
   if (!response.ok) {
@@ -160,7 +153,7 @@ export async function getAppointments(
 export async function createQuickAppointment(
   bookingData: BookingData,
 ): Promise<QuickBookingResponse> {
-  const response = await fetch(`${API_BASE_URL}/appointments/quick`, {
+  const response = await apiFetch(`${API_BASE_URL}/appointments/quick`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -177,13 +170,9 @@ export async function createQuickAppointment(
 }
 
 export async function getMyAppointments(
-  accessToken: string,
 ): Promise<BookingResponse[]> {
-  const response = await fetch(`${API_BASE_URL}/appointments/me`, {
+  const response = await apiFetch(`${API_BASE_URL}/appointments/me`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
   });
 
   if (!response.ok) {
@@ -196,15 +185,11 @@ export async function getMyAppointments(
 
 export async function cancelAppointment(
   appointmentId: string,
-  accessToken: string,
 ): Promise<BookingResponse> {
   const response = await fetch(
     `${API_BASE_URL}/appointments/${appointmentId}`,
     {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
     },
   );
 
@@ -219,7 +204,6 @@ export async function cancelAppointment(
 export async function updateAppointmentStatus(
   appointmentId: string,
   status: BookingResponse["status"],
-  accessToken: string,
 ): Promise<BookingResponse> {
   const response = await fetch(
     `${API_BASE_URL}/appointments/${appointmentId}/status`,
@@ -227,7 +211,6 @@ export async function updateAppointmentStatus(
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ status }),
     },
@@ -244,7 +227,6 @@ export async function updateAppointmentStatus(
 export async function updateAppointmentOperations(
   appointmentId: string,
   payload: AppointmentOperationsUpdate,
-  accessToken: string,
 ): Promise<BookingResponse> {
   const response = await fetch(
     `${API_BASE_URL}/appointments/${appointmentId}/operations`,
@@ -252,7 +234,6 @@ export async function updateAppointmentOperations(
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(payload),
     },

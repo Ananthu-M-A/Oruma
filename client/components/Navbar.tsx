@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { LucideIcon } from "@site-builder/icons";
 import {
   AUTH_CHANGED_EVENT,
-  clearAccessToken,
+  logout,
   getCurrentUser,
   getRedirectPathForRole,
 } from "../src/lib/auth";
 import DashboardNavbar from "./DashboardNavbar";
-import { businessConfig } from "../src/config/business";
+import { concernPaths } from "../src/lib/concerns";
+import { publishedSeoServices } from "../src/content/seoServices";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,8 +44,13 @@ export default function Navbar() {
   };
 
   const services = [
+    { name: "All Services", href: "/services" },
     { name: "Individual Therapy", href: "/services/individual-therapy" },
     { name: "Couple Therapy", href: "/services/couple-therapy" },
+    ...publishedSeoServices.map((service) => ({
+      name: service.navLabel,
+      href: service.path,
+    })),
     { name: "Parenting Support", href: "/services/parenting-support" },
     {
       name: "Child & Teen Counselling",
@@ -56,25 +62,28 @@ export default function Navbar() {
   ];
 
   const concerns = [
+    { name: "All Concerns", href: "/concerns" },
     {
       name: "Relationship Issues",
-      href: "/concerns#relationship",
+      href: concernPaths.relationship,
     },
-    { name: "Breakup Recovery", href: "/concerns#breakup" },
-    { name: "Anxiety & Stress", href: "/concerns#anxiety" },
-    { name: "Postpartum Support", href: "/concerns#postpartum" },
-    { name: "Depression", href: "/concerns#depression" },
-    { name: "Teenage Wellness", href: "/concerns#student" },
-    { name: "Trauma & PTSD", href: "/concerns#trauma" },
+    { name: "Breakup Recovery", href: concernPaths.breakup },
+    { name: "Anxiety & Stress", href: concernPaths.anxiety },
+    { name: "Emotional Wellbeing", href: concernPaths.emotionalWellbeing },
+    { name: "Postpartum Support", href: concernPaths.postpartum },
+    { name: "Depression", href: concernPaths.depression },
+    { name: "Teenage Wellness", href: concernPaths.student },
+    { name: "Trauma & PTSD", href: concernPaths.trauma },
   ];
 
   const programs = [
-    { name: "Oruma Courses", href: "/programs#courses" },
-    { name: "Offline Workshops", href: "/programs#workshops" },
-    { name: "Webinars & Events", href: "/programs#webinars" },
+    { name: "Oruma Courses", href: "/programs/courses" },
+    { name: "Offline Workshops", href: "/programs/workshops" },
+    { name: "Webinars & Events", href: "/programs/webinars" },
   ];
 
   const resources = [
+    { name: "All Resources", href: "/resources" },
     { name: "Articles", href: "/articles" },
     { name: "About Oruma", href: "/about" },
     { name: "Join as a Practitioner", href: "/careers" },
@@ -86,7 +95,7 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    clearAccessToken();
+    void logout();
     handleLinkClick();
   };
 
@@ -116,37 +125,35 @@ export default function Navbar() {
       />
 
       <nav className="fixed top-0 left-0 right-0 bg-white z-[1000] border-b border-gray-100 shadow-sm transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-18 flex items-center justify-between relative">
-          <a href="/" className="flex items-center gap-2 group h-full py-1.5">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6 xl:h-20">
+          <a
+            href="/"
+            aria-label="Oruma home"
+            className="group flex shrink-0 items-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0A7F7A]"
+          >
             <img
-              src="/assets/oruma-main-logo.webp"
-              alt={`${businessConfig.brandName} logo`}
-              width="1000"
-              height="600"
+              src="/assets/Oruma_Primary_Logo.png"
+              alt="Oruma logo"
+              width="444"
+              height="148"
               loading="eager"
               decoding="async"
-              className="h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105"
+              className="h-9 w-auto rounded-md bg-[#0A7F7A] p-1 object-contain transition-transform group-hover:scale-[1.03] sm:h-10 xl:h-11"
             />
-            <div className="flex flex-col justify-center">
-              <span className="text-lg md:text-xl font-heading font-black text-[#01413D] tracking-tighter uppercase leading-none">
-                oruma
-              </span>
-              <span className="text-[7px] font-black text-[#0A7F7A] uppercase tracking-[0.2em] mt-0.5">
-                Together gently
-              </span>
-            </div>
           </a>
 
           <button
-            className="lg:hidden p-2 text-[#0A7F7A] relative z-[1001]"
+            className="relative z-[1001] rounded-full p-2 text-[#0A7F7A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A7F7A] xl:hidden"
             onClick={() => setIsOpen(!isOpen)}
-            aria-label="Toggle Menu"
+            aria-label={isOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isOpen}
+            aria-controls="mobile-navigation"
           >
             <LucideIcon name={isOpen ? "x" : "menu"} size={24} />
           </button>
 
           {/* Desktop Links */}
-          <div className="hidden lg:flex items-center gap-4 xl:gap-5">
+          <div className="hidden items-center gap-3 xl:flex 2xl:gap-5">
             <a
               href="/"
               className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors"
@@ -157,15 +164,15 @@ export default function Navbar() {
               href="/about"
               className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors"
             >
-              About Us
+              About
             </a>
 
             <div className="relative group/services">
-              <button className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
+              <a href="/services" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
                 Services <LucideIcon name="chevron-down" size={12} />
-              </button>
+              </a>
               <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover/services:opacity-100 group-hover/services:visible transition-all duration-300">
-                <div className="bg-white border border-gray-100 shadow-2xl rounded-b-2xl p-4 min-w-[220px]">
+                <div className="grid min-w-[460px] grid-cols-2 gap-x-6 rounded-b-2xl border border-gray-100 bg-white p-4 shadow-2xl">
                   {services.map((s) => (
                     <a
                       key={s.name}
@@ -180,9 +187,9 @@ export default function Navbar() {
             </div>
 
             <div className="relative group/concerns">
-              <button className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
+              <a href="/concerns" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
                 Concerns <LucideIcon name="chevron-down" size={12} />
-              </button>
+              </a>
               <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover/concerns:opacity-100 group-hover/concerns:visible transition-all duration-300">
                 <div className="bg-white border border-gray-100 shadow-2xl rounded-b-2xl p-4 min-w-[220px]">
                   {concerns.map((c) => (
@@ -206,9 +213,9 @@ export default function Navbar() {
             </a>
 
             <div className="relative group/programs">
-              <button className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
+              <a href="/programs" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
                 Programs <LucideIcon name="chevron-down" size={12} />
-              </button>
+              </a>
               <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover/programs:opacity-100 group-hover/programs:visible transition-all duration-300">
                 <div className="bg-white border border-gray-100 shadow-2xl rounded-b-2xl p-4 min-w-[220px]">
                   {programs.map((program) => (
@@ -225,9 +232,9 @@ export default function Navbar() {
             </div>
 
             <div className="relative group/resources">
-              <button className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
+              <a href="/resources" className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase flex items-center gap-1 transition-colors h-16">
                 Resources <LucideIcon name="chevron-down" size={12} />
-              </button>
+              </a>
               <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover/resources:opacity-100 group-hover/resources:visible transition-all duration-300">
                 <div className="bg-white border border-gray-100 shadow-2xl rounded-b-2xl p-4 min-w-[220px]">
                   {resources.map((resource) => (
@@ -246,7 +253,7 @@ export default function Navbar() {
               href="/contact"
               className="text-xs font-black text-[#5F7F7A] hover:text-[#0A7F7A] tracking-widest uppercase transition-colors"
             >
-              Contact Us
+              Contact
             </a>
             {currentUser ? (
               <div className="flex items-center gap-3">
@@ -284,7 +291,8 @@ export default function Navbar() {
 
         {/* Mobile Menu Overlay */}
         <div
-          className={`fixed inset-0 top-0 bg-white z-[999] lg:hidden transition-all duration-300 ${
+          id="mobile-navigation"
+          className={`fixed inset-x-0 bottom-0 top-14 z-[999] bg-white transition-all duration-300 sm:top-16 xl:hidden ${
             isOpen
               ? "opacity-100 translate-y-0"
               : "opacity-0 -translate-y-4 pointer-events-none"

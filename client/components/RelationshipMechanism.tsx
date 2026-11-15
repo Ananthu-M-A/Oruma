@@ -1,10 +1,6 @@
-import { createWhatsAppUrl } from "../src/config/business";
 import { LucideIcon } from "@site-builder/icons";
 
 export default function RelationshipMechanism() {
-  const whatsappLink = createWhatsAppUrl(
-    "Hello, I need help choosing a relationship counselling service.",
-  );
   const steps = [
     {
       icon: "users",
@@ -54,14 +50,6 @@ export default function RelationshipMechanism() {
           ))}
         </div>
 
-        <div className="mt-12">
-          <a
-            href={whatsappLink}
-            className="inline-block bg-[#1A1A1A] text-white px-10 py-3.5 rounded-full font-bold text-sm hover:bg-black shadow-xl shadow-black/10 transition-transform hover:scale-105 active:scale-95"
-          >
-            Get Therapy
-          </a>
-        </div>
       </div>
     </section>
   );

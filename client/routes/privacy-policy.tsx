@@ -16,14 +16,16 @@ const sections: PolicySection[] = [
       "Booking information may include the selected service, practitioner, appointment date and time, contact preference, booking reference, payment status, and operational communications.",
       "Where a user chooses to provide it, consultation information may include wellness concerns, symptoms, medication information, previous support, case-sheet content, session notes, and other sensitive information relevant to the service.",
       "Payment records include amount, status, invoice and booking references, gateway payment identifiers, and refund records. Full card credentials, UPI PINs, bank passwords, and complete banking credentials are not stored by Oruma.",
+      "Contact form enquiries include name, email address, an optional telephone number, preferred contact method, subject, message, the page the form was sent from, and the time consent was given.",
       "Technical and security records may include IP address, device and browser information, pages visited, authentication events, and error logs.",
+      "If a visitor accepts cookies in the cookie banner, Google Analytics and Google Tag Manager may set cookies to measure how the website is used and how marketing performs. Rejecting these cookies does not affect booking or any other service. Booking, payment and consultation details are never sent to these tools.",
     ],
   },
   {
     title: "3. Confidentiality—not complete anonymity",
     body: [
       "Oruma protects personal and wellness information through limited access, role controls, authentication, and operational confidentiality. No online service can promise complete anonymity or absolute security.",
-      "A person may make a general initial enquiry without describing a health concern, but email, telephone, WhatsApp, and similar channels reveal account or contact identifiers to their providers and to Oruma staff handling the enquiry.",
+      "A person may make a general initial enquiry without describing a health concern. Public enquiries can be made by email, telephone, WhatsApp, or the website contact form. Messages sent by WhatsApp are carried by WhatsApp under its own terms and reveal the sender's telephone number to the messaging provider and authorised care-team staff. A booking-specific WhatsApp chat is also available in the patient dashboard after payment for an appointment is complete.",
       "Bookings and paid consultations are identified services because Oruma collects customer contact details, booking information, payment references, and records needed to deliver and support the service.",
     ],
   },
@@ -54,6 +56,7 @@ const sections: PolicySection[] = [
     title: "7. Retention",
     body: [
       "Account, booking, consultation, payment, invoice, refund, and support records are retained only for as long as reasonably needed for service delivery, continuity, payment reconciliation, disputes, security, and applicable legal or accounting obligations.",
+      "Contact form enquiries that have been answered or closed are deleted after a configured retention period, which is 365 days by default.",
       "Deletion or account closure may not remove records that must be retained for an unresolved payment, refund, complaint, safety matter, professional record obligation, or legal requirement.",
     ],
   },

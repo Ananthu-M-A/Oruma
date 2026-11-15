@@ -8,6 +8,7 @@ import {
   Body,
   UseGuards,
   Req,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 
 import { TherapistService } from './therapist.service';
@@ -100,7 +101,9 @@ export class TherapistController {
 
   // PUBLIC
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(
+    @Param('id', new ParseUUIDPipe({ errorHttpStatusCode: 404 })) id: string,
+  ) {
     return this.therapistService.findOne(id);
   }
 

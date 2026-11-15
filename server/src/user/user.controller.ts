@@ -2,6 +2,7 @@ import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { JwtPayload } from '../auth/strategies/jwt.strategy';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -16,17 +17,7 @@ export class UserController {
 
   @Patch('me')
   @UseGuards(JwtAuthGuard)
-  updateMe(
-    @Req() req: { user: JwtPayload },
-    @Body()
-    body: {
-      fullName?: string;
-      phone?: string;
-      age?: number;
-      gender?: string;
-      healthInfo?: Record<string, unknown> | null;
-    },
-  ) {
+  updateMe(@Req() req: { user: JwtPayload }, @Body() body: UpdateProfileDto) {
     return this.userService.updateProfile(req.user.userId, {
       fullName: body.fullName?.trim() || null,
       phone: body.phone?.trim() || null,

@@ -67,10 +67,100 @@ test("primary navigation is keyboard reachable", async ({ page }) => {
   await expect(page.locator(":focus")).toBeVisible();
 });
 
-test("unknown routes recover to the home page", async ({ page }) => {
+test("unknown routes show a non-indexable not-found page", async ({ page }) => {
   await page.goto("/route-that-does-not-exist");
-  await expect(page).toHaveURL(/\/$/);
-  await expect(page.locator("main")).toBeVisible();
+  await expect(page).toHaveURL(/\/route-that-does-not-exist$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: /couldn.t find that page/i }),
+  ).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    "noindex, nofollow",
+  );
+});
+
+const seoServicePaths = [
+  "/services/relationship-counselling",
+  "/services/marriage-counselling",
+  "/services/trust-healing",
+  "/services/breakup-recovery",
+  "/services/premarital-counselling",
+  "/services/nri-online-counselling",
+];
+
+test("SEO service pages render one heading, FAQ schema and no overflow", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  for (const path of seoServicePaths) {
+    await page.goto(path);
+    await expect(page.locator("main h1")).toHaveCount(1);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      "href",
+      `https://oruma.me${path}`,
+    );
+    const schema = await page
+      .locator("#oruma-page-schema")
+      .evaluate((element) => element.textContent ?? "");
+    expect(schema).toContain('"FAQPage"');
+    expect(schema).toContain('"BreadcrumbList"');
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > window.innerWidth + 1,
+      ),
+      `${path} should not scroll horizontally`,
+    ).toBe(false);
+  }
+});
+
+test("the hypnotherapy page stays out of search until it is approved", async ({
+  page,
+}) => {
+  await page.goto("/services/clinical-hypnotherapy");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    "noindex, nofollow",
+  );
+});
+
+test("the WhatsApp button opens a pre-filled chat", async ({ page }) => {
+  await page.goto("/services/marriage-counselling");
+  const whatsapp = page.getByRole("link", {
+    name: "Chat with Oruma on WhatsApp",
+  });
+  await expect(whatsapp).toHaveAttribute(
+    "href",
+    /^https:\/\/wa\.me\/918157039987\?text=.*marriage%20counselling/,
+  );
+});
+
+test("the contact form sends an enquiry and confirms it", async ({ page }) => {
+  let submitted: Record<string, unknown> | null = null;
+  await page.route("**/api/enquiries", async (route) => {
+    submitted = route.request().postDataJSON() as Record<string, unknown>;
+    await route.fulfill({
+      status: 202,
+      contentType: "application/json",
+      body: JSON.stringify({ received: true }),
+    });
+  });
+
+  await page.goto("/contact");
+  await page.getByLabel("Your name").fill("Asha");
+  await page.getByLabel("Email", { exact: true }).fill("asha@example.com");
+  await page
+    .getByLabel("Your message")
+    .fill("I would like help choosing a counsellor.");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Send message" }).click();
+
+  await expect(page.getByRole("status")).toContainText("message has been sent");
+  expect(submitted).toMatchObject({
+    name: "Asha",
+    email: "asha@example.com",
+    consent: true,
+    pagePath: "/contact",
+  });
 });
 
 test("public routes expose page-specific indexable SEO metadata", async ({
@@ -122,7 +212,9 @@ test("robots and sitemap expose canonical public URLs", async ({ request }) => {
   expect(sitemap.ok()).toBe(true);
   const xml = await sitemap.text();
   expect(xml).toContain("https://oruma.me/contact");
+  expect(xml).toContain("https://oruma.me/services/marriage-counselling");
   expect(xml).not.toContain("/profile/");
+  expect(xml).not.toContain("clinical-hypnotherapy");
 });
 
 test("legal routes are public, crawlable, and disclose the individual operator", async ({
@@ -147,18 +239,17 @@ test("legal routes are public, crawlable, and disclose the individual operator",
   }
 });
 
-test("official contact links match the centralized phone, WhatsApp, and email", async ({
+test("public contact offers email, phone and WhatsApp with matching details", async ({
   page,
 }) => {
+  // Phone and WhatsApp follow publicContact in config/business.json.
   await page.goto("/contact");
   await expect(
-    page.getByRole("link", { name: "+91-8157039987", exact: true }).first(),
-  ).toHaveAttribute("href", "tel:+918157039987");
-  await expect(
-    page.locator('a[href^="mailto:oruma9987@gmail.com"]').first(),
+    page.getByRole("link", { name: "oruma9987@gmail.com", exact: true }).first(),
   ).toContainText("oruma9987@gmail.com");
+  await expect(page.locator('a[href="tel:+918157039987"]')).toHaveCount(1);
   await expect(
-    page.locator('a[href^="https://wa.me/918157039987"]').first(),
+    page.locator('main a[href^="https://wa.me/918157039987"]').first(),
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Browse and book online", exact: true }),

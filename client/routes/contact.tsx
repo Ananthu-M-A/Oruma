@@ -2,7 +2,8 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import FloatingActions from "../components/FloatingActions";
 import ContactSection from "../components/ContactSection";
-import { businessConfig } from "../src/config/business";
+import ContactForm from "../components/ContactForm";
+import { businessConfig, googleBusinessProfile } from "../src/config/business";
 
 export default function ContactPage() {
   return (
@@ -24,7 +25,29 @@ export default function ContactPage() {
           </p>
         </div>
       </section>
+
+      <section id="contact-form" className="scroll-mt-24 bg-[#F5F8F7] px-4 pb-4 sm:px-6">
+        <div className="mx-auto max-w-3xl rounded-[2.5rem] bg-white p-7 shadow-2xl shadow-[#064F4B]/10 sm:p-12">
+          <ContactForm />
+        </div>
+      </section>
+
       <ContactSection />
+
+      {googleBusinessProfile.mapEmbedUrl ? (
+        <section className="bg-[#F5F8F7] px-4 pb-24 sm:px-6">
+          <div className="mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] border-8 border-white shadow-xl">
+            <iframe
+              src={googleBusinessProfile.mapEmbedUrl}
+              title={`${businessConfig.brandName} on Google Maps`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="h-[360px] w-full border-0"
+            />
+          </div>
+        </section>
+      ) : null}
+
       <Footer />
     </main>
   );

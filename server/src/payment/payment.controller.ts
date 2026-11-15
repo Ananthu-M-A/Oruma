@@ -47,6 +47,13 @@ export class PaymentController {
     return this.paymentService.findWebhookEvents();
   }
 
+  @Get('admin/refunds')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  findRefundOperations() {
+    return this.paymentService.findRefundOperations();
+  }
+
   @Patch('admin/webhooks/:id/retry')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -59,6 +66,16 @@ export class PaymentController {
   @Roles(Role.PATIENT)
   findMine(@Req() req: AuthenticatedRequest) {
     return this.paymentService.findForPatient(req.user);
+  }
+
+  @Get('razorpay/order/:orderId/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PATIENT)
+  getRazorpayOrderStatus(
+    @Param('orderId') orderId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.paymentService.getRazorpayOrderStatus(orderId, req.user);
   }
 
   @Get(':id/invoice')
@@ -122,7 +139,11 @@ export class PaymentController {
   @Patch(':id/refund')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  refund(@Param('id') id: string, @Body() dto: RefundPaymentDto) {
-    return this.paymentService.refund(id, dto);
+  refund(
+    @Param('id') id: string,
+    @Body() dto: RefundPaymentDto,
+    @Headers('idempotency-key') idempotencyKey?: string,
+  ) {
+    return this.paymentService.refund(id, dto, idempotencyKey);
   }
 }

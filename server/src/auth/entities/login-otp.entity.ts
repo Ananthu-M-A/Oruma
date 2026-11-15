@@ -11,7 +11,7 @@ export class LoginOtp {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Index()
+  @Index('IDX_login_otp_identifier')
   @Column('varchar')
   identifier: string;
 

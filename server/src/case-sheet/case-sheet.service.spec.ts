@@ -32,6 +32,7 @@ describe('CaseSheetService', () => {
       userId: 'admin-1',
       email: 'admin@example.com',
       role: Role.ADMIN,
+      mustChangePassword: false,
     });
 
     expect(result).toEqual([{ id: 'case-1' }]);
@@ -48,6 +49,7 @@ describe('CaseSheetService', () => {
       userId: 'therapist-user-1',
       email: 'therapist@example.com',
       role: Role.THERAPIST,
+      mustChangePassword: false,
     });
 
     expect(caseSheetRepo.find).toHaveBeenCalledWith({
@@ -64,6 +66,7 @@ describe('CaseSheetService', () => {
         userId: 'patient-1',
         email: 'patient@example.com',
         role: Role.PATIENT,
+        mustChangePassword: false,
       }),
     ).rejects.toBeInstanceOf(ForbiddenException);
 
@@ -80,6 +83,7 @@ describe('CaseSheetService', () => {
           userId: 'admin-1',
           email: 'admin@example.com',
           role: Role.ADMIN,
+          mustChangePassword: false,
         },
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);

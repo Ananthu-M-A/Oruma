@@ -29,8 +29,10 @@ function mapForBooking(therapist: Therapist) {
 type TherapistGridProps = {
   nextDayOnly?: boolean;
   searchQuery?: string;
-  maxFee?: number | null;
   maxItems?: number;
+  specialtyAreas?: string[];
+  preferredLanguage?: string;
+  sessionFor?: string;
   emptyTitle?: string;
   emptyDescription?: string;
 };
@@ -38,8 +40,10 @@ type TherapistGridProps = {
 export default function TherapistGrid({
   nextDayOnly = false,
   searchQuery = "",
-  maxFee = null,
   maxItems,
+  specialtyAreas = [],
+  preferredLanguage = "",
+  sessionFor = "",
   emptyTitle = "No therapists are available right now.",
   emptyDescription = "Please check back soon or contact Oruma directly.",
 }: TherapistGridProps) {
@@ -90,8 +94,62 @@ export default function TherapistGrid({
     setIsModalOpen(true);
   };
 
+  const requiredAreasBySessionFor: Record<string, string[]> = {
+    "Me and my partner": ["Relationship Issues", "Couple Therapy"],
+    "My child or teenager": [
+      "Child Behaviour",
+      "Teenage Concerns",
+      "Academic Stress",
+    ],
+    "My family": ["Family Counselling", "Parenting Challenges"],
+  };
+
   const filteredTherapists = therapists.filter((therapist) => {
-    if (maxFee && therapist.price > maxFee) return false;
+    const legacyTags = splitTherapistTags(therapist.tags);
+    const areasOfPractice = Array.isArray(therapist.areasOfPractice)
+      ? therapist.areasOfPractice.filter((area): area is string => typeof area === "string")
+      : [];
+    const therapistAreas = [
+      therapist.specialization,
+      ...(areasOfPractice.length
+        ? areasOfPractice
+        : legacyTags.areasOfPractice),
+    ]
+      .filter(Boolean)
+      .map(normalizePracticeArea);
+
+    if (
+      specialtyAreas.length > 0 &&
+      !matchesPracticeArea(therapistAreas, specialtyAreas)
+    ) {
+      return false;
+    }
+
+    const requiredSessionAreas = requiredAreasBySessionFor[sessionFor];
+    if (
+      requiredSessionAreas &&
+      !matchesPracticeArea(therapistAreas, requiredSessionAreas)
+    ) {
+      return false;
+    }
+
+    if (preferredLanguage.trim()) {
+      const legacyTags = splitTherapistTags(therapist.tags);
+      const therapistLanguages = Array.isArray(therapist.languages)
+        ? therapist.languages.filter((language): language is string => typeof language === "string")
+        : [];
+      const languages = therapistLanguages.length
+        ? therapistLanguages
+        : legacyTags.languages;
+      if (
+        !languages.some(
+          (language) =>
+            language.toLowerCase() === preferredLanguage.trim().toLowerCase(),
+        )
+      ) {
+        return false;
+      }
+    }
 
     const normalizedQuery = searchQuery.trim().toLowerCase();
     if (!normalizedQuery) return true;
@@ -101,8 +159,9 @@ export default function TherapistGrid({
       therapist.title,
       therapist.specialization,
       therapist.qualifications,
-      ...(therapist.areasOfPractice ?? therapist.tags ?? []),
-      ...(therapist.languages ?? []),
+      ...(Array.isArray(therapist.areasOfPractice) ? therapist.areasOfPractice : []),
+      ...(Array.isArray(therapist.tags) ? therapist.tags : []),
+      ...(Array.isArray(therapist.languages) ? therapist.languages : []),
     ]
       .filter(Boolean)
       .join(" ")
@@ -119,7 +178,7 @@ export default function TherapistGrid({
         {[1, 2, 3].map((item) => (
           <div
             key={item}
-            className="h-[360px] rounded-[3rem] bg-[#B7C8A3]/40 animate-pulse"
+            className="h-[360px] rounded-[3rem] bg-[#F1E8D7]/70 animate-pulse"
           />
         ))}
       </div>
@@ -173,9 +232,9 @@ export default function TherapistGrid({
           return (
             <div
               key={therapist.id}
-              className="bg-white rounded-[2rem] border border-[#E2E8E6] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden"
+              className="bg-[#F8F5EF] rounded-[2rem] border border-[#E9E1D4] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden"
             >
-              <div className="relative min-h-44 bg-[#F2E5AE] px-7 py-7">
+              <div className="relative min-h-44 bg-[#F1E8D7] px-7 py-7">
                 <div className="relative z-10 pr-28">
                   <h3 className="text-3xl font-heading font-black text-[#1A2E2C] leading-tight">
                     {therapist.name}
@@ -323,6 +382,45 @@ export default function TherapistGrid({
       />
     </div>
   );
+}
+
+function normalizePracticeArea(value: string) {
+  return value.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function getPracticeAreaWords(value: string) {
+  const ignoredWords = new Set([
+    "and",
+    "or",
+    "the",
+    "for",
+    "with",
+    "support",
+    "issues",
+    "concerns",
+    "therapy",
+    "counselling",
+    "counseling",
+  ]);
+  return new Set(
+    value.split(/\s+/).filter((word) => word.length > 2 && !ignoredWords.has(word)),
+  );
+}
+
+function matchesPracticeArea(therapistAreas: string[], requestedAreas: string[]) {
+  return requestedAreas.some((area) => {
+    const normalizedArea = normalizePracticeArea(area);
+    const areaWords = getPracticeAreaWords(normalizedArea);
+    return therapistAreas.some((therapistArea) => {
+      const therapistWords = getPracticeAreaWords(therapistArea);
+      return (
+        therapistArea === normalizedArea ||
+        therapistArea.includes(normalizedArea) ||
+        normalizedArea.includes(therapistArea) ||
+        [...areaWords].some((word) => therapistWords.has(word))
+      );
+    });
+  });
 }
 
 function InfoItem({
